@@ -1,0 +1,74 @@
+{
+    "ar": 2026,
+    "manad": 11,
+    "skapad": "2026-11-12T14:57:42Z",
+    "poster": [
+        {
+            "session_id": "S0121SV",
+            "plats_id": "P65D9",
+            "plats_namn": "Örebro",
+            "startad": "2026-11-12T14:24:25Z",
+            "avslutad": "2026-11-12T14:24:36Z",
+            "startad_av": "Anna Admin",
+            "avslutad_av": "Anna Admin",
+            "avstamning": {
+                "typ": "uttag",
+                "avstalld_av": "K8Y04",
+                "avstalld_av_namn": "Anna Admin",
+                "tid": "2026-11-12T14:24:36Z",
+                "artiklar": 2,
+                "justerade": 4
+            },
+            "antal_artiklar": 4,
+            "antal_avvikelser": 4,
+            "summa_forvantat": 528,
+            "summa_raknat": 266,
+            "rader": [
+                {
+                    "artikel_id": "A8VVTG7",
+                    "artikelnummer": "DEMO-100",
+                    "namn": "Skruvdragare (demo)",
+                    "enhet": "st",
+                    "typ": "qr",
+                    "forvantat": 8,
+                    "raknat": 0,
+                    "differens": -8,
+                    "raknat_tid": null
+                },
+                {
+                    "artikel_id": "AE07SG1",
+                    "artikelnummer": "",
+                    "namn": "(borttagen artikel)",
+                    "enhet": "st",
+                    "typ": "antal",
+                    "forvantat": 250,
+                    "raknat": 0,
+                    "differens": -250,
+                    "raknat_tid": null
+                },
+                {
+                    "artikel_id": "A2W2QFC",
+                    "artikelnummer": "",
+                    "namn": "(borttagen artikel)",
+                    "enhet": "st",
+                    "typ": "antal",
+                    "forvantat": 180,
+                    "raknat": 179,
+                    "differens": -1,
+                    "raknat_tid": "2026-11-12T14:24:26Z"
+                },
+                {
+                    "artikel_id": "AWX9NF5",
+                    "artikelnummer": "",
+                    "namn": "(borttagen artikel)",
+                    "enhet": "st",
+                    "typ": "antal",
+                    "forvantat": 90,
+                    "raknat": 87,
+                    "differens": -3,
+                    "raknat_tid": "2026-11-12T14:24:26Z"
+                }
+            ]
+        }
+    ]
+}

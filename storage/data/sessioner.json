@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "fil": "sessioner",
+  "poster": [
+    {
+      "id": "S0121SV",
+      "plats_id": "P65D9",
+      "startad": "2026-11-12T14:24:25Z",
+      "startad_av": "K8Y04",
+      "startad_av_namn": "Anna Admin",
+      "status": "avslutad",
+      "artiklar": {
+        "A8VVTG7": {
+          "typ": "qr",
+          "forvantat": 8,
+          "forvantade_enheter": [
+            "TDLUMGGF8WD883I",
+            "TDLUFMXH9VTKSTQ",
+            "TDLU15G0Y58YANF",
+            "TDLUW1J9RVVFDHQ",
+            "TDLUY2CKV5H1E37",
+            "TDLUS5G3DSSVPSC",
+            "TDLUE6TXCKMGAE3",
+            "TDLUTMKJT70AFRO"
+          ],
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 0
+        },
+        "AE07SG1": {
+          "typ": "antal",
+          "forvantat": 250,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 0
+        },
+        "A2W2QFC": {
+          "typ": "antal",
+          "forvantat": 180,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 179,
+          "raknat_uppdaterad": "2026-11-12T14:24:26Z"
+        },
+        "AWX9NF5": {
+          "typ": "antal",
+          "forvantat": 90,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 87,
+          "raknat_uppdaterad": "2026-11-12T14:24:26Z"
+        }
+      },
+      "avslutad": "2026-11-12T14:24:36Z",
+      "avslutad_av": "K8Y04",
+      "avslutad_av_namn": "Anna Admin",
+      "avstamning": {
+        "typ": "uttag",
+        "avstalld_av": "K8Y04",
+        "avstalld_av_namn": "Anna Admin",
+        "tid": "2026-11-12T14:24:36Z",
+        "artiklar": 2,
+        "justerade": 4
+      }
+    },
+    {
+      "id": "SF41HT7",
+      "plats_id": "P65D9",
+      "startad": "2026-11-12T14:27:13Z",
+      "startad_av": "K8Y04",
+      "startad_av_namn": "Anna Admin",
+      "status": "öppen",
+      "artiklar": {
+        "A8VVTG7": {
+          "typ": "qr",
+          "forvantat": 8,
+          "forvantade_enheter": [
+            "TDLUMGGF8WD883I",
+            "TDLUFMXH9VTKSTQ",
+            "TDLU15G0Y58YANF",
+            "TDLUW1J9RVVFDHQ",
+            "TDLUY2CKV5H1E37",
+            "TDLUS5G3DSSVPSC",
+            "TDLUE6TXCKMGAE3",
+            "TDLUTMKJT70AFRO"
+          ],
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 0
+        },
+        "AGC1CR7": {
+          "typ": "antal",
+          "forvantat": 250,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 0
+        },
+        "AXTJ24S": {
+          "typ": "antal",
+          "forvantat": 180,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 175,
+          "raknat_uppdaterad": "2026-11-12T14:27:14Z"
+        },
+        "A46FKAS": {
+          "typ": "antal",
+          "forvantat": 90,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 89,
+          "raknat_uppdaterad": "2026-11-12T14:27:14Z"
+        },
+        "AJ4H34X": {
+          "typ": "antal",
+          "forvantat": 12,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 10,
+          "raknat_uppdaterad": "2026-11-12T14:27:14Z"
+        },
+        "AC1RX85": {
+          "typ": "antal",
+          "forvantat": 640,
+          "raknade_enheter": [],
+          "okanda_enheter": [],
+          "raknat": 0
+        }
+      }
+    }
+  ]
+}
