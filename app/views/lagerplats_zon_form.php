@@ -20,17 +20,19 @@
     </div>
     <div class="rad">
         <div class="falt">
-            <label for="rader">Antal rader</label>
-            <input id="rader" name="rader" type="number" min="1" max="<?= \TDL\Domain\Lagerplats::MAX_RADER ?>"
-                   value="<?= (int) ($zon['rader'] ?? 5) ?>">
+            <label for="rader">Antal rader (0 = utan rader)</label>
+            <input id="rader" name="rader" type="number" min="0" max="<?= \TDL\Domain\Lagerplats::MAX_RADER ?>"
+                   value="<?= (int) ($zon['rader'] ?? 0) ?>">
         </div>
         <div class="falt">
-            <label for="fack">Antal fack per rad</label>
-            <input id="fack" name="fack" type="number" min="1" max="<?= \TDL\Domain\Lagerplats::MAX_FACK ?>"
-                   value="<?= (int) ($zon['fack'] ?? 8) ?>">
-            <div class="falt-hjalp">Rutnätet blir <span class="mono">rader × fack</span> rutor.</div>
+            <label for="fack">Antal fack per rad (0 = utan fack)</label>
+            <input id="fack" name="fack" type="number" min="0" max="<?= \TDL\Domain\Lagerplats::MAX_FACK ?>"
+                   value="<?= (int) ($zon['fack'] ?? 0) ?>">
+            <div class="falt-hjalp">Rutnätet blir <span class="mono">rader × fack</span> rutor (0 = ingen uppdelning).</div>
         </div>
     </div>
+    <label for="zon-bild">Zonbild / foto (valfritt)</label>
+    <input id="zon-bild" name="bild" type="file" accept="image/*" capture="environment">
     <div class="actions">
         <button type="submit" class="primar"><?= $zon === null ? 'Skapa zon' : 'Spara' ?></button>
         <a class="knapp" href="<?= e(u($zon === null ? '/lagerplatser' : '/lagerplatser/' . $zon['id'])) ?>">Avbryt</a>
