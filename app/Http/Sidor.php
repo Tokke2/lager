@@ -995,7 +995,7 @@ final class Sidor
             'short_name' => \TDL\Support\Varumarke::v('kortnamn') ?: mb_substr($namn, 0, 12),
             'description' => 'Lager och inventering med QR. Saldo per arbetsställe, etiketter och historik.',
             'lang' => 'sv-SE',
-            'start_url' => '/?kalla=pwa',
+            'start_url' => u('/?kalla=pwa'),
             'scope' => '/',
             'display' => 'standalone',
             'background_color' => \TDL\Support\Varumarke::v('farg_bakgrund'),
