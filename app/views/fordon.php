@@ -21,8 +21,8 @@ $csrf = \TDL\Support\Sakerhet::csrfToken();
             <input id="modell" name="modell" maxlength="80" placeholder="t.ex. Volvo V70">
         </div>
         <div>
-            <label for="fordon-bild">Foto (valfritt)</label>
-            <input id="fordon-bild" name="bild" type="file" accept="image/*" capture="environment">
+            <label for="fordon-bild">Foton (valfritt, välj en eller flera)</label>
+            <input id="fordon-bild" name="bild[]" type="file" accept="image/*" capture="environment" multiple>
         </div>
         <button type="submit" class="primar">Lägg till fordon</button>
     </form>
