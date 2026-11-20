@@ -10,7 +10,7 @@ $csrf = \TDL\Support\Sakerhet::csrfToken();
 
 <div class="kort no-print" style="margin-bottom:16px">
     <h2>Registrera nytt fordon</h2>
-    <form method="post" action="<?= e(u('/fordon/ny')) ?>" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+    <form method="post" action="<?= e(u('/fordon/ny')) ?>" enctype="multipart/form-data" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
         <div>
             <label for="regnr">Regnr / ID *</label>
@@ -19,6 +19,10 @@ $csrf = \TDL\Support\Sakerhet::csrfToken();
         <div>
             <label for="modell">Modell / Beskrivning</label>
             <input id="modell" name="modell" maxlength="80" placeholder="t.ex. Volvo V70">
+        </div>
+        <div>
+            <label for="fordon-bild">Foto (valfritt)</label>
+            <input id="fordon-bild" name="bild" type="file" accept="image/*" capture="environment">
         </div>
         <button type="submit" class="primar">Lägg till fordon</button>
     </form>
