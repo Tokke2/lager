@@ -21,6 +21,7 @@ $nav = [
     ['id' => 'etiketter', 'href' => '/etiketter', 'text' => 'Etiketter', 'ikon' => '❏'],
     ['id' => 'historik', 'href' => '/historik', 'text' => 'Historik', 'ikon' => '≡'],
     ['id' => 'arkiv', 'href' => '/arkiv', 'text' => 'Arkiv', 'ikon' => '▦'],
+    ['id' => 'fordon', 'href' => '/fordon', 'text' => 'Fordon', 'ikon' => '🚗'],
     ['id' => 'stod', 'href' => '/stod', 'text' => 'Stöd', 'ikon' => '♥'],
 ];
 $adminNav = [
