@@ -996,7 +996,7 @@ final class Sidor
             'description' => 'Lager och inventering med QR. Saldo per arbetsställe, etiketter och historik.',
             'lang' => 'sv-SE',
             'start_url' => u('/?kalla=pwa'),
-            'scope' => '/',
+            'scope' => u('/'),
             'display' => 'standalone',
             'background_color' => \TDL\Support\Varumarke::v('farg_bakgrund'),
             'theme_color' => \TDL\Support\Varumarke::v('farg_bakgrund'),
