@@ -26,6 +26,6 @@
     <?= e(\TDL\Support\Varumarke::v('namn')) ?> · <?= e(\TDL_VERSION) ?> · alla ändringar sparas i historiken
 </footer>
 <!-- All klientlogik: bekräftelser, autospar vid räkning, kamera, QR. Extern fil = CSP script-src 'self' -->
-<script src="<?= e(u('/assets/app.js?v=' . e(\TDL_VERSION))) ?>"></script>
+<script src="<?= e(u('/assets/app.js?v=' . (int) @filemtime(TDL_PUBLIC . '/assets/app.js'))) ?>"></script>
 </body>
 </html>

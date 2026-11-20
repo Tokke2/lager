@@ -232,6 +232,49 @@ $visaNummerFalt = $arAdmin || !$nyArtikel;
     </div>
     <?php endif; ?>
 
+    <label for="bild">Artikelbild (valfritt – fota direkt eller välj fil)</label>
+    <input id="bild" name="bild" type="file" accept="image/*" capture="environment">
+    <div id="bild-forhand" style="margin-top:8px"></div>
+    <script>
+    (function () {
+        var b = document.getElementById('bild'), p = document.getElementById('bild-forhand');
+        if (!b || !p) return;
+        b.addEventListener('change', function () {
+            p.innerHTML = '';
+            if (!b.files || !b.files[0]) return;
+            var file = b.files[0];
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                var img = new Image();
+                img.onload = function () {
+                    var max = 1200, w = img.width, h = img.height;
+                    if (w > max || h > max) {
+                        if (w > h) { h = Math.round(h * max / w); w = max; }
+                        else { w = Math.round(w * max / h); h = max; }
+                    }
+                    var c = document.createElement('canvas');
+                    c.width = w; c.height = h;
+                    c.getContext('2d').drawImage(img, 0, 0, w, h);
+                    c.toBlob(function (blob) {
+                        if (blob && typeof DataTransfer !== 'undefined') {
+                            var dt = new DataTransfer();
+                            dt.items.add(new File([blob], (file.name || 'foto') + '.jpg', { type: 'image/jpeg' }));
+                            b.files = dt.files;
+                        }
+                        var prev = document.createElement('img');
+                        prev.src = c.toDataURL('image/jpeg', 0.82);
+                        prev.style.cssText = 'max-width:160px;max-height:160px;border-radius:10px;object-fit:cover;';
+                        p.innerHTML = '';
+                        p.appendChild(prev);
+                    }, 'image/jpeg', 0.82);
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    })();
+    </script>
+
     <div class="actions">
         <button type="submit" class="primar"><?= $artikel === null ? 'Skapa artikel' : 'Spara' ?></button>
         <a class="knapp" href="<?= e(u('/artiklar' . ($artikel !== null ? '/' . e($artikel['id']) : ''))) ?>">Avbryt</a>

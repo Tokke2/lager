@@ -88,7 +88,7 @@
                 </td>
                 <td class="dold-mobil">
                     <?php if (!empty($a['bilder'])): ?>
-                        <img src="<?= e(\TDL\Http\ArtikelQr::bildUrl($a['id'], $a['bilder'][0]['fil'])) ?>" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px">
+                        <img src="<?= e(\TDL\Http\ArtikelQr::bildUrl($a['id'], $a['bilder'][0]['fil'])) ?>" alt="" loading="lazy" style="width:44px;height:44px;object-fit:cover;border-radius:8px">
                     <?php else: ?>
                         <span class="dampad">–</span>
                     <?php endif; ?>
@@ -97,6 +97,13 @@
                     <a class="knapp liten" href="<?= e(u('/artiklar/' . (e($a['id'])) . '/etiketter?antal=1&skriv=1')) ?>"
                        title="Skriv ut etikett direkt">Etikett</a>
                     <a class="knapp liten" href="<?= e(\TDL\Http\ArtikelQr::lankUrl($a['id'])) ?>" title="Öppna artikel-QR-sidan">QR</a>
+                    <?php if ((\TDL\Support\Auth::inloggad()['roll'] ?? '') === 'admin'): ?>
+                        <form method="post" action="<?= e(u('/artiklar/' . e($a['id']) . '/ta-bort')) ?>" style="display:inline"
+                              data-bekrafta="Ta bort <?= e($a['namn']) ?>?">
+                            <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+                            <button type="submit" class="knapp liten fara" title="Ta bort artikel">Ta bort</button>
+                        </form>
+                    <?php endif; ?>
                 </td>
             </tr>
         <?php endforeach; ?>

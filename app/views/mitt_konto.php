@@ -28,12 +28,12 @@
                 <input id="nuvarande_pin" name="nuvarande_pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" required autocomplete="current-password">
             </div>
             <div class="falt">
-                <label for="pin">Ny PIN (4–8 siffror)</label>
-                <input id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" required autocomplete="new-password">
+                <label for="pin">Ny PIN (4–16 tecken, siffror/specialtecken)</label>
+                <input id="pin" name="pin" type="password" minlength="4" maxlength="16" required autocomplete="new-password">
             </div>
             <div class="falt">
                 <label for="pin2">Upprepa ny PIN</label>
-                <input id="pin2" name="pin2" type="password" inputmode="numeric" pattern="[0-9]{4,8}" required autocomplete="new-password">
+                <input id="pin2" name="pin2" type="password" minlength="4" maxlength="16" required autocomplete="new-password">
             </div>
         </div>
         <div class="actions">
@@ -42,25 +42,13 @@
     </form>
 </div>
 
-<?php if (($konto['roll'] ?? '') === 'admin'): ?>
-<div class="kort">
-    <h2>Lösenord</h2>
-    <?php
-    $dagar = \TDL\Support\Konto::dagarKvarPaLosenord($konto);
-    $max = (int) \TDL\Support\Konto::LÖSENORD_DAGAR;
-    ?>
-    <?php if ($dagar === null): ?>
-        <div class="flash varning">Du har inget lösenord än. Sätt ett nu – det behövs vid nästa inloggning.</div>
-    <?php elseif ($dagar <= 0): ?>
-        <div class="flash varning">Lösenordet har gått ut och måste bytas nu.</div>
-    <?php elseif ($dagar <= \TDL\Support\Konto::LÖSENORD_VARNING_DAGAR): ?>
-        <div class="flash varning">Lösenordet går ut om <?= $dagar ?> dag(ar).</div>
-    <?php else: ?>
-        <p class="dampad">Lösenordet gäller i <?= $max ?> dagar – <?= $dagar ?> dag(ar) kvar.</p>
-    <?php endif; ?>
-    <div class="actions">
-        <a class="knapp primar" href="<?= e(u('/mitt-konto/losenord')) ?>">Byt lösenord</a>
-    </div>
-    <p class="falt-hjalp">Lösenordet behövs vid inloggning utöver PIN-koden och gäller i <?= $max ?> dagar i taget.</p>
+<div class="kort" style="margin-top:16px">
+    <h2>Tidszon</h2>
+    <label for="tdl-tz-val">Välj tidszon (standard: Europe/Stockholm)</label>
+    <select id="tdl-tz-val" onchange="document.cookie='tdl_tz='+this.value+';path=/;max-age=31536000';location.reload();">
+        <?php $nuTz = date_default_timezone_get(); ?>
+        <?php foreach (['Europe/Stockholm' => 'Sverige (Europe/Stockholm)', 'Europe/London' => 'Storbritannien (Europe/London)', 'Europe/Berlin' => 'Tyskland (Europe/Berlin)', 'America/New_York' => 'USA Öst (America/New_York)', 'UTC' => 'UTC'] as $tzId => $tzNamn): ?>
+            <option value="<?= e($tzId) ?>" <?= $nuTz === $tzId ? 'selected' : '' ?>><?= e($tzNamn) ?></option>
+        <?php endforeach; ?>
+    </select>
 </div>
-<?php endif; ?>

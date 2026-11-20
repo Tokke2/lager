@@ -208,12 +208,14 @@ final class Lagerplats
         }
         $r = (int) $rad;
         $f = (int) $fack;
-        if ($r < 1 || $r > (int) $zon['rader']) {
+        if ((int) $zon['rader'] > 0 && ($r < 1 || $r > (int) $zon['rader'])) {
             throw new AppFel('Raden måste vara 1–' . (int) $zon['rader'] . ' i zon ' . $zon['kod'] . '.');
         }
-        if ($f < 1 || $f > (int) $zon['fack']) {
+        if ((int) $zon['fack'] > 0 && ($f < 1 || $f > (int) $zon['fack'])) {
             throw new AppFel('Facket måste vara 1–' . (int) $zon['fack'] . ' i zon ' . $zon['kod'] . '.');
         }
+        if ((int) $zon['rader'] === 0) { $r = 0; }
+        if ((int) $zon['fack'] === 0) { $f = 0; }
         return ['zon_id' => $zonId, 'rad' => $r, 'fack' => $f];
     }
 

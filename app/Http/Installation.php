@@ -58,6 +58,28 @@ final class Installation
         return $angivet !== '' && hash_equals($token, $angivet);
     }
 
+    public static function genereraToken(): void
+    {
+        if (Konto::harKonton()) {
+            omdirigera('/login');
+        }
+        Sakerhet::verifieraCsrf();
+        if (!is_dir(TDL_STORAGE)) {
+            @mkdir(TDL_STORAGE, 0775, true);
+        }
+        $fil = TDL_STORAGE . '/setup.token';
+        $token = bin2hex(random_bytes(16));
+        @file_put_contents($fil, $token);
+        @chmod($fil, 0644);
+        if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'fetch') {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['ok' => true, 'meddelande' => 'Ny token skapad i storage/setup.token på servern.']);
+            exit;
+        }
+        flash('ok', 'Ny token skapad i storage/setup.token på servern.');
+        omdirigera('/installera');
+    }
+
     /** Skapar eller läser engångstoken för installationen. */
     private static function tokenlage(): array
     {
@@ -68,10 +90,13 @@ final class Installation
             return ['token' => $token, 'skapad' => $skapad, 'fil' => true];
         }
         // Ingen tokenfil: skapa en (endast när appen inte har konton).
+        if (!is_dir(TDL_STORAGE)) {
+            @mkdir(TDL_STORAGE, 0775, true);
+        }
         $token = bin2hex(random_bytes(16));
-        file_put_contents($fil, $token);
-        @chmod($fil, 0600);
-        return ['token' => $token, 'skapad' => time(), 'fil' => true];
+        @file_put_contents($fil, $token);
+        @chmod($fil, 0644);
+        return ['token' => $token, 'skapad' => time(), 'fil' => is_file($fil)];
     }
 
     public static function skapa(): void
@@ -107,16 +132,9 @@ final class Installation
         // Datafilerna måste finnas innan kontot kan skrivas.
         Lager::initieraFiler();
 
-        $losenord = post('losenord');
-        if ($losenord !== post('losenord2')) {
-            throw new AppFel('Lösenorden stämmer inte överens.');
-        }
-        Konto::valideraLosenord($losenord);
-
         // false: administratören valde PIN-koden själv i guiden – den är inte
         // tillfällig och ska inte behöva bytas direkt efter inloggning.
         $konto = Konto::skapaForstaAdmin($namn, $pin, false);
-        Konto::andraLosenord($konto['id'], $losenord, '', $konto, true);
 
         // Namnet sparas efter kontot: Varumarke::spara kräver en admin i
         // historiken, och den finns först nu.
@@ -254,17 +272,7 @@ final class Installation
     /** Sida för att sätta nytt lösenord (admin). */
     public static function losenordForm(): void
     {
-        $konto = Auth::kravInloggning();
-        if (($konto['roll'] ?? '') !== 'admin') {
-            throw new AppFel('Lösenord används bara av administratörer.', 403);
-        }
-        Vyer::rendera('losenord', [
-            'titel' => 'Byt lösenord',
-            'konto' => $konto,
-            'aktiv' => 'mer',
-            'masteByta' => Konto::losenordUtgatt($konto),
-            'dagarKvar' => Konto::dagarKvarPaLosenord($konto),
-        ]);
+        omdirigera('/mitt-konto');
     }
 
     public static function losenordSpara(): void

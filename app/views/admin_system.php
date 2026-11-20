@@ -226,6 +226,23 @@ $halsoFarg = $halso['niva'] === 'fel' ? 'fel' : ($halso['niva'] === 'varning' ? 
         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
         <button type="submit" class="primar">Skapa backup nu</button>
     </form>
+    <form method="post" action="<?= e(u('/admin/system/uppdatera')) ?>" style="margin-top:10px"
+          data-bekrafta="Hämta och installera senaste release från GitHub? (storage/ rörs inte)">
+        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+        <button type="submit" class="knapp">Uppdatera från GitHub Release</button>
+    </form>
+    <?php
+    $molnCfg = is_file(TDL_STORAGE . '/molnbackup.json') ? json_decode((string) @file_get_contents(TDL_STORAGE . '/molnbackup.json'), true) : [];
+    $molnUrl = (string) ($molnCfg['url'] ?? '');
+    ?>
+    <form method="post" action="<?= e(u('/admin/system/molnbackup')) ?>" style="margin-top:14px">
+        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+        <label for="moln_url">Molnbackup (Webhook / WebDAV-URL för Google Drive, Dropbox m.fl.)</label>
+        <input id="moln_url" name="moln_url" type="url" value="<?= e($molnUrl) ?>" placeholder="https://hook.eu2.make.com/..." style="max-width:420px">
+        <div class="actions">
+            <button type="submit" class="knapp">Spara molnbackup</button>
+        </div>
+    </form>
     <?php if ($backuper !== []): ?>
         <div class="tabell-rull" style="margin-top:14px">
         <table>

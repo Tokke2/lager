@@ -16,7 +16,7 @@
             Personal<br><span class="dampad" style="font-size:.78rem">PIN-kod</span>
         </button>
         <button type="button" class="valj-knapp" data-inloggning="admin" role="tab" aria-selected="false">
-            Administratör<br><span class="dampad" style="font-size:.78rem">Lösenord + PIN</span>
+            Administratör<br><span class="dampad" style="font-size:.78rem">Endast PIN</span>
         </button>
     </div>
 
@@ -36,12 +36,36 @@
             <?php endforeach; ?>
         </datalist>
         <label for="pin">PIN-kod</label>
-        <input id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*"
+        <input id="pin" name="pin" type="password"
                autocomplete="current-password" required>
         <div class="actions">
             <button type="submit" class="primar" style="width:100%">Logga in</button>
         </div>
     </form>
+    <div style="margin-top:10px;text-align:center">
+        <button type="button" class="sekundar" id="qr-bricka-btn" style="width:100%">📷 Skanna QR-bricka</button>
+        <video id="qr-bricka-video" playsinline style="display:none;width:100%;border-radius:10px;margin-top:8px"></video>
+    </div>
+    <div id="pin-knappsats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px">
+        <?php foreach (['1','2','3','4','5','6','7','8','9','/','0','⌫'] as $k): ?>
+            <button type="button" class="sekundar pin-knapp" data-k="<?= e($k) ?>" style="padding:12px;font-size:1.1rem;font-weight:700"><?= e($k) ?></button>
+        <?php endforeach; ?>
+    </div>
+    <script>
+    (function () {
+        document.querySelectorAll('.pin-knapp').forEach(function (b) {
+            b.addEventListener('click', function () {
+                var adminSynlig = !document.getElementById('admin-form').hasAttribute('hidden');
+                var inp = document.getElementById(adminSynlig ? 'pin-admin' : 'pin');
+                if (!inp) return;
+                var k = b.getAttribute('data-k');
+                if (k === '⌫') inp.value = inp.value.slice(0, -1);
+                else inp.value += k;
+                inp.focus();
+            });
+        });
+    })();
+    </script>
 
     <form method="post" action="<?= e(u('/login')) ?>" id="admin-form" hidden>
         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
@@ -55,20 +79,13 @@
                 <option value="<?= e($u['namn']) ?>"></option>
             <?php endforeach; ?>
         </datalist>
-        <label for="losenord">Lösenord</label>
-        <input id="losenord" name="losenord" type="password" autocomplete="current-password" required>
         <label for="pin-admin">PIN-kod</label>
-        <?php /* autocomplete="one-time-code" säger åt Bitwarden och andra
-                 lösenordshanterare att fältet INTE är det sparade lösenordet.
-                 Annars ser de två lösenordsfält och vägrar spara inloggningen
-                 (de fyller samma lösenord i båda). Nu sparas namn + lösenord,
-                 och PIN-koden skrivs för hand. */ ?>
-        <input id="pin-admin" name="pin" type="password" inputmode="numeric" pattern="[0-9]*"
-               autocomplete="one-time-code" data-lpignore="true" data-1p-ignore required>
+        <input id="pin-admin" name="pin" type="password"
+               autocomplete="current-password" required>
         <div class="actions">
             <button type="submit" class="primar" style="width:100%">Logga in som administratör</button>
         </div>
-        <p class="falt-hjalp">Lösenordet måste bytas var <?= (int) \TDL\Support\Konto::LÖSENORD_DAGAR ?>:e dag.</p>
+        <p class="falt-hjalp">PIN-koden måste bytas var <?= (int) \TDL\Support\Konto::LÖSENORD_DAGAR ?>:e dag.</p>
     </form>
 
     <p class="falt-hjalp">Glömd PIN? En administratör kan sätta en ny.</p>

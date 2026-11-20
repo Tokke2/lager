@@ -21,6 +21,7 @@ $nav = [
     ['id' => 'etiketter', 'href' => '/etiketter', 'text' => 'Etiketter', 'ikon' => '❏'],
     ['id' => 'historik', 'href' => '/historik', 'text' => 'Historik', 'ikon' => '≡'],
     ['id' => 'arkiv', 'href' => '/arkiv', 'text' => 'Arkiv', 'ikon' => '▦'],
+    ['id' => 'stod', 'href' => '/stod', 'text' => 'Stöd', 'ikon' => '♥'],
 ];
 $adminNav = [
     ['id' => 'lagerplats', 'href' => '/lagerplatser', 'text' => 'Lagerplatser', 'ikon' => '▥'],
@@ -39,6 +40,7 @@ $adminNav = [
 <title><?= e($titel) ?> – <?= e($foretagsnamn) ?></title>
 <link rel="icon" type="image/svg+xml" href="<?= e(\TDL\Support\Varumarke::ikonUrl()) ?>?v=<?= e(\TDL_VERSION) ?>">
 <link rel="icon" type="image/png" sizes="32x32" href="<?= e(u('/assets/ikoner/marke-32.png?v=' . e(\TDL_VERSION))) ?>">
+<link rel="shortcut icon" type="image/png" href="<?= e(u('/assets/ikoner/marke-32.png?v=' . e(\TDL_VERSION))) ?>">
 <link rel="apple-touch-icon" href="<?= e(u('/assets/ikoner/ikon-256.png?v=' . e(\TDL_VERSION))) ?>">
 <link rel="manifest" href="<?= e(u('/site.webmanifest')) ?>">
 <meta name="mobile-web-app-capable" content="yes">
@@ -68,8 +70,14 @@ $adminNav = [
         <?php endif; ?>
     </a>
     <nav class="topp-nav">
+        <?php $lagAntal = count(\TDL\Domain\Lager::underMiniminiva()); ?>
         <?php foreach ($nav as $n): ?>
-            <a href="<?= e(u($n['href'])) ?>" class="<?= $aktiv === $n['id'] ? 'aktiv' : '' ?>"><?= $n['text'] ?></a>
+            <a href="<?= e(u($n['href'])) ?>" class="<?= $aktiv === $n['id'] ? 'aktiv' : '' ?>">
+                <?= $n['text'] ?>
+                <?php if ($n['id'] === 'miniminiva' && $lagAntal > 0): ?>
+                    <span style="background:#dc2626;color:#fff;border-radius:999px;padding:1px 6px;font-size:.72rem;margin-left:4px"><?= $lagAntal ?></span>
+                <?php endif; ?>
+            </a>
         <?php endforeach; ?>
         <?php if (($konto['roll'] ?? '') === 'admin'): ?>
             <?php
@@ -130,8 +138,8 @@ $arLosenordssidan = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/mitt-konto/
 if (($konto['roll'] ?? '') === 'admin' && !$arLosenordssidan && \TDL\Support\Konto::losenordSnartUtgatt($konto)): ?>
     <?php $kvar = \TDL\Support\Konto::dagarKvarPaLosenord($konto); ?>
     <div class="flash varning" role="status">
-        <strong>Lösenordet <?= ($kvar !== null && $kvar <= 0) ? 'har gått ut' : 'går ut snart' ?>.</strong>
-        <a href="<?= e(u('/mitt-konto/losenord')) ?>">Byt lösenord</a> –
+        <strong>PIN-koden <?= ($kvar !== null && $kvar <= 0) ? 'har gått ut' : 'går ut snart' ?>.</strong>
+        <a href="<?= e(u('/mitt-konto')) ?>">Byt PIN-kod</a> –
         administratörens lösenord ska bytas var <?= (int) \TDL\Support\Konto::LÖSENORD_DAGAR ?>:e dag.
     </div>
 <?php endif; ?>

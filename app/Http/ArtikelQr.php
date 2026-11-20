@@ -379,9 +379,9 @@ final class ArtikelQr
             . '?n=' . rawurlencode($nonce)
             . '&s=' . rawurlencode(self::signatur($artikelId, $nonce));
         if ($absolut) {
-            $url = self::basUrl() . $url;
+            return self::basUrl() . $url;
         }
-        return $url;
+        return u($url);
     }
 
     /** Signerad bild-URL – fungerar utan inloggning så länge QR-länken är giltig. */

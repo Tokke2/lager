@@ -479,8 +479,8 @@ final class Sidor
                 . '&koder=' . urlencode(implode(',', array_column($nya, 'id'))));
         }
 
-        flash('ok', 'Artikeln ' . $artikel['namn'] . ' skapades.');
-        omdirigera('/artiklar/' . $artikel['id'] . '?ny=1');
+        flash('ok', 'Artikeln ' . $artikel['namn'] . ' skapades – QR-etiketten är redo för utskrift.');
+        omdirigera('/artiklar/' . $artikel['id'] . '/etiketter?antal=1&skriv=1');
     }
 
     /** Föreslå ett ledigt artikelnummer när personal lägger upp en artikel. */

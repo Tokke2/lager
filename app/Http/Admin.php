@@ -285,6 +285,111 @@ final class Admin
         omdirigera('/admin/system');
     }
 
+    public static function systemUppdatera(): void
+    {
+        Auth::kravRoll('admin');
+        Sakerhet::kravCsrf();
+        if (!class_exists(\ZipArchive::class)) {
+            throw new AppFel('PHP-tillägget zip saknas på servern.');
+        }
+
+        $hamta = function (string $url): ?string {
+            if (function_exists('curl_init')) {
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 25);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['User-Agent: Lager-App', 'Accept: application/vnd.github+json']);
+                $res = curl_exec($ch);
+                $kod = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                if (is_string($res) && $kod >= 200 && $kod < 400) {
+                    return $res;
+                }
+            }
+            $ctx = stream_context_create([
+                'http' => [
+                    'method' => 'GET',
+                    'header' => "User-Agent: Lager-App\r\nAccept: application/vnd.github+json\r\n",
+                    'timeout' => 25,
+                ],
+            ]);
+            $res = @file_get_contents($url, false, $ctx);
+            return is_string($res) ? $res : null;
+        };
+
+        $json = $hamta('https://api.github.com/repos/Tokke2/lager/releases/latest');
+        $data = is_string($json) ? json_decode($json, true) : null;
+        $zipUrl = $data['zipball_url'] ?? '';
+        $tagg = (string) ($data['tag_name'] ?? 'senaste');
+        if ($zipUrl === '') {
+            throw new AppFel('Kunde inte hämta senaste release från GitHub.');
+        }
+
+        $tmpZip = tempnam(sys_get_temp_dir(), 'tdl_upd_');
+        $zipInnehall = $hamta($zipUrl);
+        if (!is_string($zipInnehall) || $zipInnehall === '') {
+            @unlink($tmpZip);
+            throw new AppFel('Kunde inte ladda ner release-paketet.');
+        }
+        file_put_contents($tmpZip, $zipInnehall);
+
+        $zip = new \ZipArchive();
+        if ($zip->open($tmpZip) !== true) {
+            @unlink($tmpZip);
+            throw new AppFel('Kunde inte öppna zip-filen.');
+        }
+
+        $uppdaterade = 0;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $namn = $zip->getNameIndex($i);
+            $delar = explode('/', $namn, 2);
+            $rel = $delar[1] ?? '';
+            if ($rel === '' || str_ends_with($rel, '/')) {
+                continue;
+            }
+            if (str_starts_with($rel, 'storage/')) {
+                continue;
+            }
+            if (!str_starts_with($rel, 'app/') && !str_starts_with($rel, 'public/') && !str_starts_with($rel, 'bin/') && $rel !== 'index.php' && $rel !== '.htaccess') {
+                continue;
+            }
+            $mal = TDL_ROT . '/' . $rel;
+            $mapp = dirname($mal);
+            if (!is_dir($mapp)) {
+                @mkdir($mapp, 0755, true);
+            }
+            $innehall = $zip->getFromIndex($i);
+            if ($innehall !== false) {
+                if (is_file($mal) && sha1_file($mal) === sha1($innehall)) {
+                    continue;
+                }
+                file_put_contents($mal, $innehall);
+                $uppdaterade++;
+            }
+        }
+        $zip->close();
+        @unlink($tmpZip);
+        @file_put_contents(TDL_STORAGE . '/version.txt', $tagg);
+
+        flash('ok', "Uppdaterad till {$tagg} ({$uppdaterade} filer uppdaterade, storage/ orörd).");
+        omdirigera('/admin/system');
+    }
+
+    public static function systemMolnbackup(): void
+    {
+        Auth::kravRoll('admin');
+        Sakerhet::kravCsrf();
+        $url = trim((string) ($_POST['moln_url'] ?? ''));
+        if ($url !== '' && !filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new AppFel('Ogiltig URL för molnbackup.');
+        }
+        @file_put_contents(TDL_STORAGE . '/molnbackup.json', json_encode(['url' => $url], JSON_PRETTY_PRINT));
+        flash('ok', $url === '' ? 'Molnbackup avaktiverad.' : 'Molnbackup-URL sparad.');
+        omdirigera('/admin/system');
+        omdirigera('/admin/system');
+    }
+
     /** Sparar appens publika adress (används i artikel-QR). */
     public static function systemAdress(): void
     {

@@ -79,16 +79,13 @@ final class Konto
         return $losenord;
     }
 
-    /** Behöver admin byta sitt lösenord? */
+    /** Behöver admin byta sin PIN-kod? */
     public static function losenordUtgatt(array $konto): bool
     {
         if (($konto['roll'] ?? '') !== 'admin') {
             return false;
         }
-        if (empty($konto['losenord_hash'])) {
-            return true;   // admin utan lösenord måste sätta ett
-        }
-        $satt = $konto['losenord_satt'] ?? null;
+        $satt = $konto['pin_satt'] ?? $konto['pin_andrad'] ?? $konto['losenord_satt'] ?? $konto['skapad'] ?? null;
         if ($satt === null) {
             return true;
         }
@@ -97,16 +94,17 @@ final class Konto
     }
 
     /**
-     * Dagar kvar innan lösenordet måste bytas.
-     * null = kontot är inte admin eller saknar lösenord.
+     * Dagar kvar innan PIN-koden måste bytas.
+     * null = kontot är inte admin eller saknar datum.
      */
     public static function dagarKvarPaLosenord(array $konto): ?int
     {
-        if (($konto['roll'] ?? '') !== 'admin' || empty($konto['losenord_satt'])) {
+        $sattDatum = $konto['pin_satt'] ?? $konto['pin_andrad'] ?? $konto['losenord_satt'] ?? $konto['skapad'] ?? null;
+        if (($konto['roll'] ?? '') !== 'admin' || empty($sattDatum)) {
             return null;
         }
         try {
-            $satt = new \DateTimeImmutable((string) $konto['losenord_satt']);
+            $satt = new \DateTimeImmutable((string) $sattDatum);
             $utgar = $satt->modify('+' . self::LÖSENORD_DAGAR . ' days');
             $nu = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
             $sekunder = $utgar->getTimestamp() - $nu->getTimestamp();
@@ -196,17 +194,6 @@ final class Konto
             throw new AppFel('Fel namn eller PIN-kod.');
         }
 
-        // Admin måste även ange lösenord
-        if (($konto['roll'] ?? '') === 'admin') {
-            if (empty($konto['losenord_hash'])) {
-                throw new AppFel('Administratören har inget lösenord. Be en annan admin sätta ett.');
-            }
-            if ($losenord === '' || !password_verify($losenord, (string) $konto['losenord_hash'])) {
-                self::registreraMisslyckande($konto);
-                throw new AppFel('Fel lösenord för administratören.');
-            }
-        }
-
         // Lyckat försök: nollställ räknaren.
         Las::under(function () use ($konto) {
             $tx = new Transaktion('konto_andrad', null);
@@ -225,8 +212,8 @@ final class Konto
 
     public static function valideraPin(string $pin): string
     {
-        if (!preg_match('/^[0-9]{' . self::PIN_MIN . ',' . self::PIN_MAX . '}$/', $pin)) {
-            throw new AppFel('PIN-koden ska vara ' . self::PIN_MIN . '–' . self::PIN_MAX . ' siffror.');
+        if (!preg_match('/^[0-9!@#$%^&*()_+\-=\[\]{};:,.<>?\/~]{4,16}$/', $pin)) {
+            throw new AppFel('PIN-koden ska vara 4–16 tecken (siffror och/eller specialtecken).');
         }
         if (preg_match('/^(.)\1+$/', $pin) || $pin === '1234' || $pin === '12345' || $pin === '0000' || $pin === '1111') {
             throw new AppFel('PIN-koden är för enkel. Välj en annan.');

@@ -37,7 +37,11 @@ if ($tdlMiljo === false || $tdlMiljo === '') {
 }
 define('TDL_MILJO', $tdlMiljo);
 
-date_default_timezone_set('UTC');
+$tz = $_COOKIE['tdl_tz'] ?? 'Europe/Stockholm';
+if (!in_array($tz, timezone_identifiers_list(), true)) {
+    $tz = 'Europe/Stockholm';
+}
+date_default_timezone_set($tz);
 mb_internal_encoding('UTF-8');
 
 spl_autoload_register(static function (string $klass): void {

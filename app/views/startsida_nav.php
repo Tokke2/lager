@@ -191,7 +191,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
         <div class="start-rutnat">
             <?= $kort('/mitt-konto', 'Mitt konto', e((string) $konto['namn']), 'person') ?>
             <?php if ($arAdmin): ?>
-                <?= $kort('/mitt-konto/losenord', 'Byt lösenord', 'Krävs var 20:e dag', 'nyckel') ?>
+                <?= $kort('/mitt-konto', 'Byt PIN-kod', 'Krävs var 20:e dag', 'nyckel') ?>
             <?php else: ?>
                 <?= $kort('/mitt-konto/pin', 'Byt PIN-kod', 'Välj en ny fyrasiffrig kod', 'nyckel') ?>
             <?php endif; ?>
