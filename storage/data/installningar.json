@@ -1,0 +1,15 @@
+{
+    "version": 1,
+    "fil": "installningar",
+    "varden": {
+        "miniminiva_larm": 1,
+        "miniminiva_per_mail": 0,
+        "miniminiva_mail": "",
+        "tva_person_grans": 100,
+        "tva_person_varde": 5000,
+        "backup_max_dygn": 2,
+        "skrivare": "brother_ql800",
+        "arkiv_ar": "",
+        "arkiv_manad": ""
+    }
+}
