@@ -1,3 +1,8 @@
+<div class="flikar" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <a class="knapp primar" href="<?= e(u('/artiklar')) ?>">📦 Artiklar</a>
+    <a class="knapp sekundar" href="<?= e(u('/inventering')) ?>">📋 Inventering</a>
+    <a class="knapp sekundar" href="<?= e(u('/miniminiva')) ?>">⚠️ Miniminivå</a>
+</div>
 <?php /** @var array $rader @var string $q */ $csrf = \TDL\Support\Sakerhet::csrfToken(); ?>
 <div class="actions" style="justify-content:space-between;margin-top:0">
     <h1 style="margin:0">Artiklar</h1>

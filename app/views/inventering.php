@@ -1,3 +1,8 @@
+<div class="flikar" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <a class="knapp sekundar" href="<?= e(u('/artiklar')) ?>">📦 Artiklar</a>
+    <a class="knapp primar" href="<?= e(u('/inventering')) ?>">📋 Inventering</a>
+    <a class="knapp sekundar" href="<?= e(u('/miniminiva')) ?>">⚠️ Miniminivå</a>
+</div>
 <?php
 /**
  * Inventering av ett arbetsställe – flera artiklar i samma räkning.
