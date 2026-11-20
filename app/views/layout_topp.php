@@ -133,6 +133,11 @@ $adminNav = [
 <?php endif; ?>
 
 <main class="innehall">
+<?php if ($aktiv !== 'start' && $aktiv !== 'login' && $aktiv !== 'installera'): ?>
+<div class="no-print" style="margin-bottom:10px">
+    <button type="button" class="knapp liten sekundar" onclick="if(history.length>1){history.back();}else{location.href='<?= e(u('/')) ?>';}">← Tillbaka</button>
+</div>
+<?php endif; ?>
 <?php
 $arLosenordssidan = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/mitt-konto/losenord');
 if (($konto['roll'] ?? '') === 'admin' && !$arLosenordssidan && \TDL\Support\Konto::losenordSnartUtgatt($konto)): ?>
