@@ -1074,3 +1074,18 @@ document.addEventListener('change', function (e) {
         inp.parentNode.appendChild(btn);
     });
 })();
+
+/* === Flytande "↑ Topp"-knapp vid skroll === */
+(function () {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'knapp primar no-print';
+    b.textContent = '↑ Topp';
+    b.title = 'Tillbaka till toppen';
+    b.style.cssText = 'position:fixed;right:18px;bottom:22px;z-index:90;display:none;border-radius:999px;padding:10px 16px;box-shadow:0 6px 18px rgba(0,0,0,.25);';
+    b.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    document.body.appendChild(b);
+    window.addEventListener('scroll', function () {
+        b.style.display = window.scrollY > 300 ? 'inline-flex' : 'none';
+    }, { passive: true });
+})();
