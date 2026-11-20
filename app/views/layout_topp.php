@@ -70,7 +70,7 @@ $adminNav = [
         <?php endif; ?>
     </a>
     <nav class="topp-nav">
-        <?php $lagAntal = count(\TDL\Domain\Lager::underMiniminiva()); ?>
+        <?php $lagAntal = count(array_filter(\TDL\Domain\Lager::artiklar(), static fn($a) => isset($a['miniminiva']) && (float) ($a['miniminiva'] ?? 0) > 0 && (float) ($a['antal'] ?? 0) < (float) $a['miniminiva'])); ?>
         <?php foreach ($nav as $n): ?>
             <a href="<?= e(u($n['href'])) ?>" class="<?= $aktiv === $n['id'] ? 'aktiv' : '' ?>">
                 <?= $n['text'] ?>
