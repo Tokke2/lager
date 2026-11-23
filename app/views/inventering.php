@@ -1,3 +1,8 @@
+<div class="flikar" style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <a class="knapp sekundar" href="<?= e(u('/artiklar')) ?>">📦 Artiklar</a>
+    <a class="knapp primar" href="<?= e(u('/inventering')) ?>">📋 Inventering</a>
+    <a class="knapp sekundar" href="<?= e(u('/miniminiva')) ?>">⚠️ Miniminivå</a>
+</div>
 <?php
 /**
  * Inventering av ett arbetsställe – flera artiklar i samma räkning.
@@ -427,3 +432,34 @@ $procent = $lage['antal_artiklar'] > 0
         }
     }
 </style>
+
+<div class="print-only" style="margin-top:32px;border-top:1px solid #999;padding-top:14px;display:flex;justify-content:space-between;gap:24px">
+    <div>Datum: _______________________</div>
+    <div>Signatur: _______________________</div>
+    <div>Namnförtydligande: _______________________</div>
+</div>
+<div class="kort" style="margin-top:16px">
+    <h3>Signatur</h3>
+    <canvas id="signatur-canvas" width="420" height="120" style="border:1px solid #cbd5e1;border-radius:6px;background:#fff;touch-action:none;max-width:100%"></canvas>
+    <div class="no-print" style="margin-top:6px">
+        <button type="button" class="knapp liten sekundar" onclick="window.tdlRensaSignatur && window.tdlRensaSignatur()">Rensa signatur</button>
+    </div>
+</div>
+<script>
+(function () {
+    var c = document.getElementById('signatur-canvas');
+    if (!c) return;
+    var ctx = c.getContext('2d'), ritar = false;
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a';
+    function pos(e) {
+        var r = c.getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+        return { x: (t.clientX - r.left) * (c.width / r.width), y: (t.clientY - r.top) * (c.height / r.height) };
+    }
+    function start(e) { ritar = true; var p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+    function move(e) { if (!ritar) return; e.preventDefault(); var p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+    function stop() { ritar = false; }
+    c.addEventListener('mousedown', start); c.addEventListener('mousemove', move); window.addEventListener('mouseup', stop);
+    c.addEventListener('touchstart', start, { passive: false }); c.addEventListener('touchmove', move, { passive: false }); window.addEventListener('touchend', stop);
+    window.tdlRensaSignatur = function () { ctx.clearRect(0, 0, c.width, c.height); };
+})();
+</script>
