@@ -24,7 +24,7 @@ usort($punkter, fn ($a, $b) => ($ordning[$a['niva']] ?? 9) <=> ($ordning[$b['niv
     </div>
 <?php elseif ($halso['niva'] === 'varning'): ?>
     <div class="flash varning" role="status">
-        <strong><?= (int) $halso['varningar'] ?> sak(er) att se över.</strong>
+        <strong><?= (int) $halso['varningar'] ?> <?= (int) $halso['varningar'] === 1 ? 'sak' : 'saker' ?> att se över.</strong>
         Inget är trasigt just nu – men det kan bli det om det får ligga.
     </div>
 <?php else: ?>

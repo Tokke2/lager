@@ -110,7 +110,7 @@ $antalRader = count($sorterade);
     </p>
 
     <p class="falt-hjalp" id="plocksumma">
-        <?= (int) $antalRader ?> rad(er) i listan.
+        <?= (int) $antalRader ?> <?= (int) $antalRader === 1 ? 'rad' : 'rader' ?> i listan.
     </p>
 
     <label for="kommentar">Kommentar (valfri, sparas på varje rad i historiken)</label>

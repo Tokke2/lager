@@ -607,6 +607,7 @@ button, .knapp {
     justify-content: center;
     gap: .45rem;
     min-height: 42px;
+    max-width: 100%;
     padding: 9px 16px;
     font: inherit;
     font-size: .94rem;
@@ -778,9 +779,10 @@ label.kryss input { flex: 0 0 auto; margin-top: 2px; }
 
 /* ------------------------------------------------------------ 10. Flash */
 .flash {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    /* Block, inte flex: en varning kan innehålla vanlig text, <em>, <span>
+       och <a> blandat. Som flex blev varje sådant barn en egen kolumn och
+       texten klämdes ihop på mobil. Ikonen flyter i stället till vänster. */
+    display: block;
     margin: 0 0 var(--steg-3);
     padding: 11px 14px;
     border: 1px solid var(--kant);
@@ -792,7 +794,8 @@ label.kryss input { flex: 0 0 auto; margin-top: 2px; }
     color: var(--text2);
     text-decoration: none;
 }
-.flash .ikon { width: 20px; height: 20px; margin-top: 2px; }
+.flash .ikon { float: left; width: 20px; height: 20px; margin: 2px 10px 0 0; }
+.flash::after { content: ""; display: table; clear: both; }
 .flash > div { min-width: 0; }
 .flash strong { color: var(--text); }
 .flash.ok { border-left-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, var(--yta)); }
@@ -804,7 +807,8 @@ label.kryss input { flex: 0 0 auto; margin-top: 2px; }
 .flash.fel { border-left-color: var(--fel); background: color-mix(in srgb, var(--fel) 10%, var(--yta)); }
 .flash.fel .ikon { color: var(--fel); }
 a.flash:hover { border-color: var(--kant-stark); text-decoration: none; }
-.larm-rad { align-items: center; flex-wrap: wrap; }
+.larm-rad { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.larm-rad::after { content: none; }
 .larm-lank { margin-left: auto; font-weight: 700; white-space: nowrap; }
 
 /* -------------------------------------------------------------- 11. Taggar */
@@ -1451,3 +1455,9 @@ body.energispar .topp,
 body.energispar .botten-nav { backdrop-filter: none; background: var(--bak2); }
 body.energispar .meny-skrim,
 body.energispar .kommando::backdrop { backdrop-filter: none; }
+
+/* Flash med ikon: håll all text på samma vänsterkant, även över flera rader. */
+@supports selector(:has(*)) {
+    .flash:has(> .ikon) { position: relative; padding-left: 44px; }
+    .flash:has(> .ikon) > .ikon { position: absolute; left: 14px; top: 12px; float: none; margin: 0; }
+}

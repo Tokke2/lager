@@ -35,7 +35,7 @@ $halsoFarg = $halso['niva'] === 'fel' ? 'fel' : ($halso['niva'] === 'varning' ? 
         <strong>Hälsokontroll: allt är som det ska.</strong>
         <?= count($halso['punkter']) ?> kontroller utan anmärkning.
     <?php elseif ($halso['niva'] === 'varning'): ?>
-        <strong>Hälsokontroll: <?= (int) $halso['varningar'] ?> sak(er) att se över.</strong>
+        <strong>Hälsokontroll: <?= (int) $halso['varningar'] ?> <?= (int) $halso['varningar'] === 1 ? 'sak' : 'saker' ?> att se över.</strong>
         Inget är trasigt, men åtgärda det som står längre ner.
     <?php else: ?>
         <strong>Hälsokontroll: <?= (int) $halso['fel'] ?> fel måste åtgärdas.</strong>

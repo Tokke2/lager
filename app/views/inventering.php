@@ -283,7 +283,7 @@ $procent = $lage['antal_artiklar'] > 0
 
         <?php if ($arAdmin): ?>
         <form method="post" action="<?= e(u('/inventering/' . (e($session['id'])) . '/avstamning')) ?>"
-              data-bekrafta="Bekräfta avstämning: lagret ändras för <?= count($avvik) ?> artikel(er) och kan inte ångras."
+              data-bekrafta="Bekräfta avstämning: lagret ändras för <?= count($avvik) ?> <?= count($avvik) === 1 ? 'artikel' : 'artiklar' ?> och kan inte ångras."
               style="margin-top:12px">
             <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
             <label for="bekraftelse">Skriv <span class="mono">stam av</span> för att bekräfta</label>
