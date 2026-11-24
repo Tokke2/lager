@@ -1062,7 +1062,8 @@ prov('SK-01 app.js laddas på alla sidor', function () {
     // Det här felet var tyst: utan skriptet fungerade varken
     // bekräftelsedialoger, autosparning eller autoutskrift.
     $botten = file_get_contents(__DIR__ . '/../app/views/layout_botten.php');
-    krav(str_contains($botten, '/assets/app.js'), 'layout_botten.php måste ladda app.js');
+    // Sökvägen går genom tdl_tillgang() och har därför inget inledande snedstreck.
+    krav(str_contains($botten, 'assets/app.js'), 'layout_botten.php måste ladda app.js');
     krav(substr_count($botten, '<script') >= 1, 'det ska finnas en script-tagg');
     krav(strpos($botten, '</body>') > strpos($botten, 'app.js'), 'skriptet ska ligga före </body>');
 });
