@@ -133,6 +133,25 @@ if ($konto !== null) {
 
 <div class="app">
 <?php if ($konto !== null): ?>
+<dialog id="kommando" class="kommando" aria-labelledby="kommando-rubrik">
+    <h2 id="kommando-rubrik" class="dolt">Sök i appen</h2>
+    <div class="kommando-topp">
+        <span class="kommando-sok" aria-hidden="true"><?= tdl_ikon('sok') ?></span>
+        <input id="kommando-falt" type="search" placeholder="Sök sida eller åtgärd …"
+               autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true"
+               aria-autocomplete="list" aria-controls="kommando-lista"
+               aria-describedby="kommando-hjalp">
+        <button type="button" class="kommando-stang" data-kommando-stang aria-label="Stäng sökningen">
+            <?= tdl_ikon('stang') ?>
+        </button>
+    </div>
+    <ul id="kommando-lista" class="kommando-lista" role="listbox" aria-label="Träffar"></ul>
+    <p id="kommando-hjalp" class="kommando-hjalp">
+        <kbd>↑</kbd><kbd>↓</kbd> välj <span aria-hidden="true">·</span>
+        <kbd>Enter</kbd> öppna <span aria-hidden="true">·</span>
+        <kbd>Esc</kbd> stäng
+    </p>
+</dialog>
 <header class="topp">
     <button class="meny-knapp" type="button" data-meny-oppna aria-controls="huvudmeny"
             aria-expanded="false" aria-label="Öppna menyn">
@@ -149,6 +168,12 @@ if ($konto !== null) {
     </a>
 
     <div class="topp-verktyg">
+        <?php if ($konto !== null): ?>
+            <button type="button" class="knapp liten ikon-knapp kommando-knapp" data-kommando-oppna
+                    aria-haspopup="dialog" aria-controls="kommando" title="Sök i appen (Ctrl+K)">
+                <?= tdl_ikon('sok') ?><span class="kommando-text">Sök</span><kbd>Ctrl K</kbd>
+            </button>
+        <?php endif; ?>
         <?php if ($valtStalle !== null): ?>
             <form method="post" action="<?= e(u('/arbetsstalle/byt')) ?>" class="stalle-val">
                 <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">

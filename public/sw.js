@@ -9,7 +9,7 @@
  * Det gör att appen startar snabbt även med dålig täckning i en lagerlokal,
  * utan att någonsin visa gamla saldon.
  */
-const VERSION = 'tdl-v5';
+const VERSION = 'tdl-v6';
 
 // Basvägen: service worker-filen ligger i public/ (eller i roten), och
 // self.registration.scope är den katalog den registrerades från. Ligger

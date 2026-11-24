@@ -86,5 +86,4 @@ $harRegel = ($tvaPerson['antal'] ?? 0) > 0 || ($tvaPerson['varde'] ?? 0) > 0;
     </div>
 </form>
 
-<script src="<?= e(tdl_tillgang('assets/app.js')) ?>"></script>
 

@@ -81,5 +81,4 @@
 </div>
 
 <script src="<?= e(u('/assets/jsqr.js')) ?>"></script>
-<script src="<?= e(tdl_tillgang('assets/app.js')) ?>"></script>
 

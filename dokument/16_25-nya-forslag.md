@@ -23,7 +23,7 @@ första dagen.** Allt nedan kan byggas i PHP/JS i den här kodbasen.
 | 11 | Utlämning med ansvarig och återlämning | Uthyrning | Hög | S | Förslag |
 | 12 | Verktyg och fordon som ”utcheckade” | Uthyrning | Hög | S | Förslag |
 | 13 | Dagens uppgifter per roll | Vardag | Medel | S | Förslag |
-| 14 | Kommandopalett (Ctrl+K) | Vardag | Medel | S | Förslag |
+| 14 | Kommandopalett (Ctrl+K) | Vardag | Medel | S | **Klar** |
 | 15 | Kvitto till kund via QR | Uttag | Medel | S | Förslag |
 | 16 | Revisionsläge med tidsbegränsad länk | Revision | Hög | S | Förslag |
 | 17 | Avvikelseutredning med förslag på orsak | Inventering | Hög | M | Förslag |
@@ -64,6 +64,12 @@ larm och öppna inventeringar – ingen ny databas behövs.
 Ett sökfält överallt: skriv ”uttag skruv” eller ”öppna system” och tryck
 Enter. Tangentbordsanvändare i kontor och på terminaler sparar många klick.
 Fungerar offline eftersom listan byggs från menyn som redan finns i sidan.
+
+**Klart:** `Ctrl+K` / `⌘K` eller Sök-knappen i huvudet öppnar en
+kommandopalett. Träffarna byggs av sidomenyn plus genvägar och vanliga
+synonymord (”räkna” → Inventering, ”lämna ut” → Uttag). Listan kräver
+inget nätanrop, fungerar offline och stängs med Esc. Se `app.js`
+(avsnittet Kommandopalett) och `app/views/layout_topp.php`.
 
 ---
 

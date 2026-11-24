@@ -1304,3 +1304,138 @@ body.tema-ljus .foto-kort { background: var(--yta2); }
        i listkortet räcker namn, nummer, plats och total. */
     .kort-tabell td.dold-mobil, .kort-tabell td.kort-dold { display: none; }
 }
+
+/* ------------------------------------------------- 26. Kommandopalett (Ctrl+K)
+ * Sök över meny, genvägar och synonymer utan nätanrop. Listan byggs av
+ * app.js från sidomenyn, så den följer automatiskt med när menyn ändras.
+ */
+.dolt {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.kommando-knapp { gap: 6px; padding-inline: 10px; }
+.kommando-knapp kbd {
+    font-family: inherit;
+    font-size: .68rem;
+    line-height: 1;
+    padding: 3px 5px;
+    border: 1px solid var(--kant);
+    border-radius: 5px;
+    background: var(--yta3);
+    color: var(--dampad);
+}
+.kommando-knapp svg { width: 18px; height: 18px; }
+
+.kommando {
+    width: min(560px, calc(100vw - 24px));
+    max-height: min(70vh, 520px);
+    margin: 10vh auto auto;
+    padding: 0;
+    border: 1px solid var(--kant);
+    border-radius: var(--radie);
+    background: var(--yta);
+    color: var(--text);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+    overflow: hidden;
+}
+.kommando[open] { display: flex; flex-direction: column; }
+.kommando::backdrop { background: rgba(3, 8, 15, .62); backdrop-filter: blur(2px); }
+.kommando:focus-within { border-color: color-mix(in srgb, var(--accent) 60%, var(--kant)); }
+
+.kommando-topp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 10px 14px;
+    border-bottom: 1px solid var(--kant);
+}
+.kommando-sok { display: flex; color: var(--dampad); }
+.kommando-sok svg { width: 20px; height: 20px; }
+#kommando-falt {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    padding: 8px 0;
+    font-size: 1.05rem;
+    color: var(--text);
+}
+#kommando-falt:focus { outline: 0; box-shadow: none; border: 0; }
+.kommando-stang {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dampad);
+    cursor: pointer;
+}
+.kommando-stang:hover { background: var(--yta3); color: var(--text); }
+.kommando-stang svg { width: 18px; height: 18px; }
+
+.kommando-lista {
+    list-style: none;
+    margin: 0;
+    padding: 6px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    overscroll-behavior: contain;
+}
+.kommando-rad {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    color: var(--text2);
+    cursor: pointer;
+}
+.kommando-rad.vald { background: var(--accent-mjuk); }
+.kommando-rad-namn { font-weight: 600; color: var(--text); }
+.kommando-rad-grupp { font-size: .78rem; color: var(--dampad); white-space: nowrap; }
+.kommando-tom { padding: 18px 12px; color: var(--dampad); }
+
+.kommando-hjalp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 14px;
+    border-top: 1px solid var(--kant);
+    background: var(--yta2);
+    font-size: .78rem;
+    color: var(--dampad);
+}
+.kommando-hjalp kbd {
+    font-family: inherit;
+    font-size: .72rem;
+    line-height: 1;
+    padding: 2px 5px;
+    border: 1px solid var(--kant);
+    border-radius: 5px;
+    background: var(--yta3);
+    color: var(--text2);
+}
+
+@media (max-width: 1023px) {
+    /* Knappen tar plats i huvudet på surfplatta/telefon; menyn räcker där. */
+    .kommando-knapp { display: none; }
+}
+@media (max-width: 620px) {
+    .kommando { margin-top: 8vh; max-height: 76vh; }
+    .kommando-hjalp { display: none; }
+}

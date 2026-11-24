@@ -66,5 +66,4 @@
     </div>
 </form>
 
-<script src="<?= e(tdl_tillgang('assets/app.js')) ?>"></script>
 

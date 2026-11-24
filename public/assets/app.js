@@ -830,3 +830,173 @@ document.addEventListener('submit', function (e) {
         gorOmTabeller();
     }
 })();
+
+/* ---------------------------------------------------------------------------
+ * Kommandopalett (Ctrl+K / ⌘K).
+ *
+ * Listan byggs av menyn som redan finns i sidan – inget nytt API och inget
+ * nätanrop. Skriv "uttag", "räkna" eller "system" och tryck Enter. Fungerar
+ * även offline eftersom allt redan är hämtat. Utan <dialog>-stöd händer
+ * ingenting; då finns menyn kvar som vanligt.
+ * ------------------------------------------------------------------------- */
+(function () {
+    var dialog = document.getElementById('kommando');
+    if (!dialog || typeof dialog.showModal !== 'function') return;
+
+    var falt = document.getElementById('kommando-falt');
+    var lista = document.getElementById('kommando-lista');
+    var stang = dialog.querySelector('[data-kommando-stang]');
+    if (!falt || !lista) return;
+
+    var poster = [];
+    var synliga = [];
+    var vald = 0;
+
+    // Ord som inte står i menyn men som personalen säger.
+    var synonymer = {
+        '/inleverans': 'ta emot fylla på leverans ankomst',
+        '/uttag': 'lämna ut plocka ta ut förbruka',
+        '/plocklista': 'plocka flera lista order',
+        '/overforing': 'flytta överföra mellan ställen',
+        '/skanna': 'kamera qr streckkod läs av',
+        '/inventering': 'räkna av inventera lagerkontroll',
+        '/artiklar': 'vara sök artikelnummer saldo',
+        '/miniminiva': 'brist beställa larm slut',
+        '/lagerkarta': 'hylla karta zon fack',
+        '/lokalplan': 'ritning lokal plan',
+        '/historik': 'logg händelser spårbarhet',
+        '/arkiv': 'gamla månader år',
+        '/etiketter': 'skriv ut lapp qr',
+        '/platsetikett': 'arbetsställe lapp ingång',
+        '/konton': 'användare personal admin',
+        '/platser': 'arbetsställe ställe',
+        '/admin/varumarke': 'logotyp färg företag namn tema',
+        '/admin/system': 'backup inställningar system',
+        '/admin/halsa': 'hälsa kontroll fel status'
+    };
+
+    function normalisera(text) {
+        return (text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    }
+
+    function byggPoster() {
+        var sedda = {};
+        var lankar = document.querySelectorAll('.sido-innre a.meny-lank');
+        for (var i = 0; i < lankar.length; i++) {
+            var a = lankar[i];
+            var href = a.getAttribute('href') || '';
+            var namn = a.querySelector('.meny-text');
+            var text = (namn ? namn.textContent : a.textContent).trim();
+            if (!href || !text || sedda[href + text]) continue;
+            sedda[href + text] = 1;
+            var grupp = '';
+            var omrade = a.closest('.sido-grupp');
+            if (omrade) {
+                var rubrik = omrade.querySelector('.sido-rubrik');
+                if (rubrik) grupp = rubrik.textContent.trim();
+            }
+            var sok = synonymer[href.replace(/^.*?(?=\/[^/]*$)/, '')] || '';
+            poster.push({ text: text, href: href, grupp: grupp, sok: sok });
+        }
+        // Genvägar som sparar ett klick men inte får plats i menyn.
+        poster.push({ text: 'Ny artikel', href: (poster[0] ? poster[0].href.replace(/\/[^/]*$/, '') : '') + '/artiklar/ny', grupp: 'Genväg', sok: 'skapa lägg upp' });
+        poster.push({ text: 'Nytt arbetsställe', href: (poster[0] ? poster[0].href.replace(/\/[^/]*$/, '') : '') + '/platser', grupp: 'Genväg', sok: 'skapa lägg upp' });
+    }
+
+    function rita() {
+        lista.textContent = '';
+        if (synliga.length === 0) {
+            var tom = document.createElement('li');
+            tom.className = 'kommando-tom';
+            tom.textContent = 'Ingen träff. Prova ett annat ord.';
+            lista.appendChild(tom);
+            falt.removeAttribute('aria-activedescendant');
+            return;
+        }
+        for (var i = 0; i < synliga.length; i++) {
+            var p = synliga[i];
+            var li = document.createElement('li');
+            li.className = 'kommando-rad' + (i === vald ? ' vald' : '');
+            li.id = 'kommando-rad-' + i;
+            li.setAttribute('role', 'option');
+            li.setAttribute('aria-selected', i === vald ? 'true' : 'false');
+            li.dataset.href = p.href;
+
+            var namn = document.createElement('span');
+            namn.className = 'kommando-rad-namn';
+            namn.textContent = p.text;
+            li.appendChild(namn);
+
+            if (p.grupp) {
+                var grupp = document.createElement('span');
+                grupp.className = 'kommando-rad-grupp';
+                grupp.textContent = p.grupp;
+                li.appendChild(grupp);
+            }
+            li.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                ga(this.dataset.href);
+            });
+            lista.appendChild(li);
+        }
+        falt.setAttribute('aria-activedescendant', 'kommando-rad-' + vald);
+    }
+
+    function filtrera() {
+        var q = normalisera(falt.value);
+        var ord = q.split(' ').filter(Boolean);
+        synliga = poster.filter(function (p) {
+            var h = normalisera(p.text + ' ' + p.grupp + ' ' + p.sok);
+            return ord.every(function (o) { return h.indexOf(o) !== -1; });
+        }).slice(0, 8);
+        vald = 0;
+        rita();
+    }
+
+    function ga(href) {
+        if (!href) return;
+        if (dialog.open) dialog.close();
+        window.location.href = href;
+    }
+
+    function oppna() {
+        if (!poster.length) byggPoster();
+        if (!dialog.open) dialog.showModal();
+        falt.value = '';
+        vald = 0;
+        filtrera();
+        window.setTimeout(function () { falt.focus(); }, 30);
+    }
+
+    var knappar = document.querySelectorAll('[data-kommando-oppna]');
+    for (var k = 0; k < knappar.length; k++) {
+        knappar[k].addEventListener('click', oppna);
+    }
+    if (stang) stang.addEventListener('click', function () { dialog.close(); });
+
+    falt.addEventListener('input', filtrera);
+
+    falt.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (synliga.length === 0) return;
+            vald = (vald + (e.key === 'ArrowDown' ? 1 : -1) + synliga.length) % synliga.length;
+            rita();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (synliga[vald]) ga(synliga[vald].href);
+        }
+    });
+
+    // Klick utanför rutan stänger, som en vanlig dialog.
+    dialog.addEventListener('click', function (e) {
+        if (e.target === dialog) dialog.close();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && normalisera(e.key) === 'k') {
+            e.preventDefault();
+            if (dialog.open) dialog.close(); else oppna();
+        }
+    });
+})();
