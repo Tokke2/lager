@@ -1000,3 +1000,34 @@ document.addEventListener('submit', function (e) {
         }
     });
 })();
+
+/* ---------------------------------------------------------------------------
+ * Energisparläge.
+ *
+ * När batteriet är under 20 % och inte laddar, eller när webbläsaren säger
+ * att användaren vill spara data, stängs tunga effekter av: inga
+ * övergångar, ingen genomskinlighet bakom huvud och meny. Sidan blir
+ * snabbare att rita och skärmen får mindre att göra – utan att något
+ * försvinner. Laddar man eller stänger av data-sparläget slås det på igen.
+ * ------------------------------------------------------------------------- */
+(function () {
+    var kropp = document.body;
+    if (!kropp) return;
+    function satt(pa) { kropp.classList.toggle('energispar', !!pa); }
+
+    try {
+        var nat = navigator.connection;
+        if (nat && nat.saveData) satt(true);
+    } catch (e) { /* äldre webbläsare saknar connection */ }
+
+    if (typeof navigator.getBattery === 'function') {
+        navigator.getBattery().then(function (batteri) {
+            function uppdatera() {
+                satt(batteri.level <= 0.2 && !batteri.charging);
+            }
+            batteri.addEventListener('levelchange', uppdatera);
+            batteri.addEventListener('chargingchange', uppdatera);
+            uppdatera();
+        }).catch(function () { /* ingen batteristatus – inget att göra */ });
+    }
+})();

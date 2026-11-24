@@ -203,6 +203,12 @@ ett uttalat energiläge: lägre skanningsfrekvens, inga animationer,
 mörkare ytor på OLED och tydlig indikator när läget är på. Kan slås på
 automatiskt under 20 % batteri via Battery Status API.
 
+**Delvis klart:** `app.js` slår på `body.energispar` automatiskt under
+20 % batteri (om enheten inte laddar) eller när webbläsarens
+data-sparläge är på. Läget stänger av animationer, övergångar och
+oskärpa bakom header/meny. Kvar: lägre skanningsfrekvens och en synlig
+indikator i gränssnittet.
+
 ### 24. Prestandabudget i Hälsokontrollen
 Hälsokontrollen får tre nya rader: tid till första ritning (LCP),
 JavaScript-arbete per sidladdning och överförd CSS/JS-mängd. Gränserna

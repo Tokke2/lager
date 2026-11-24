@@ -1439,3 +1439,15 @@ body.tema-ljus .foto-kort { background: var(--yta2); }
     .kommando { margin-top: 8vh; max-height: 76vh; }
     .kommando-hjalp { display: none; }
 }
+
+/* 27. Energisparläge – sätts av app.js vid lågt batteri eller sparläge. */
+body.energispar *,
+body.energispar *::before,
+body.energispar *::after {
+    animation: none !important;
+    transition: none !important;
+}
+body.energispar .topp,
+body.energispar .botten-nav { backdrop-filter: none; background: var(--bak2); }
+body.energispar .meny-skrim,
+body.energispar .kommando::backdrop { backdrop-filter: none; }
