@@ -262,6 +262,7 @@ try {
         preg_match('#^/konton/([A-Z0-9]+)/aktivera$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::kontoAktivera($m[1]),
         $rutt === '/mitt-konto' && $metod === 'GET' => \TDL\Http\Sidor::mittKonto(),
         $rutt === '/miniminiva' => \TDL\Http\Sidor::miniminiva(),
+        $rutt === '/miniminiva/bestallning.csv' && $metod === 'GET' => \TDL\Http\Sidor::bestallningCsv(),
         $rutt === '/arkiv' => \TDL\Http\Sidor::arkiv(),
         $rutt === '/arkiv/bygg' && $metod === 'POST' => \TDL\Http\Sidor::arkivBygg(),
         $rutt === '/mitt-konto/pin' && $metod === 'POST' => \TDL\Http\Sidor::mittPin(),

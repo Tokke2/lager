@@ -19,6 +19,9 @@ final class Installningar
         'miniminiva_mail' => '',       // mottagare
         'tva_person_grans' => 0,       // antal enheter som kräver kollegas PIN (0 = av)
         'tva_person_varde' => 0,       // eller värde i kronor (0 = av)
+        'inkop_ledtid' => 7,           // leverantörens ledtid i dagar
+        'inkop_tackning' => 30,        // extra dagar att täcka vid beställning
+        'inkop_forbrukning_dagar' => 90, // hur långt bakåt förbrukningen mäts
         'backup_max_dygn' => 2,        // rött om senaste backup är äldre
         'skrivare' => 'brother_ql500', // etikettskrivare, se Support/Skrivare.php
         'arkiv_ar' => '',              // valt år i arkivvyn

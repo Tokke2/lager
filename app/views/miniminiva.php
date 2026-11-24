@@ -57,6 +57,64 @@
     </div>
 <?php endif; ?>
 
+<?php if ($bestallning['rader'] !== []): ?>
+    <?php $b = $bestallning; $arAdmin = ($konto['roll'] ?? '') === 'admin'; ?>
+    <div class="kort">
+        <h2>Beställningsförslag</h2>
+        <p class="dampad">
+            Räknat på förbrukningen de senaste <?= (int) $b['fonster'] ?> dagarna,
+            <?= (int) $b['ledtid'] ?> dagars ledtid och <?= (int) $b['tackning'] ?> dagars extra täckning.
+            Förslaget är alltid minst den sammanlagda bristen.
+            <?php if ($arAdmin): ?>
+                <a href="<?= e(u('/admin/system')) ?>">Ändra ledtid</a>.
+            <?php endif; ?>
+            <a href="<?= e(u('/miniminiva/bestallning.csv')) ?>">Ladda ner som CSV</a>.
+        </p>
+        <div class="tabell-rull">
+        <table class="kort-tabell">
+            <thead>
+            <tr>
+                <th>Artikel</th><th class="tal-hoger">Totalt saldo</th>
+                <th>Förbrukning</th><th class="tal-hoger">Räcker</th>
+                <th class="tal-hoger">Förslag</th><th>Åtgärd</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($b['rader'] as $r): ?>
+                <tr>
+                    <td>
+                        <a href="<?= e(u('/artiklar/' . e($r['artikel']['id']))) ?>"><?= e($r['artikel']['namn']) ?></a>
+                        <span class="dampad mono" style="font-size:.8rem;margin-left:6px"><?= e($r['artikel']['artikelnummer']) ?></span>
+                    </td>
+                    <td class="tal-hoger" data-etikett="Totalt saldo">
+                        <?= (int) $r['totalt'] ?> <?= e($r['artikel']['enhet']) ?>
+                    </td>
+                    <td data-etikett="Förbrukning">
+                        <?php if ($r['takt'] > 0): ?>
+                            <?= e(number_format($r['takt'], $r['takt'] >= 1 ? 1 : 2, ',', ' ')) ?>/dag
+                            <span class="falt-hjalp"><?= (int) $r['bruk'] ?> <?= e($r['artikel']['enhet']) ?> på <?= (int) $b['fonster'] ?> dagar</span>
+                        <?php else: ?>
+                            <span class="dampad">Ingen förbrukning</span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="tal-hoger <?= $r['racker'] !== null && $r['racker'] <= $b['ledtid'] ? 'brist' : '' ?>"
+                        data-etikett="Räcker">
+                        <?= $r['racker'] === null ? '–' : ((int) $r['racker'] > 365 ? '> 365 dagar' : (int) $r['racker'] . ' dagar') ?>
+                    </td>
+                    <td class="tal-hoger" data-etikett="Förslag">
+                        <strong><?= (int) $r['forslag'] ?> <?= e($r['artikel']['enhet']) ?></strong>
+                    </td>
+                    <td>
+                        <a class="knapp liten" href="<?= e(u('/inleverans?artikel=' . e($r['artikel']['id']))) ?>">Fyll på</a>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        </div>
+    </div>
+<?php endif; ?>
+
 <?php if ($flyttningar !== []): ?>
     <div class="kort" id="flytt">
         <h2>Flytta i stället för att beställa</h2>

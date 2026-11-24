@@ -96,6 +96,33 @@ $halsoFarg = $halso['niva'] === 'fel' ? 'fel' : ($halso['niva'] === 'varning' ? 
         <input id="miniminiva_mail" name="miniminiva_mail" type="email"
                value="<?= e((string) $installningar['miniminiva_mail']) ?>" placeholder="lager@foretaget.se">
 
+        <h3>Inköp och påfyllning</h3>
+        <p class="falt-hjalp">
+            Används av beställningsförslagen: målet är att täcka leverantörens
+            ledtid plus den extra täckningstiden, räknat på hur mycket som
+            förbrukats under mätperioden.
+        </p>
+        <div class="rad">
+            <div class="falt">
+                <label for="inkop_ledtid">Leverantörens ledtid (dagar)</label>
+                <input id="inkop_ledtid" name="inkop_ledtid" type="number" min="0" max="120" step="1"
+                       value="<?= (int) $installningar['inkop_ledtid'] ?>">
+            </div>
+            <div class="falt">
+                <label for="inkop_tackning">Extra täckning (dagar)</label>
+                <input id="inkop_tackning" name="inkop_tackning" type="number" min="0" max="180" step="1"
+                       value="<?= (int) $installningar['inkop_tackning'] ?>">
+            </div>
+            <div class="falt">
+                <label for="inkop_forbrukning_dagar">Mät förbrukning senaste</label>
+                <select id="inkop_forbrukning_dagar" name="inkop_forbrukning_dagar">
+                    <?php foreach ([30, 60, 90, 180] as $d): ?>
+                        <option value="<?= $d ?>" <?= $d === (int) $installningar['inkop_forbrukning_dagar'] ? 'selected' : '' ?>><?= $d ?> dagar</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
         <h3>Tvåpersonersregel för stora uttag</h3>
         <p class="falt-hjalp">
             Ett uttag som når gränsen måste bekräftas av en kollega med sin PIN-kod.

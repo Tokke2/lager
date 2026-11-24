@@ -17,7 +17,7 @@ första dagen.** Allt nedan kan byggas i PHP/JS i den här kodbasen.
 | 5 | Batch och utgångsdatum (FIFO/FEFO) | Lager | Hög | M | Förslag |
 | 6 | Alla streckkoder: EAN, GS1, DataMatrix | Skanning | Hög | S | Förslag |
 | 7 | Leverantörsföljesedel till inleverans | Inleverans | Hög | M | Förslag |
-| 8 | Påfyllnadsförslag med ledtid | Inköp | Hög | S | Förslag |
+| 8 | Påfyllnadsförslag med ledtid | Inköp | Hög | S | **Klar** |
 | 9 | Överskott→brist-förslag mellan ställen | Lager | Hög | S | **Klar** |
 | 10 | Reservera saldo mot order/projekt | Order | Hög | M | Förslag |
 | 11 | Utlämning med ansvarig och återlämning | Uthyrning | Hög | S | Förslag |
@@ -105,6 +105,14 @@ annars manuellt med förifyllda fält. Sparar 10–20 minuter per leverans.
 Miniminivå + förbrukningstakt + leverantörens ledtid = förslag på
 beställningspunkt och antal. Listan kan exporteras som CSV eller skrivas
 ut. Bygger på historiken som redan är hashkedjad.
+
+**Klart:** *Under miniminivå* visar ett beställningsförslag per artikel.
+Förbrukningen räknas ur historikens riktiga uttag under 30/60/90/180
+dagar, målet täcker ledtid + extra täckning och förslaget är aldrig
+mindre än den sammanlagda bristen. Ledtid, täckning och mätperiod ställs
+in under System → Inköp och påfyllning. Listan kan laddas ner som CSV
+med semikolon och BOM så att svensk Excel öppnar den direkt. Se
+`Sidor::bestallningsforslag()` och `/miniminiva/bestallning.csv`.
 
 ### 9. Överskott→brist-förslag mellan arbetsställen
 Appen jämför saldon: ”Örebro har 40 fler än behovet, Laxå saknar 12”.

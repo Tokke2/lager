@@ -297,6 +297,123 @@ final class Sidor
         return $forslag;
     }
 
+    /**
+     * Beställningsförslag: miniminivå + förbrukning + ledtid.
+     *
+     * Förbrukningen räknas ur historiken (bara riktiga uttag, inte
+     * avstämningar) under de senaste N dagarna. Målet är att täcka
+     * ledtiden plus en vald täckningstid. Förslaget är aldrig mindre än
+     * den sammanlagda bristen, så listan kan användas direkt vid inköp.
+     *
+     * @return array{rader: list<array>, ledtid: int, tackning: int, fonster: int}
+     */
+    private static function bestallningsforslag(): array
+    {
+        $ledtid = max(0, min(120, (int) Installningar::hamta('inkop_ledtid', 7)));
+        $tackning = max(0, min(180, (int) Installningar::hamta('inkop_tackning', 30)));
+        $fonster = (int) Installningar::hamta('inkop_forbrukning_dagar', 90);
+        if (!in_array($fonster, [30, 60, 90, 180], true)) {
+            $fonster = 90;
+        }
+
+        $start = gmdate('Y-m-d\TH:i:s\Z', time() - $fonster * 86400);
+        $forbrukning = [];
+        try {
+            foreach (Json::las('historik')['poster'] as $post) {
+                if (($post['typ'] ?? '') !== 'uttag' || (string) ($post['tid'] ?? '') < $start) {
+                    continue;
+                }
+                $id = (string) ($post['artikel_id'] ?? '');
+                if ($id !== '') {
+                    $forbrukning[$id] = ($forbrukning[$id] ?? 0) + max(0, (int) ($post['antal'] ?? 0));
+                }
+            }
+        } catch (\Throwable $e) {
+            // Utan historik blir förbrukningen noll – bristen räknas ändå.
+            $forbrukning = [];
+        }
+
+        $platser = array_values(array_filter(
+            Lager::platser(),
+            fn ($p) => empty($p['system']) && !empty($p['aktiv'])
+        ));
+        $enheter = Lager::enheter();
+        $rader = [];
+        foreach (Lager::artiklar(true) as $a) {
+            $min = (int) ($a['miniminiva'] ?? 0);
+            if ($min <= 0) {
+                continue;
+            }
+            $saldo = Lager::saldoPerPlats($a, $enheter);
+            $totalt = 0;
+            $brist = 0;
+            foreach ($platser as $p) {
+                $n = (int) ($saldo[$p['id']] ?? 0);
+                $totalt += $n;
+                if ($n < $min) {
+                    $brist += $min - $n;
+                }
+            }
+            if ($brist <= 0) {
+                continue;
+            }
+            $bruk = (int) ($forbrukning[$a['id']] ?? 0);
+            $takt = $bruk / $fonster;
+            $mal = (int) ceil($takt * ($ledtid + $tackning));
+            $forslag = max($brist, $mal - $totalt, 0);
+            if ($forslag <= 0) {
+                continue;
+            }
+            $rader[] = [
+                'artikel' => $a,
+                'totalt' => $totalt,
+                'brist' => $brist,
+                'bruk' => $bruk,
+                'takt' => $takt,
+                'mal' => $mal,
+                'forslag' => $forslag,
+                'racker' => $takt > 0 ? (int) floor($totalt / $takt) : null,
+            ];
+        }
+        usort($rader, static function ($x, $y) {
+            $a = $x['racker'] ?? PHP_INT_MAX;
+            $b = $y['racker'] ?? PHP_INT_MAX;
+            return $a <=> $b ?: strcmp((string) $x['artikel']['namn'], (string) $y['artikel']['namn']);
+        });
+        return ['rader' => $rader, 'ledtid' => $ledtid, 'tackning' => $tackning, 'fonster' => $fonster];
+    }
+
+    /** Beställningsförslagen som CSV – öppnas direkt i Excel. */
+    public static function bestallningCsv(): void
+    {
+        Auth::kravInloggning();
+        $b = self::bestallningsforslag();
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="bestallningsforslag-' . gmdate('Y-m-d') . '.csv"');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: private, no-store');
+        echo "\xEF\xBB\xBF";
+        $ut = fopen('php://output', 'w');
+        if ($ut === false) {
+            return;
+        }
+        // Semikolon och BOM gör att Excel i svensk miljö tolkar filen rätt.
+        fputcsv($ut, ['Artikel', 'Artikelnummer', 'Totalt saldo', 'Förbrukning per dag', 'Räcker (dagar)', 'Förslag', 'Enhet'], ';');
+        foreach ($b['rader'] as $r) {
+            fputcsv($ut, [
+                $r['artikel']['namn'],
+                $r['artikel']['artikelnummer'],
+                $r['totalt'],
+                number_format($r['takt'], 2, ',', ''),
+                $r['racker'] === null ? '' : $r['racker'],
+                $r['forslag'],
+                $r['artikel']['enhet'],
+            ], ';');
+        }
+        fclose($ut);
+        exit;
+    }
+
     public static function miniminiva(): void
     {
         $konto = Auth::kravInloggning();
@@ -307,6 +424,7 @@ final class Sidor
             'aktiv' => 'start',
             'rader' => $rader,
             'flyttningar' => self::flyttforslag(),
+            'bestallning' => self::bestallningsforslag(),
             'larmPa' => (bool) Installningar::hamta('miniminiva_larm'),
         ]);
     }

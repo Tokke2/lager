@@ -250,6 +250,10 @@ final class Admin
         $varde = max(0, (int) post('tva_person_varde', '0'));
         $backupDygn = (int) post('backup_max_dygn', '2');
         $backupDygn = in_array($backupDygn, [1, 2, 3, 7, 14], true) ? $backupDygn : 2;
+        $ledtid = max(0, min(120, (int) post('inkop_ledtid', '7')));
+        $tackning = max(0, min(180, (int) post('inkop_tackning', '30')));
+        $fonster = (int) post('inkop_forbrukning_dagar', '90');
+        $fonster = in_array($fonster, [30, 60, 90, 180], true) ? $fonster : 90;
 
         Installningar::spara([
             'miniminiva_larm' => post('miniminiva_larm') === '1' ? 1 : 0,
@@ -257,6 +261,9 @@ final class Admin
             'miniminiva_mail' => $mail,
             'tva_person_grans' => $antal,
             'tva_person_varde' => $varde,
+            'inkop_ledtid' => $ledtid,
+            'inkop_tackning' => $tackning,
+            'inkop_forbrukning_dagar' => $fonster,
             'backup_max_dygn' => $backupDygn,
             'skrivare' => \TDL\Support\Skrivare::finns($skrivare = (string) post('skrivare'))
                 ? $skrivare
