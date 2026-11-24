@@ -106,11 +106,16 @@ final class Sidor
 
         $platser = array_values(array_filter(Lager::platser(), fn ($p) => empty($p['system'])));
         $artiklar = Lager::artiklar(true);
-        $sessioner = Inventering::sessioner(20);
+        $sessioner = Inventering::sessioner(PHP_INT_MAX);
         $oppna = array_values(array_filter($sessioner, fn ($s) => ($s['status'] ?? '') === 'öppen'));
-
-        // Siffrorna på korten – räknas i en genomgång, inte per kort.
-        $underMin = count(self::underMinimiLista($artiklar));
+        $enheter = Lager::enheter();
+        $brister = self::underMinimiLista($artiklar, $platser, $enheter);
+        $underMin = count($brister);
+        $aktivtStalle = Arbetsstalle::aktivt();
+        $uppgifter = \TDL\Support\DagensUppgifter::bygg(
+            $konto, $aktivtStalle, $oppna, $brister,
+            ($konto['roll'] ?? '') === 'admin' ? Backupkontroll::lage() : null
+        );
 
         Vyer::rendera('startsida_nav', [
             'titel' => 'Start',
@@ -118,10 +123,10 @@ final class Sidor
             'aktiv' => 'start',
             'antalArtiklar' => count($artiklar),
             'antalPlatser' => count($platser),
-            'antalEnheter' => count(Lager::enheter()),
+            'antalEnheter' => count($enheter),
             'underMin' => $underMin,
-            'oppnaSessioner' => $oppna,
-            'aktivtStalle' => Arbetsstalle::aktivt(),
+            'aktivtStalle' => $aktivtStalle,
+            'uppgifter' => $uppgifter,
         ]);
     }
 
@@ -1420,7 +1425,7 @@ final class Sidor
             'titel' => 'Inventeringar',
             'konto' => $konto,
             'aktiv' => 'inventering',
-            'sessioner' => Inventering::sessioner(100),
+            'sessioner' => Inventering::sessionerMedOppna(100),
             'artiklar' => Lager::artiklar(true),
             'platser' => $platser,
             'antalPerPlats' => $antalPerPlats,

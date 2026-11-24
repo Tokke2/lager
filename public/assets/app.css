@@ -916,6 +916,19 @@ button.stalle-kort:hover, a.stalle-kort:hover {
 .start-topp p { margin: 0; color: var(--dampad); }
 .start-topp strong { color: var(--text); }
 
+.dagens-uppgifter {
+    padding: 16px 18px;
+    background: var(--yta);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie);
+}
+.dagens-uppgifter h2 { margin: 0 0 4px; font-size: 1.12rem; }
+.dagens-uppgifter p { margin: 0 0 8px; }
+.dagens-uppgifter p:last-child { margin-bottom: 0; }
+.dagens-uppgifter ul { margin: 0; padding-left: 1.25em; }
+.dagens-uppgifter li + li { margin-top: 5px; }
+.dagens-uppgifter a { overflow-wrap: anywhere; }
+
 .start-siffror {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

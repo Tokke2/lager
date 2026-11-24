@@ -11,7 +11,7 @@
  * ärver färgen från kortet.
  *
  * @var int $antalArtiklar @var int $antalPlatser @var int $antalEnheter
- * @var int $underMin @var array $oppnaSessioner @var array|null $aktivtStalle
+ * @var int $underMin @var array $uppgifter @var array|null $aktivtStalle
  * @var array $konto
  */
 $arAdmin = ($konto['roll'] ?? '') === 'admin';
@@ -52,6 +52,21 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
         </p>
     </header>
 
+    <section class="dagens-uppgifter" aria-labelledby="dagens-rubrik">
+        <h2 id="dagens-rubrik">Dagens uppgifter</h2>
+        <p class="dampad"><?= $stalle !== null ? 'För ' . e($stalle['namn']) . ' och din roll.' : 'För alla arbetsställen och din roll.' ?></p>
+        <p class="falt-hjalp">En bristrad gäller en artikel på ett arbetsställe.</p>
+        <?php if ($uppgifter === []): ?>
+            <p>Inga aktuella uppgifter hittades.</p>
+        <?php else: ?>
+            <ul>
+                <?php foreach ($uppgifter as $uppgift): ?>
+                    <li><a href="<?= e(u($uppgift['href'])) ?>"><?= e($uppgift['text']) ?> <span aria-hidden="true">→</span></a></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </section>
+
     <?php // ---- Läget i siffror: det man oftast vill veta först ---- ?>
     <div class="start-siffror" aria-label="Läget i korthet">
         <a class="start-siffra" href="<?= e(u('/artiklar')) ?>">
@@ -68,7 +83,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
         </a>
         <a class="start-siffra<?= $underMin > 0 ? ' varning' : '' ?>" href="<?= e(u('/miniminiva')) ?>">
             <span class="tal"><?= (int) $underMin ?></span>
-            <span class="etikett">under miniminivå</span>
+            <span class="etikett">bristrader under miniminivå</span>
         </a>
     </div>
 
@@ -79,22 +94,6 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
             Det syns i menyn, på kvitton och i historiken.
             <span class="larm-lank">Öppna Varumärke →</span>
         </a>
-    <?php endif; ?>
-
-    <?php // ---- Larmet först: det är därför man öppnar appen ---- ?>
-    <?php if ($underMin > 0): ?>
-        <a class="flash varning larm-rad" href="<?= e(u('/miniminiva')) ?>">
-            <strong><?= (int) $underMin ?> <?= $underMin === 1 ? 'artikel ligger' : 'artiklar ligger' ?> under miniminivå.</strong>
-            <span class="larm-lank">Visa listan →</span>
-        </a>
-    <?php endif; ?>
-    <?php if ($oppnaSessioner !== []): ?>
-        <div class="flash info">
-            <strong>Pågående inventering:</strong>
-            <?php foreach ($oppnaSessioner as $s): ?>
-                <a href="<?= e(u('/inventering/' . e($s['id']))) ?>"><?= e($s['id']) ?></a>
-            <?php endforeach; ?>
-        </div>
     <?php endif; ?>
 
     <?php // ---- 1. Det dagliga arbetet ---- ?>
@@ -116,7 +115,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
         <div class="start-rutnat">
             <?= $kort('/artiklar', 'Artiklar', $antalArtiklar . ' aktiva · sök, filtrera, redigera', 'artiklar') ?>
             <?= $kort('/oversikt', 'Översikt', 'Saldo per ställe, larm och status', 'hus') ?>
-            <?= $kort('/miniminiva', 'Under miniminivå', $underMin > 0 ? $underMin . ' att beställa' : 'Allt är över miniminivå', 'varning') ?>
+            <?= $kort('/miniminiva', 'Under miniminivå', $underMin > 0 ? $underMin . ($underMin === 1 ? ' bristrad' : ' bristrader') : 'Allt är över miniminivå', 'varning') ?>
             <?= $kort('/historik', 'Historik', 'Allt som hänt, spårbart', 'historik') ?>
             <?= $kort('/arkiv', 'Arkiv', 'Äldre månader och år', 'arkiv') ?>
         </div>

@@ -2741,6 +2741,57 @@ prov('LL-19 fotografera klart rör inte andra våningars rutor', function () use
     }
 });
 
+/* ---------------------------------------------------------- Dagens uppgifter */
+prov('DU-01 personal ser bara uppgifter för valt arbetsställe', function () {
+    $sessioner = [
+        ['status' => 'öppen', 'plats_id' => 'A'],
+        ['status' => 'öppen', 'plats_id' => 'B'],
+        ['status' => 'avslutad', 'plats_id' => 'A'],
+    ];
+    $brister = [['plats' => ['id' => 'A']], ['plats' => ['id' => 'B']]];
+    $u = \TDL\Support\DagensUppgifter::bygg(['roll' => 'personal'], ['id' => 'A'], $sessioner, $brister, ['lage' => 'saknas']);
+    krav(count($u) === 2, 'inventering och brist, men ingen backup');
+    krav(str_starts_with($u[0]['text'], '1 pågående inventering '), 'en öppen inventering på A');
+    krav(str_starts_with($u[1]['text'], '1 bristrad '), 'en bristrad på A');
+    krav($u[0]['href'] === '/inventering' && $u[1]['href'] === '/miniminiva', 'länkar till rätt sidor');
+});
+prov('DU-02 admin överallt ser alla ställen och backupvarning', function () {
+    $sessioner = [['status' => 'öppen', 'plats_id' => 'A'], ['status' => 'öppen', 'plats_id' => 'B']];
+    $brister = [['plats' => ['id' => 'A']], ['plats' => ['id' => 'B']]];
+    $u = \TDL\Support\DagensUppgifter::bygg(['roll' => 'admin'], null, $sessioner, $brister, ['lage' => 'gammal']);
+    krav(count($u) === 3, 'tre typer av uppgift');
+    krav(str_starts_with($u[0]['text'], '2 pågående inventeringar '), 'båda sessioner');
+    krav(str_starts_with($u[1]['text'], '2 bristrader '), 'båda bristrader');
+    krav($u[2]['href'] === '/admin/system', 'backupåtgärd');
+});
+prov('DU-03 inga uppgifter vid nolläge och frisk backup', function () {
+    $u = \TDL\Support\DagensUppgifter::bygg(['roll' => 'admin'], ['id' => 'A'], [['status' => 'avslutad', 'plats_id' => 'A']], [], ['lage' => 'ok']);
+    krav($u === [], 'inget aktivt arbete');
+});
+prov('DU-04 saknad backup visas bara för admin', function () {
+    $u = \TDL\Support\DagensUppgifter::bygg(['roll' => 'admin'], ['id' => 'A'], [], [], ['lage' => 'saknas']);
+    krav(count($u) === 1 && str_contains($u[0]['text'], 'Ingen backup'), 'saknad backup visas');
+    $u = \TDL\Support\DagensUppgifter::bygg(['roll' => 'personal'], ['id' => 'A'], [], [], ['lage' => 'saknas']);
+    krav($u === [], 'personal ska inte se adminlänk');
+});
+
+prov('DU-05 äldre öppen inventering syns även utanför senaste listan', function () {
+    $sessionsfil = Json::las('sessioner');
+    try {
+        $test = $sessionsfil;
+        $test['poster'] = [
+            ['id' => 'S-ny', 'startad' => '2026-01-02', 'status' => 'avslutad'],
+            ['id' => 'S-gammal', 'startad' => '2026-01-01', 'status' => 'öppen'],
+            ['id' => 'S-arkiv', 'startad' => '2025-12-31', 'status' => 'avslutad'],
+        ];
+        Json::skriv('sessioner', $test);
+        $resultat = Inventering::sessionerMedOppna(1);
+        krav(array_column($resultat, 'id') === ['S-ny', 'S-gammal'], 'den äldre öppna sessionen ska finnas med');
+    } finally {
+        Json::skriv('sessioner', $sessionsfil);
+    }
+});
+
 /* ---------------------------------------------------------- Sammanställning */
 echo "Tadega Lager – integrationstest\n";
 echo str_repeat('=', 60) . "\n";

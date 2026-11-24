@@ -62,6 +62,15 @@ final class Inventering
         return array_slice($s, 0, $max);
     }
 
+    /** Senaste sessionerna samt alla äldre som fortfarande är öppna. */
+    public static function sessionerMedOppna(int $max = 100): array
+    {
+        $alla = self::sessioner(PHP_INT_MAX);
+        return array_values(array_filter($alla, static fn ($s, $i) =>
+            $i < $max || ($s['status'] ?? '') === 'öppen', ARRAY_FILTER_USE_BOTH
+        ));
+    }
+
     /** Är sessionen av den gamla typen (en artikel per session)? */
     public static function arGammal(array $session): bool
     {

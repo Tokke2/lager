@@ -60,6 +60,12 @@ En kort lista överst på startsidan: ”3 inleveranser väntar”, ”räkna kl
 A-zonen”, ”2 artiklar under miniminivå”. Bygger på befintliga sessioner,
 larm och öppna inventeringar – ingen ny databas behövs.
 
+**Klart:** Startsidan visar pågående inventeringar och bristrader för det
+valda arbetsstället, med länkar till åtgärderna. Administratörer får även
+varning om backup saknas eller är för gammal. Utan valt arbetsställe visas
+alla ställen. Listan bygger på befintliga data; väntande inleveranser visas
+inte eftersom de inte registreras som en kö.
+
 ### 14. Kommandopalett (Ctrl+K / ⌘K)
 Ett sökfält överallt: skriv ”uttag skruv” eller ”öppna system” och tryck
 Enter. Tangentbordsanvändare i kontor och på terminaler sparar många klick.
