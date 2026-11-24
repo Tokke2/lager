@@ -54,7 +54,7 @@ cd desktop && npm install && npm start
 | **Inventering** | En session per arbetsställe täcker alla artiklar. Räkna med +/− direkt i listan (autosparat), skanna enhetskoder, se framsteg live. Avstämning kräver admin |
 | **Historik** | Hashkedja (SHA-256) – manipulation upptäcks med `bin/verifiera-historik.php` |
 | **Roller** | Admin och lagerpersonal, behörighetskontroll på serversidan |
-| **Inloggning** | Personal: PIN (4–8 siffror). Admin: PIN **och** lösenord (12+ tecken) som byts var 20:e dag. Sessioner, CSRF, kontouttåg i adminpanel |
+| **Inloggning** | Alla roller: namn och PIN (4–8 siffror). Sessioner, CSRF, kontouttåg i adminpanel |
 | **Vitmärkning** | Namn, färger, tema, ordval och SVG-logotyp per kund – inget hårdkodat |
 | **PWA** | Installerbar på Android/iOS, offline-sida, cachar aldrig saldon |
 | **Skrivbordsapp** | Electron med lokalt PHP, systray, data i användarens datakatalog |
@@ -113,7 +113,7 @@ php tests/integrationstest.php                    # 92 prov
 | `dokument/05_lansering-och-vitmarkning.md` | Sälja till andra företag, bygga appen, tryckkrav |
 | `dokument/06_drift-webbhotell.md` | Drift på WebSupport, säkerhetstester, felsökning |
 | `dokument/08_25-forbattringar.md` | 25 förbättringsförslag med kostnad/nytta och status |
-| `dokument/09_inloggning-och-losenord.md` | PIN för personal, lösenord för admin med 20 dagars rotation |
+| `dokument/09_inloggning-och-losenord.md` | Namn och PIN för alla roller |
 | `dokument/11_json-eller-sql.md` | Varför JSON räcker, och vad en SQL-flytt skulle kosta |
 | `dokument/07_forbattringsforslag.md` | Första förslagsrundan – inventeringen, etiketter, logotyp |
 | `dokument/10_larm-sakerhet-och-arkiv.md` | Miniminivålarm, tvåpersonersregel, backupkontroll och års/månadsarkiv |

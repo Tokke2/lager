@@ -1691,21 +1691,6 @@ final class Sidor
         omdirigera('/konton');
     }
 
-    /** Admin sätter nytt lösenord åt en annan admin. */
-    public static function kontoLosenord(string $id): void
-    {
-        $konto = Auth::kravRoll('admin');
-        Sakerhet::kravCsrf();
-        $nytt = post('losenord');
-        if ($nytt === '') {
-            // Slumpa ett starkt lösenord och visa det en gång
-            $nytt = 'Tdl' . bin2hex(random_bytes(6)) . rand(10, 99);
-        }
-        Konto::andraLosenord($id, $nytt, '', $konto, true);
-        flash('ok', 'Nytt lösenord satt. Lämna det till administratören: ' . $nytt);
-        omdirigera('/konton');
-    }
-
     public static function kontoPin(string $id): void
     {
         $konto = Auth::kravRoll('admin');

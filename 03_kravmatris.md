@@ -1,5 +1,7 @@
 # Kravmatris – kravspecifikation mot nuläge och plan
 
+> Historiskt planeringsunderlag: autentiseringsavsnitten är inaktuella. Aktuellt: [inloggning med PIN](dokument/09_inloggning-och-losenord.md).
+
 **Statuskolumner:** `Nuläge` = vad som är känt idag. `Plan` = vad som ska byggas. Inget har verifierats i kod – arbetskopian är inte tillgänglig i den här sessionen (se `00_start-har.md`).
 
 Teckenförklaring: ✅ klart · 🟡 delvis/finns som referens · ❌ saknas · ⬜ ej verifierat

@@ -1,5 +1,7 @@
 # Tadega Lager – startdokument för ny chatt
 
+> Historiskt planeringsunderlag: autentiseringsavsnitten är inaktuella. Aktuellt: [inloggning med PIN](dokument/09_inloggning-och-losenord.md).
+
 **Datum:** 2026-11-12
 **Status:** Appen är byggd och fungerar – webb (PHP 8.3+), installation, adminpanel,
 artikel-QR med bilder, PWA och skrivbordsapp. 25/25 integrationstester passerar.

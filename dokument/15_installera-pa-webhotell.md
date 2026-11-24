@@ -146,7 +146,7 @@ dokumentroten innan du lägger in några riktiga data.
 
 Aktivera Let's Encrypt för subdomänen. Det finns i paketet och kostar inget.
 
-Appen kräver HTTPS i drift: utan det skickas PIN-koder och lösenord i klartext
+Appen kräver HTTPS i drift: utan det skickas PIN-koder i klartext
 över nätet.
 
 ### 7. Sätt den publika adressen — **före första utskriften**
@@ -228,7 +228,7 @@ kopia av `storage/` med jämna mellanrum via SFTP.
 | **"Ogiltig CSRF-token"** | Sessionskatalogen är inte skrivbar | `chmod 700 storage storage/sessions` |
 | **Ingen QR-kod ritas** | CSP blockerar, eller `assets/qrcode.js` saknas | Ladda om hårt, kontrollera att `public/assets/` kom med |
 | **Inloggningen går inte igenom** | Fel PIN, eller klockan på servern går fel | PIN: 4–8 siffror. Kontrollera servertiden |
-| **"Installationen är redan genomförd"** | Det finns redan ett konto | Logga in i stället. Glömt PIN: `php bin/aterstall-losenord.php` |
+| **"Installationen är redan genomförd"** | Det finns redan ett konto | Logga in i stället. Glömt PIN: be en annan administratör sätta en ny under Konton; annars `php bin/aterstall-pin.php --namn="Namn"` på servern |
 | **QR-koden öppnar inget** | Publik adress är inte satt | System → Publik adress |
 
 ---
@@ -352,7 +352,7 @@ hotellet slå på `mod_rewrite`.
 
 ---
 
-# Första gången: namn, PIN och lösenord
+# Första gången: namn och PIN
 
 Releasen är en **ren utgångspunkt** – den innehåller inga konton, inga artiklar
 och inget företagsnamn. Första besökaren möts av installationsguiden.
@@ -363,19 +363,18 @@ och inget företagsnamn. Första besökaren möts av installationsguiden.
 https://kund.se/lager
 ```
 
-Guiden ber om fem saker – **namn och PIN sätts innan man loggar in**:
+Guiden ber om fyra saker – **namn och PIN sätts innan man loggar in**:
 
 | Fält | Vad det är |
 |---|---|
 | **Företagets namn** | står i menyn och historiken, t.ex. "Nordiska Bygg AB" |
 | **Ditt namn** | visas i historiken ("Anna tog ut 4 st") |
 | **PIN-kod** | 4–8 siffror, används vid varje inloggning |
-| **Lösenord** | minst 12 tecken, bara för administratörer |
 | **Installationstoken** | står i `storage/setup.token` på servern |
 
 När du klickar **Installera och fortsätt till inloggning** skickas du till
-inloggningssidan med företagsnamnet redan satt. Logga in med den PIN och det
-lösenord du valde. Ingen automatisk inloggning – PIN-koden är den du själv
+inloggningssidan med företagsnamnet redan satt. Logga in med ditt namn och den PIN
+du valde. Ingen automatisk inloggning – PIN-koden är den du själv
 satte, inte en tillfällig som måste bytas direkt.
 
 Token finns för att ingen annan ska kunna ta över appen innan du hunnit
@@ -390,7 +389,7 @@ php bin/installera.php --namn="Anna" --pin=7391
 
 ## 2. Logga in med din PIN
 
-Ange namn, PIN och (som administratör) lösenord. Klart.
+Ange namn och PIN, även som administratör. Klart.
 
 ## 3. PIN-byte för andra konton
 
@@ -468,54 +467,8 @@ Kör den **aldrig** i skarp drift.
 
 ---
 
-# Spara inloggningen i Bitwarden
+# Spara PIN-inloggningen i en lösenordshanterare
 
-Inloggningssidorna är byggda så att **Bitwarden, 1Password, Chrome och Safari**
-erbjuder sig att spara inloggningen – både vid installationen och vid vanlig
-inloggning.
-
-| Formulär | Användarnamn | Sparas som lösenord |
-|---|---|---|
-| **Guiden** (`/installera`) | Ditt namn | Lösenordet |
-| **Personal** | Namn (textfält) | PIN-koden |
-| **Administratör** | Namn (textfält) | Lösenordet — PIN-koden skrivs för hand |
-
-**Två saker krävdes för att det skulle fungera:**
-
-1. **Namnet är ett textfält, inte en lista.** Bitwarden sparar bara när
-   användarnamnet är ett inmatningsfält. Det gamla `<select>`-fältet gick
-   inte att spara alls. Namnen föreslås fortfarande – via `datalist`, så du
-   kan skriva de tre första bokstäverna i stället för att rulla i en lista.
-2. **Bara ett lösenordsfält per formulär.** Administratörens PIN-fält är
-   märkt `autocomplete="one-time-code"`, vilket säger åt lösenordshanteraren
-   att det inte är det sparade lösenordet. Annars ser Bitwarden två
-   lösenordsfält och vägrar spara.
-
-## Så här ser posten ut i Bitwarden
-
-```
-Namn:      Tadega Lager (eller vad du kallar appen)
-Användare: Anna Andersson
-Lösenord:  KistaLager2026b        ← admin
-           – eller PIN-koden –    ← personal
-```
-
-Är du **personal** sparas PIN-koden som lösenord – det är den enda uppgift du
-anger. Är du **administratör** sparas lösenordet, och PIN-koden skriver du
-för hand (den är kort och lätt att komma ihåg; att lägga den i valvet vore
-att spara två hemligheter i samma post).
-
-Vill du spara även PIN-koden som ett eget fält: öppna posten i Bitwarden,
-välj **Nytt fält → Dolt fält**, namnge det `pin` och skriv koden. Bitwarden
-kan sedan fylla i det via **Högerklicka → Bitwarden → Autofyll** på sidan.
-
-## Vad som inte går att spara
-
-Bitwarden kan bara spara **ett** lösenord per post. Två lösenordsfält i
-samma formulär gör att den inte erbjuder sig att spara alls – det är därför
-PIN-fältet är undantaget.
-
----
-
-*Provsviten: **101 godkända, 0 misslyckade** (BW-01 vaktar att inloggningen
-går att spara).*
+Alla roller använder samma inloggningsformulär med namn och PIN. Namnet är
+ett textfält med förslag och PIN-fältet kan sparas i en lösenordshanterare.
+Appen använder inget separat lösenord.

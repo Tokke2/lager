@@ -106,7 +106,7 @@ if ($metod === 'GET' && in_array($rutt, ['/site.webmanifest', '/sw.js', '/offlin
     };
 }
 
-// Admin med utgånget lösenord måste byta det innan något annat kan göras.
+// Tillfälliga PIN-koder måste bytas före övrigt arbete.
 if (Lager::arInstallerad()) {
     $inloggad = \TDL\Support\Auth::inloggad();
 
@@ -121,11 +121,7 @@ if (Lager::arInstallerad()) {
         omdirigera('/mitt-konto');
     }
 
-    if ($inloggad !== null
-        && \TDL\Support\Konto::losenordUtgatt($inloggad)
-        && !in_array($rutt, ['/mitt-konto/losenord', '/logout'], true)) {
-        omdirigera('/mitt-konto/losenord');
-    }
+
 }
 
 // Första gången: skapa datafiler om de saknas och skicka till installationen.
@@ -257,7 +253,6 @@ try {
         $rutt === '/konton' && $metod === 'POST' => \TDL\Http\Sidor::kontoSkapa(),
         preg_match('#^/konton/([A-Z0-9]+)/roll$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::kontoRoll($m[1]),
         preg_match('#^/konton/([A-Z0-9]+)/pin$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::kontoPin($m[1]),
-        preg_match('#^/konton/([A-Z0-9]+)/losenord$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::kontoLosenord($m[1]),
         preg_match('#^/konton/([A-Z0-9]+)/stang$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::kontoStang($m[1]),
         preg_match('#^/konton/([A-Z0-9]+)/aktivera$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::kontoAktivera($m[1]),
         $rutt === '/mitt-konto' && $metod === 'GET' => \TDL\Http\Sidor::mittKonto(),
@@ -266,8 +261,6 @@ try {
         $rutt === '/arkiv' => \TDL\Http\Sidor::arkiv(),
         $rutt === '/arkiv/bygg' && $metod === 'POST' => \TDL\Http\Sidor::arkivBygg(),
         $rutt === '/mitt-konto/pin' && $metod === 'POST' => \TDL\Http\Sidor::mittPin(),
-        $rutt === '/mitt-konto/losenord' && $metod === 'GET' => \TDL\Http\Installation::losenordForm(),
-        $rutt === '/mitt-konto/losenord' && $metod === 'POST' => \TDL\Http\Installation::losenordSpara(),
 
         $rutt === '/varumarke/logotyp.svg' => \TDL\Http\Admin::logotypFil('logotyp'),
         $rutt === '/varumarke/ikon.svg' => \TDL\Http\Admin::logotypFil('ikon'),

@@ -1,5 +1,7 @@
 # Arkitektur- och datamodell – Tadega Lager
 
+> Historiskt planeringsunderlag: autentiseringsavsnitten är inaktuella. Aktuellt: [inloggning med PIN](dokument/09_inloggning-och-losenord.md).
+
 **Status 2026-11-12: byggt och verifierat** (25/25 integrationstester). Detta dokument beskriver
 den arkitektur som faktiskt körs, inte ett förslag. Avsnitt markerade *planerat* är ännu inte byggda.
 

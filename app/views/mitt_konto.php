@@ -41,26 +41,3 @@
         </div>
     </form>
 </div>
-
-<?php if (($konto['roll'] ?? '') === 'admin'): ?>
-<div class="kort">
-    <h2>Lösenord</h2>
-    <?php
-    $dagar = \TDL\Support\Konto::dagarKvarPaLosenord($konto);
-    $max = (int) \TDL\Support\Konto::LÖSENORD_DAGAR;
-    ?>
-    <?php if ($dagar === null): ?>
-        <div class="flash varning">Du har inget lösenord än. Sätt ett nu – det behövs vid nästa inloggning.</div>
-    <?php elseif ($dagar <= 0): ?>
-        <div class="flash varning">Lösenordet har gått ut och måste bytas nu.</div>
-    <?php elseif ($dagar <= \TDL\Support\Konto::LÖSENORD_VARNING_DAGAR): ?>
-        <div class="flash varning">Lösenordet går ut om <?= $dagar ?> dag(ar).</div>
-    <?php else: ?>
-        <p class="dampad">Lösenordet gäller i <?= $max ?> dagar – <?= $dagar ?> dag(ar) kvar.</p>
-    <?php endif; ?>
-    <div class="actions">
-        <a class="knapp primar" href="<?= e(u('/mitt-konto/losenord')) ?>">Byt lösenord</a>
-    </div>
-    <p class="falt-hjalp">Lösenordet behövs vid inloggning utöver PIN-koden och gäller i <?= $max ?> dagar i taget.</p>
-</div>
-<?php endif; ?>

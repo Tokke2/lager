@@ -212,8 +212,7 @@ Demolagret (skruv, mutter, bricka …) finns för att kunna prova. Ta bort det:
    - miniminivålarm: på
    - tvåpersonersregel: sätt en gräns (helst på **värde**, inte antal)
    - backupgräns: 2 dygn
-4. **Konton** – alla administratörer får ett eget lösenord. Kontrollera att
-   ingen står som *"inget lösenord"*.
+4. **Konton** – kontrollera att varje person har ett eget konto och en egen PIN.
 
 ### D. Driften
 
@@ -237,6 +236,6 @@ Demolagret (skruv, mutter, bricka …) finns för att kunna prova. Ta bort det:
 
 ### F. Personalen
 
-1. Visa inloggningen: personal = PIN, admin = lösenord + PIN.
+1. Visa inloggningen: både personal och administratörer använder namn och PIN.
 2. Visa inventeringen på telefonen – det är den de kommer använda mest.
-3. Berätta att admin-lösenordet måste bytas var 20:e dag.
+3. Visa hur användaren byter sin PIN under Mitt konto.

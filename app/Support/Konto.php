@@ -8,10 +8,7 @@
  *               inventering, etiketter). Når inte admin-API:er.
  *
  * Inloggning:
- *   personal  – PIN-kod (4–8 siffror). Välj namn, ange PIN.
- *   admin     – LÖSENORD (minst 12 tecken) OCH PIN-kod. Lösenordet måste bytas
- *               var 20:e dag (LÖSENORD_DAGAR). PIN-koden räcker inte ensam för
- *               en admin – det skyddar mot att någon ser PIN-koden över axeln.
+ *   Alla konton använder namn och PIN-kod (4–8 siffror).
  *
  * Efter 5 fel i rad på samma konto spärras kontot i 5 minuter.
  */
@@ -28,12 +25,6 @@ final class Konto
     public const PIN_MAX = 8;
     public const MAX_FORSOK = 5;
     public const SPARR_MINUTER = 5;
-
-    /** Admin-lösenord: minst 12 tecken och måste bytas var 20:e dag. */
-    public const LÖSENORD_MIN = 12;
-    public const LÖSENORD_DAGAR = 20;
-    /** Varning visas när det är färre dagar kvar än så. */
-    public const LÖSENORD_VARNING_DAGAR = 5;
 
     public static function anvandare(): array
     {
@@ -56,124 +47,11 @@ final class Konto
         return null;
     }
 
-    /* ================================================================
-     *  Lösenord – endast för administratörer
-     * ================================================================ */
-
-    /** Krav på admin-lösenord: 12+ tecken, blandat. */
-    public static function valideraLosenord(string $losenord): string
-    {
-        if (mb_strlen($losenord) < self::LÖSENORD_MIN) {
-            throw new AppFel('Lösenordet måste vara minst ' . self::LÖSENORD_MIN . ' tecken.');
-        }
-        $harBokstav = preg_match('/[A-Za-zÅÄÖåäö]/u', $losenord) === 1;
-        $harSiffra  = preg_match('/[0-9]/', $losenord) === 1;
-        if (!$harBokstav || !$harSiffra) {
-            throw new AppFel('Lösenordet måste innehålla både bokstäver och siffror.');
-        }
-        $vanliga = ['lösenord', 'losenord', 'password', '123456', 'qwerty', 'admin123', 'tadega'];
-        if (in_array(mb_strtolower($losenord), $vanliga, true)
-            || preg_match('/^(losenord|lösenord|password|tadega|admin)\d*$/iu', $losenord) === 1) {
-            throw new AppFel('Lösenordet är för vanligt. Välj ett annat som inte är enbart ordet självt.');
-        }
-        return $losenord;
-    }
-
-    /** Behöver admin byta sitt lösenord? */
-    public static function losenordUtgatt(array $konto): bool
-    {
-        if (($konto['roll'] ?? '') !== 'admin') {
-            return false;
-        }
-        if (empty($konto['losenord_hash'])) {
-            return true;   // admin utan lösenord måste sätta ett
-        }
-        $satt = $konto['losenord_satt'] ?? null;
-        if ($satt === null) {
-            return true;
-        }
-        $dagar = self::dagarKvarPaLosenord($konto);
-        return $dagar !== null && $dagar <= 0;
-    }
-
     /**
-     * Dagar kvar innan lösenordet måste bytas.
-     * null = kontot är inte admin eller saknar lösenord.
-     */
-    public static function dagarKvarPaLosenord(array $konto): ?int
-    {
-        if (($konto['roll'] ?? '') !== 'admin' || empty($konto['losenord_satt'])) {
-            return null;
-        }
-        try {
-            $satt = new \DateTimeImmutable((string) $konto['losenord_satt']);
-            $utgar = $satt->modify('+' . self::LÖSENORD_DAGAR . ' days');
-            $nu = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-            $sekunder = $utgar->getTimestamp() - $nu->getTimestamp();
-            return (int) floor($sekunder / 86400);
-        } catch (\Throwable $e) {
-            return 0;
-        }
-    }
-
-    /** Visa varning i gränssnittet? */
-    public static function losenordSnartUtgatt(array $konto): bool
-    {
-        $kvar = self::dagarKvarPaLosenord($konto);
-        return $kvar !== null && $kvar <= self::LÖSENORD_VARNING_DAGAR;
-    }
-
-    /** Sätt nytt lösenord. Kräver att man anger det nuvarande om man inte är admin. */
-    public static function andraLosenord(string $kontoId, string $nytt, string $nuvarande, array $av, bool $avAdmin = false): void
-    {
-        $nytt = self::valideraLosenord($nytt);
-        Las::under(function () use ($kontoId, $nytt, $nuvarande, $av, $avAdmin) {
-            $tx = new Transaktion('losenord_andrat', $av);
-            $fil = $tx->fil('anvandare');
-            $konto = Json::hitta($fil, $kontoId);
-            if ($konto === null) {
-                throw new AppFel('Kontot finns inte.', 404);
-            }
-            if (($konto['roll'] ?? '') !== 'admin') {
-                throw new AppFel('Lösenord används bara för administratörer. Personal loggar in med PIN-kod.');
-            }
-            if (!$avAdmin && !password_verify($nuvarande, (string) ($konto['losenord_hash'] ?? ''))) {
-                throw new AppFel('Det nuvarande lösenordet stämmer inte.');
-            }
-            $historik = $konto['losenord_historik'] ?? [];
-            if (password_verify($nytt, (string) ($konto['losenord_hash'] ?? ''))
-                || in_array(hash('sha256', $nytt), array_column($historik, 'hash'), true)) {
-                throw new AppFel('Lösenordet har använts tidigare för det här kontot. Välj ett nytt.');
-            }
-            // Historiken ska innehålla de lösenord som använts, alltså även det
-            // som just nu är giltigt och därmed byts bort i det här steget.
-            $hashNu = (string) ($konto['losenord_hash'] ?? '');
-            $nyHistorik = array_slice(array_merge(
-                $historik,
-                [['hash' => hash('sha256', $nytt), 'tid' => nu()]],
-                $hashNu !== '' ? [['hash' => hash('sha256', $hashNu), 'tid' => $konto['losenord_satt'] ?? null]] : []
-            ), -8);
-            Json::uppdatera($fil, $kontoId, function ($u) use ($nytt, $nyHistorik) {
-                $u['losenord_hash'] = password_hash($nytt, PASSWORD_DEFAULT);
-                $u['losenord_satt'] = nu();
-                $u['losenord_maste_bytas'] = false;
-                $u['losenord_historik'] = $nyHistorik;
-                return $u;
-            });
-            $tx->sattFil('anvandare', $fil);
-            $tx->historik([
-                'typ' => 'losenord_andrat',
-                'detaljer' => ['konto_id' => $kontoId, 'namn' => $konto['namn'], 'av_admin' => $avAdmin],
-            ]);
-            $tx->spara();
-        });
-    }
-
-    /**
-     * Kontrollera inloggning. Personal: PIN. Admin: lösenord + PIN.
+     * Kontrollera inloggning med namn och PIN för båda rollerna.
      * Returnerar kontot vid lyckat försök.
      */
-    public static function verifieraInloggning(string $namn, string $pin, string $losenord = ''): array
+    public static function verifieraInloggning(string $namn, string $pin): array
     {
         $konto = self::kontoViaNamn($namn);
         if ($konto === null) {
@@ -196,21 +74,17 @@ final class Konto
             throw new AppFel('Fel namn eller PIN-kod.');
         }
 
-        // Admin måste även ange lösenord
-        if (($konto['roll'] ?? '') === 'admin') {
-            if (empty($konto['losenord_hash'])) {
-                throw new AppFel('Administratören har inget lösenord. Be en annan admin sätta ett.');
-            }
-            if ($losenord === '' || !password_verify($losenord, (string) $konto['losenord_hash'])) {
-                self::registreraMisslyckande($konto);
-                throw new AppFel('Fel lösenord för administratören.');
-            }
-        }
-
         // Lyckat försök: nollställ räknaren.
         Las::under(function () use ($konto) {
             $tx = new Transaktion('konto_andrad', null);
             $fil = $tx->fil('anvandare');
+            // Befintliga lösenordsuppgifter används inte längre. Rensa dem
+            // under samma skrivlås utan att röra PIN eller övriga kontodata.
+            foreach ($fil['poster'] as &$anvandare) {
+                unset($anvandare['losenord_hash'], $anvandare['losenord_satt'],
+                    $anvandare['losenord_maste_bytas'], $anvandare['losenord_historik']);
+            }
+            unset($anvandare);
             Json::uppdatera($fil, $konto['id'], function ($u) {
                 $u['misslyckade'] = 0;
                 $u['sparrad_till'] = null;
@@ -339,11 +213,11 @@ final class Konto
         });
     }
 
-    public static function andraPin(string $kontoId, string $nyPin, array $av, bool $avAdmin = false): void
+    public static function andraPin(string $kontoId, string $nyPin, array $av, bool $avAdmin = false, bool $masteByta = false): void
     {
         // Admin behöver inte ange nuvarande PIN; användaren gör det via bytaPin.
         $nyPin = self::valideraPin($nyPin);
-        Las::under(function () use ($kontoId, $nyPin, $av, $avAdmin) {
+        Las::under(function () use ($kontoId, $nyPin, $av, $avAdmin, $masteByta) {
             $tx = new Transaktion('losenord_andrat', $av);
             $fil = $tx->fil('anvandare');
             $konto = Json::hitta($fil, $kontoId);
@@ -356,9 +230,9 @@ final class Konto
             if (!empty($konto['pin_hash']) && password_verify($nyPin, (string) $konto['pin_hash'])) {
                 throw new AppFel('Den nya PIN-koden är samma som den nuvarande. Välj en annan.');
             }
-            Json::uppdatera($fil, $kontoId, function ($u) use ($nyPin) {
+            Json::uppdatera($fil, $kontoId, function ($u) use ($nyPin, $masteByta) {
                 $u['pin_hash'] = password_hash($nyPin, PASSWORD_DEFAULT);
-                $u['maste_byta_pin'] = false;
+                $u['maste_byta_pin'] = $masteByta;
                 $u['misslyckade'] = 0;
                 $u['sparrad_till'] = null;
                 $u['pin_andrad'] = nu();

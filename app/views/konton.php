@@ -1,8 +1,6 @@
 <?php /** @var array $konton */ $csrf = \TDL\Support\Sakerhet::csrfToken(); ?>
 <h1>Konton</h1>
-<p class="dampad"><strong>Personal</strong> loggar in med namn och PIN-kod.
-    <strong>Administratörer</strong> måste dessutom ange ett lösenord som byts var
-    <?= (int) \TDL\Support\Konto::LÖSENORD_DAGAR ?>:e dag.
+<p class="dampad">Alla konton loggar in med namn och PIN-kod.
     <br><strong>Stäng av</strong> ett konto direkt när någon slutar – personen kan då inte logga in,
     och PIN-koden slutar gälla omedelbart. Återaktiverar du kontot senare behöver personen en ny PIN.
     Allt lagras hashat och kan inte läsas ut –
@@ -45,18 +43,6 @@
                 <td>
                     <strong><?= e($u['namn']) ?></strong>
                     <?php if (!empty($u['maste_byta_pin'])): ?><span class="tag varning">tillfällig PIN</span><?php endif; ?>
-                    <?php if ($u['roll'] === 'admin'): ?>
-                        <?php $dagar = \TDL\Support\Konto::dagarKvarPaLosenord($u); ?>
-                        <?php if ($dagar === null): ?>
-                            <span class="tag fel">inget lösenord</span>
-                        <?php elseif ($dagar <= 0): ?>
-                            <span class="tag fel">lösenord utgånget</span>
-                        <?php elseif ($dagar <= \TDL\Support\Konto::LÖSENORD_VARNING_DAGAR): ?>
-                            <span class="tag varning">lösenord <?= $dagar ?> dag</span>
-                        <?php else: ?>
-                            <span class="tag ok">lösenord <?= $dagar ?> dag</span>
-                        <?php endif; ?>
-                    <?php endif; ?>
                 </td>
                 <td>
                     <form method="post" action="<?= e(u('/konton/' . (e($u['id'])) . '/roll')) ?>" class="actions" style="margin:0;gap:6px">
@@ -84,13 +70,6 @@
                                 <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
                                 <button type="submit" class="liten">Ny PIN</button>
                             </form>
-                            <?php if ($u['roll'] === 'admin'): ?>
-                                <form method="post" action="<?= e(u('/konton/' . (e($u['id'])) . '/losenord')) ?>" style="margin:0"
-                                      data-bekrafta="Sätt nytt lösenord för <?= e($u['namn']) ?>? Det gamla slutar fungera direkt.">
-                                    <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
-                                    <button type="submit" class="liten">Nytt lösenord</button>
-                                </form>
-                            <?php endif; ?>
                             <form method="post" action="<?= e(u('/konton/' . (e($u['id'])) . '/stang')) ?>" style="margin:0"
                                   data-bekrafta="Stäng av <?= e($u['namn']) ?>? Kontot kan inte logga in längre.">
                                 <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">

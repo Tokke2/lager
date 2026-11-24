@@ -77,7 +77,7 @@ och när du använder den. Allt ligger utanför webbroten och kan säkerhets-
 kopieras med  bin/backup.php.
 
 Tom?  Då är appen inte installerad än. Öppna appens adress i webbläsaren
-      och följ guiden – där väljer du namn, PIN-kod och lösenord.
+      och följ guiden – där väljer du namn och PIN-kod.
 FORKLARING
 
 # storage/ får inte nås via webben även om .htaccess skulle saknas

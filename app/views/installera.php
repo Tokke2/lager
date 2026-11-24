@@ -1,14 +1,13 @@
 <?php /** @var array $token */ $csrf = \TDL\Support\Sakerhet::csrfToken(); ?>
 <div class="kort" style="max-width:520px;margin:6vh auto 0">
     <h1>Installera</h1>
-    <p>Ange företagets namn och välj den <strong>första administratörens</strong> PIN-kod och
-        lösenord. Sedan loggar du in med dem. Flödet fungerar bara en gång – när kontot
+    <p>Ange företagets namn och välj den <strong>första administratörens</strong> PIN-kod. Sedan loggar du in med namn och PIN. Flödet fungerar bara en gång – när kontot
         finns stängs det automatiskt.</p>
 
     <?php if (!empty($token['lokal'])): ?>
         <div class="flash info">
             <strong>Lokal installation</strong><br>
-            <span class="falt-hjalp">Du kör appen på den här datorn. Välj namn, PIN-kod och lösenord –
+            <span class="falt-hjalp">Du kör appen på den här datorn. Välj namn och PIN-kod –
                 token behövs inte.</span>
         </div>
     <?php else: ?>
@@ -34,15 +33,6 @@
                  lösenordshanterare erbjuder sig att spara inloggningen som
                  skapas här – det är ju den du sedan loggar in med. */ ?>
         <input id="namn" name="namn" required maxlength="40" autocomplete="username">
-
-        <label for="losenord">Lösenord för administratören</label>
-        <input id="losenord" name="losenord" type="password" minlength="12" required autocomplete="new-password">
-        <div class="falt-hjalp">
-            Minst 12 tecken med både bokstäver och siffror. Behövs vid varje inloggning
-            utöver PIN-koden, och måste bytas var <?= (int) \TDL\Support\Konto::LÖSENORD_DAGAR ?>:e dag.
-        </div>
-        <label for="losenord2">Upprepa lösenord</label>
-        <input id="losenord2" name="losenord2" type="password" minlength="12" required autocomplete="new-password">
 
         <label for="pin">PIN-kod (4–8 siffror)</label>
         <input id="pin" name="pin" type="password" inputmode="numeric" pattern="[0-9]{4,8}" required

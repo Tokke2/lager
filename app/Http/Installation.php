@@ -107,16 +107,9 @@ final class Installation
         // Datafilerna måste finnas innan kontot kan skrivas.
         Lager::initieraFiler();
 
-        $losenord = post('losenord');
-        if ($losenord !== post('losenord2')) {
-            throw new AppFel('Lösenorden stämmer inte överens.');
-        }
-        Konto::valideraLosenord($losenord);
-
         // false: administratören valde PIN-koden själv i guiden – den är inte
         // tillfällig och ska inte behöva bytas direkt efter inloggning.
         $konto = Konto::skapaForstaAdmin($namn, $pin, false);
-        Konto::andraLosenord($konto['id'], $losenord, '', $konto, true);
 
         // Namnet sparas efter kontot: Varumarke::spara kräver en admin i
         // historiken, och den finns först nu.
@@ -129,10 +122,10 @@ final class Installation
 
         @unlink($tokenFil);
         // Ingen automatisk inloggning: administratören ska logga in själv med
-        // den PIN och det lösenord som just valdes. Då är flödet detsamma
+        // den PIN som just valdes. Då är flödet detsamma
         // varje gång, och PIN-koden är den man själv satte – inte en
         // tillfällig som måste bytas direkt.
-        flash('ok', 'Klart! ' . $foretag . ' är installerat. Logga in med din PIN-kod och ditt lösenord.');
+        flash('ok', 'Klart! ' . $foretag . ' är installerat. Logga in med ditt namn och din PIN-kod.');
         omdirigera('/login');
     }
 
@@ -229,66 +222,15 @@ final class Installation
         Sakerhet::kravCsrf();
         $namn = post('namn');
         $pin = post('pin');
-        $losenord = post('losenord');
         if ($namn === '' || $pin === '') {
             throw new AppFel('Välj namn och ange PIN-kod.');
         }
-        $konto = Konto::verifieraInloggning($namn, $pin, $losenord);
+        $konto = Konto::verifieraInloggning($namn, $pin);
         Auth::loggaIn($konto);
 
-        // Admin: lösenordet måste bytas var 20:e dag
-        if (Konto::losenordUtgatt($konto)) {
-            // Bytessidan förklarar själv läget – ingen extra flash behövs.
-            omdirigera('/mitt-konto/losenord');
-        }
-        if (Konto::losenordSnartUtgatt($konto)) {
-            $dagar = Konto::dagarKvarPaLosenord($konto);
-            flash('info', 'Ditt lösenord går ut om ' . max(0, (int) $dagar) . ' dag(ar). Byt det under Mitt konto.');
-        }
         if (!empty($konto['maste_byta_pin'])) {
             flash('info', 'Ditt konto har en tillfällig PIN-kod. Byt den under Mitt konto.');
         }
-        omdirigera('/');
-    }
-
-    /** Sida för att sätta nytt lösenord (admin). */
-    public static function losenordForm(): void
-    {
-        $konto = Auth::kravInloggning();
-        if (($konto['roll'] ?? '') !== 'admin') {
-            throw new AppFel('Lösenord används bara av administratörer.', 403);
-        }
-        Vyer::rendera('losenord', [
-            'titel' => 'Byt lösenord',
-            'konto' => $konto,
-            'aktiv' => 'mer',
-            'masteByta' => Konto::losenordUtgatt($konto),
-            'dagarKvar' => Konto::dagarKvarPaLosenord($konto),
-        ]);
-    }
-
-    public static function losenordSpara(): void
-    {
-        $konto = Auth::kravInloggning();
-        Sakerhet::kravCsrf();
-        if (($konto['roll'] ?? '') !== 'admin') {
-            throw new AppFel('Lösenord används bara av administratörer.', 403);
-        }
-        $nytt = post('nytt');
-        if ($nytt !== post('nytt2')) {
-            flash('fel', 'De nya lösenorden stämmer inte överens.');
-            omdirigera('/mitt-konto/losenord');
-        }
-        try {
-            // false = bytet görs av kontot självt, alltså måste nuvarande lösenord
-            // anges och verifieras. admin-flaggan är bara för administratörens
-            // återställning av någon annans lösenord.
-            Konto::andraLosenord($konto['id'], $nytt, post('nuvarande'), $konto, false);
-        } catch (AppFel $e) {
-            flash('fel', $e->getMessage());
-            omdirigera('/mitt-konto/losenord');
-        }
-        flash('ok', 'Lösenordet är bytt. Nästa byte behövs om ' . Konto::LÖSENORD_DAGAR . ' dagar.');
         omdirigera('/');
     }
 

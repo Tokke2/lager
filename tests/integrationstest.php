@@ -597,61 +597,59 @@ prov('N-08 felaktig PIN-form nekas', function () use ($admin) {
 });
 
 /* ------------------------------------------------------------------
- *  Lösenord – endast administratörer (LO-01 … LO-07)
+ *  PIN-inloggning för alla roller
  * ------------------------------------------------------------------ */
-
-prov('LO-01 lösenordskrav: 12 tecken, bokstäver och siffror', function () {
-    kastar(fn () => Konto::valideraLosenord('Kort1'), '12');
-    kastar(fn () => Konto::valideraLosenord('barabokstäverhär'), 'bokstäver och siffror');
-    kastar(fn () => Konto::valideraLosenord('1234567890123'), 'bokstäver och siffror');
-    krav(Konto::valideraLosenord('KistaLager2026x') === 'KistaLager2026x', 'giltigt lösenord ska godtas');
-    krav(Konto::valideraLosenord('Skruvdragare77q') === 'Skruvdragare77q', 'långt lösenord ska godtas');
+prov('IN-01 admin loggar in med enbart namn och PIN', function () use ($admin) {
+    $ny = Konto::skapaKonto('PIN Admin', '9137', 'admin', $admin);
+    krav(Konto::verifieraInloggning('PIN Admin', '9137')['id'] === $ny['id'], 'admin ska kunna logga in med PIN');
+    kastar(fn () => Konto::verifieraInloggning('PIN Admin', '0000'), 'Fel namn eller PIN');
 });
 
-prov('LO-02 personal kan inte använda lösenord', function () use ($admin, $personal) {
-    kastar(fn () => Konto::andraLosenord($personal['id'], 'KistaLager2026x', '7351', $admin, true),
-        'bara för administratörer');
+prov('IN-02 gamla lösenordsfält rensas vid lyckad inloggning', function () use ($admin) {
+    $ny = Konto::skapaKonto('Äldre Admin', '5162', 'admin', $admin);
+    $f = Json::las('anvandare');
+    Json::uppdatera($f, $ny['id'], function ($u) {
+        $u['losenord_hash'] = 'gammal-hash';
+        $u['losenord_satt'] = '2020-01-01';
+        $u['losenord_historik'] = ['gammal'];
+        $u['losenord_maste_bytas'] = true;
+        return $u;
+    });
+    Json::skriv('anvandare', $f);
+    kastar(fn () => Konto::verifieraInloggning('Äldre Admin', '0000'), 'Fel namn eller PIN');
+    krav(isset(Konto::aktivAnvandare($ny['id'])['losenord_hash']), 'felaktig inloggning ska inte skriva om fält');
+    $resultat = Konto::verifieraInloggning('Äldre Admin', '5162');
+    foreach (['losenord_hash', 'losenord_satt', 'losenord_historik', 'losenord_maste_bytas'] as $falt) {
+        krav(!array_key_exists($falt, $resultat), 'gammalt fält ska rensas: ' . $falt);
+    }
+    krav(password_verify('5162', $resultat['pin_hash']), 'PIN-koden ska vara oförändrad');
 });
 
-prov('LO-03 admin kräver lösenord vid inloggning', function () use ($admin) {
-    // Kontot skapas utan lösenord – PIN ensam får inte räcka
-    $ny = Konto::skapaKonto('Ny Admin', '9137', 'admin', $admin);
-    kastar(fn () => Konto::verifieraInloggning('Ny Admin', '9137'), 'lösenord');
-    Konto::andraLosenord($ny['id'], 'FörstaKista2026q', '', $admin, true);
-    $k = Konto::verifieraInloggning('Ny Admin', '9137', 'FörstaKista2026q');
-    krav($k['id'] === $ny['id'], 'admin ska kunna logga in med lösenord + PIN');
-    kastar(fn () => Konto::verifieraInloggning('Ny Admin', '9137', 'fel lösenord här'), 'lösenord');
+prov('IN-03 upprepade felaktiga PIN-försök spärrar admin', function () use ($admin) {
+    Konto::skapaKonto('Spärr Admin', '4628', 'admin', $admin);
+    for ($i = 0; $i < Konto::MAX_FORSOK; $i++) {
+        kastar(fn () => Konto::verifieraInloggning('Spärr Admin', '0000'), 'Fel namn eller PIN');
+    }
+    kastar(fn () => Konto::verifieraInloggning('Spärr Admin', '4628'), 'För många felaktiga försök');
 });
 
-prov('LO-04 lösenordet går ut efter 20 dagar', function () use ($admin) {
-    $konto = Konto::kontoViaNamn('Ny Admin');
-    $farskt = array_merge($konto, ['losenord_satt' => gmdate('c')]);
-    krav(!Konto::losenordUtgatt($farskt), 'färskt lösenord ska gälla');
-    krav(Konto::dagarKvarPaLosenord($farskt) >= 19, 'nästan 20 dagar kvar');
-
-    $gamalt = array_merge($konto, ['losenord_satt' => gmdate('c', time() - 21 * 86400)]);
-    krav(Konto::losenordUtgatt($gamalt), 'lösenord äldre än 20 dagar ska ha gått ut');
-
-    $snart = array_merge($konto, ['losenord_satt' => gmdate('c', time() - 17 * 86400)]);
-    krav(Konto::losenordSnartUtgatt($snart), 'varning ska visas när det är få dagar kvar');
+prov('IN-05 återställd PIN kan kräva byte vid nästa inloggning', function () use ($admin) {
+    $ny = Konto::skapaKonto('Återställ Admin', '7628', 'admin', $admin);
+    Konto::andraPin($ny['id'], '96283517', $admin, true, true);
+    $inloggad = Konto::verifieraInloggning('Återställ Admin', '96283517');
+    krav(!empty($inloggad['maste_byta_pin']), 'återställd PIN ska vara tillfällig');
+    kastar(fn () => Konto::verifieraInloggning('Återställ Admin', '7628'), 'Fel namn eller PIN');
+    Konto::bytaPin($ny['id'], '96283517', '8426');
+    krav(empty(Konto::aktivAnvandare($ny['id'])['maste_byta_pin']), 'eget PIN-byte ska häva spärren');
 });
 
-prov('LO-05 återanvändning av gamla lösenord nekas', function () use ($admin) {
-    $ny = Konto::skapaKonto('Historik Admin', '5162', 'admin', $admin);
-    Konto::andraLosenord($ny['id'], 'FörstaKista2026q', '', $admin, true);
-    Konto::andraLosenord($ny['id'], 'AndraKista2026w', 'FörstaKista2026q', Konto::kontoViaNamn('Historik Admin'));
-    kastar(fn () => Konto::andraLosenord($ny['id'], 'FörstaKista2026q', 'AndraKista2026w', Konto::kontoViaNamn('Historik Admin')),
-        'använts tidigare');
-});
-
-prov('LO-06 lösenordsbyte kräver nuvarande lösenord', function () use ($admin) {
-    $ny = Konto::skapaKonto('Egen Admin', '4826', 'admin', $admin);
-    Konto::andraLosenord($ny['id'], 'FörstaKista2026q', '', $admin, true);
-    kastar(fn () => Konto::andraLosenord($ny['id'], 'AndraKista2026w', 'fel gammalt', $ny),
-        'nuvarande lösenordet stämmer inte');
-    Konto::andraLosenord($ny['id'], 'AndraKista2026w', 'FörstaKista2026q', $ny);
-    $k = Konto::verifieraInloggning('Egen Admin', '4826', 'AndraKista2026w');
-    krav($k['id'] === $ny['id'], 'nytt lösenord ska gälla');
+prov('IN-04 inga lösenordsflöden finns i vyer eller routning', function () {
+    foreach (['login.php', 'installera.php', 'konton.php', 'mitt_konto.php', 'layout_topp.php', 'startsida_nav.php'] as $vy) {
+        $kod = file_get_contents(dirname(__DIR__) . '/app/views/' . $vy);
+        krav(!str_contains($kod, 'name="losenord"') && !str_contains($kod, '/mitt-konto/losenord'), $vy . ' ska inte efterfråga lösenord');
+    }
+    $front = file_get_contents(dirname(__DIR__) . '/public/index.php');
+    krav(!str_contains($front, '/losenord'), 'lösenordsrutter ska vara borttagna');
 });
 
 prov('N-09 historikens hashkedja upptäcker manipulation', function () {
@@ -1733,7 +1731,7 @@ prov('PIN-01 tillfällig PIN spärrar appen tills den byts', function () {
 
 
 prov('INST-01 namn och PIN väljs innan inloggning', function () {
-    // Guiden ska fråga efter företagsnamn, namn, PIN och lösenord – och
+    // Guiden ska fråga efter företagsnamn, namn och PIN – och
     // därefter skicka till inloggningen. Ingen automatisk inloggning: då
     // vore PIN-koden en tillfällig kod som måste bytas direkt.
     $vy = file_get_contents(dirname(__DIR__) . '/app/views/installera.php');
@@ -1800,39 +1798,12 @@ prov('INST-03 nollställning kräver token och bekräftelse', function () {
 });
 
 
-prov('BW-01 inloggningen går att spara i Bitwarden', function () {
-    // Bitwarden (och 1Password, Chrome, Safari) sparar bara inloggningar när
-    // 1) användarnamnet är ett TEXTFÄLT märkt autocomplete="username", och
-    // 2) formuläret har EXAKT ETT lösenordsfält.
-    // En <select> för namnet gick inte att spara alls, och två likvärdiga
-    // lösenordsfält (lösenord + PIN) gjorde att de vägrade spara.
+prov('BW-01 PIN-inloggningen kan sparas', function () {
     $vy = file_get_contents(dirname(__DIR__) . '/app/views/login.php');
-
-    krav(substr_count($vy, 'autocomplete="username"') === 2,
-        'båda inloggningsformulären ska ha autocomplete="username"');
-    krav(!str_contains($vy, '<select id="namn'),
-        'namnet ska vara ett textfält, inte en lista – annars går det inte att spara');
-    krav(str_contains($vy, 'list="namn-lista"'),
-        'namnen ska föreslås via datalist i stället för select');
-
-    // Räkna sparbara lösenordsfält i admin-formuläret. PIN-fältet är märkt
-    // one-time-code och räknas därför inte som lösenordet.
-    $start = strpos($vy, 'id="admin-form"');
-    $slut = strpos($vy, '</form>', $start);
-    $admin = substr($vy, $start, $slut - $start);
-    preg_match_all('/type="password"[^>]*/', $admin, $m);
-    $sparbara = 0;
-    foreach ($m[0] as $falt) {
-        if (!str_contains($falt, 'one-time-code')) {
-            $sparbara++;
-        }
-    }
-    krav($sparbara === 1, 'admin-formuläret ska ha exakt ett sparbart lösenordsfält, har ' . $sparbara);
-
-    // Även guiden ska gå att spara – där skapas ju inloggningen
-    $guide = file_get_contents(dirname(__DIR__) . '/app/views/installera.php');
-    krav(str_contains($guide, 'type="password"') && str_contains($guide, 'autocomplete="username"'),
-        'installationsguiden ska gå att spara som inloggning');
+    krav(substr_count($vy, 'autocomplete="username"') === 1, 'ett användarnamnsfält för alla roller');
+    krav(str_contains($vy, 'list="namn-lista"'), 'namn föreslås via datalist');
+    krav(str_contains($vy, 'name="pin"') && str_contains($vy, 'autocomplete="current-password"'), 'PIN kan sparas i lösenordshanterare');
+    krav(!str_contains($vy, 'name="losenord"'), 'inget separat lösenord');
 });
 
 

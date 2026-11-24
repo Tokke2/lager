@@ -1,5 +1,7 @@
 # Testplan – Tadega Lager (fas 1)
 
+> Historiskt planeringsunderlag: autentiseringsavsnitten är inaktuella. Aktuellt: [inloggning med PIN](dokument/09_inloggning-och-losenord.md).
+
 Testplanen är skriven för att kunna köras **innan** appen är byggd: varje test beskriver förväntat beteende, så att implementationen kan testas mot kontraktet i stället för tvärtom.
 
 **Miljöer:** `dev` (lokal kopia) → `staging` (HTTPS, samma PHP-version och proxy som drift) → `drift`.

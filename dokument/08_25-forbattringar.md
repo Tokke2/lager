@@ -330,7 +330,7 @@ Vill du att jag börjar med de sju små?
 | Område | Läge |
 |---|---|
 | Flera arbetsställen | ✅ Klart – admin kan lägga till hur många som helst, platskod 2–6 tecken |
-| Inloggning med PIN och lösenord | ✅ Klart – se [09_inloggning-och-losenord.md](09_inloggning-och-losenord.md) |
+| Inloggning med namn och PIN | ✅ Klart – se [09_inloggning-och-losenord.md](09_inloggning-och-losenord.md) |
 | Förslag 3 – miniminivålarm | ✅ Klart – se [10_larm-sakerhet-och-arkiv.md](10_larm-sakerhet-och-arkiv.md) |
 | Förslag 4 – tvåpersonersregel | ✅ Klart – samma dokument |
 | Förslag 5 – backup med kontroll | ✅ Klart – samma dokument |

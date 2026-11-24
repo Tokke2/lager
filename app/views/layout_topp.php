@@ -225,11 +225,7 @@ if ($konto !== null) {
         <div class="sido-grupp">
             <p class="sido-rubrik">Konto</p>
             <?= $menyLank(['id' => 'konto', 'href' => '/mitt-konto', 'text' => $konto['namn'], 'ikon' => 'person']) ?>
-            <?php if (($konto['roll'] ?? '') === 'admin'): ?>
-                <?= $menyLank(['id' => 'losenord', 'href' => '/mitt-konto/losenord', 'text' => 'Byt lösenord', 'ikon' => 'nyckel']) ?>
-            <?php else: ?>
-                <?= $menyLank(['id' => 'pin', 'href' => '/mitt-konto/pin', 'text' => 'Byt PIN-kod', 'ikon' => 'nyckel']) ?>
-            <?php endif; ?>
+            <?= $menyLank(['id' => 'pin', 'href' => '/mitt-konto', 'text' => 'Byt PIN-kod', 'ikon' => 'nyckel']) ?>
         </div>
     </nav>
     <p class="sido-fot"><?= e($foretagsnamn) ?> · <?= e(\TDL_VERSION) ?></p>
@@ -261,19 +257,6 @@ if ($konto !== null) {
 
 <main class="innehall" id="innehall">
 <div class="innehall-inre">
-<?php
-$arLosenordssidan = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/mitt-konto/losenord');
-if (($konto['roll'] ?? '') === 'admin' && !$arLosenordssidan && \TDL\Support\Konto::losenordSnartUtgatt($konto)): ?>
-    <?php $kvar = \TDL\Support\Konto::dagarKvarPaLosenord($konto); ?>
-    <div class="flash varning" role="status">
-        <?= tdl_ikon('varning') ?>
-        <div>
-            <strong>Lösenordet <?= ($kvar !== null && $kvar <= 0) ? 'har gått ut' : 'går ut snart' ?>.</strong>
-            <a href="<?= e(u('/mitt-konto/losenord')) ?>">Byt lösenord</a> –
-            administratörens lösenord ska bytas var <?= (int) \TDL\Support\Konto::LÖSENORD_DAGAR ?>:e dag.
-        </div>
-    </div>
-<?php endif; ?>
 <?php foreach ($flash as $f): ?>
     <div class="flash <?= e($f['typ']) ?>" role="status">
         <?= tdl_ikon($f['typ'] === 'ok' ? 'bock' : ($f['typ'] === 'fel' || $f['typ'] === 'varning' ? 'varning' : 'info')) ?>

@@ -242,7 +242,7 @@ Tjugo kort i fem grupper, ordnade efter vad man ska göra:
 | **Lager och artiklar** | Artiklar, Översikt, Under miniminivå, Historik, Arkiv |
 | **Etiketter och utskrift** | Skriv ut etiketter, Arbetsställets lapp |
 | **Adminpanel** *(bara admin)* | Arbetsställen, Konton, System, Varumärke, Hälsokontroll, Byt arbetsställe |
-| **Mitt konto** | Mitt konto, Byt lösenord/PIN |
+| **Mitt konto** | Mitt konto, byt PIN |
 
 Överst: en hälsning med namnet, vilket arbetsställe passet gäller, och **larmet
 först** — ligger något under miniminivå står det där innan man hunnit klicka.

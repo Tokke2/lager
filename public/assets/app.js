@@ -185,30 +185,6 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
  * CSP är script-src 'self', så <script>TDLArtiklarValjare()</script> blockerades tyst.
  * ------------------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', function () {
-    // Inloggning: växla mellan personal (PIN) och admin (lösenord + PIN)
-    var flikar = document.querySelectorAll('[data-inloggning]');
-    if (flikar.length) {
-        flikar.forEach(function (flik) {
-            flik.addEventListener('click', function () {
-                flikar.forEach(function (f) {
-                    f.classList.remove('vald');
-                    f.setAttribute('aria-selected', 'false');
-                });
-                flik.classList.add('vald');
-                flik.setAttribute('aria-selected', 'true');
-                var arAdmin = flik.getAttribute('data-inloggning') === 'admin';
-                var pf = document.getElementById('personal-form');
-                var af = document.getElementById('admin-form');
-                if (pf) pf.hidden = arAdmin;
-                if (af) af.hidden = !arAdmin;
-                // Namnfältet är ett textfält (lösenordshanterare behöver det),
-                // inte en lista – fokusera första inmatningsfältet.
-                var fokus = document.querySelector((arAdmin ? '#admin-form' : '#personal-form') + ' input:not([type=hidden])');
-                if (fokus) fokus.focus();
-            });
-        });
-    }
-
     // Utskriftssidor: ?skriv=1 startar utskriftsdialogen utan inline-skript
     if (new URLSearchParams(window.location.search).get('skriv') === '1') {
         window.print();
