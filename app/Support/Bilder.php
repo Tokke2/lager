@@ -69,6 +69,87 @@ final class Bilder
         return is_file($fil) ? $fil : null;
     }
 
+    /**
+     * Skapar (eller återanvänder) en nedskalad kopia av en bild.
+     *
+     * Varför: en artikelbild på 1600 px väger och avkodas som flera
+     * megapixlar, men visas i 130 px-rutor i listan. Att skicka originalet
+     * dit kostar data, minne och batteri – särskilt på telefon. Miniatyrerna
+     * cachas på disk och skapas bara en gång per bild och bredd.
+     *
+     * Returnerar sökvägen till miniatyren, originalet om bilden redan är
+     * mindre, eller null om GD saknas.
+     */
+    public static function miniatyr(string $sokvag, int $bredd): ?string
+    {
+        if ($bredd < 80 || $bredd > 1200 || !function_exists('imagecreatetruecolor')) {
+            return null;
+        }
+        $info = @getimagesize($sokvag);
+        if ($info === false || !isset(self::TYPER[$info[2]])) {
+            return null;
+        }
+        [$andelse] = self::TYPER[$info[2]];
+        $bas = preg_replace('/\.[a-z]+$/i', '', $sokvag);
+        $mal = $bas . '.w' . $bredd . '.' . $andelse;
+        $kallaTid = (int) @filemtime($sokvag);
+        if (is_file($mal) && (int) @filemtime($mal) >= $kallaTid) {
+            return $mal;
+        }
+        // Skala aldrig upp – då blir bilden suddig och större än originalet.
+        if (max((int) $info[0], (int) $info[1]) <= $bredd) {
+            return $sokvag;
+        }
+
+        $bild = match ($info[2]) {
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($sokvag),
+            IMAGETYPE_PNG => @imagecreatefrompng($sokvag),
+            IMAGETYPE_GIF => @imagecreatefromgif($sokvag),
+            IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sokvag) : false,
+            default => false,
+        };
+        if (!$bild) {
+            return null;
+        }
+        $breddKalla = imagesx($bild);
+        $hojdKalla = imagesy($bild);
+        $skala = $bredd / max(1, max($breddKalla, $hojdKalla));
+        $nyB = max(1, (int) round($breddKalla * $skala));
+        $nyH = max(1, (int) round($hojdKalla * $skala));
+        $ny = imagecreatetruecolor($nyB, $nyH);
+        if ($andelse === 'png' || $andelse === 'webp') {
+            imagealphablending($ny, false);
+            imagesavealpha($ny, true);
+        }
+        imagecopyresampled($ny, $bild, 0, 0, 0, 0, $nyB, $nyH, $breddKalla, $hojdKalla);
+        imagedestroy($bild);
+
+        // Lätt oskarp mask: nedskalning mjukar upp kanter. Bara när bilden
+        // krympts ordentligt, så att brus inte förstärks i onödan.
+        if ($skala < 0.66 && function_exists('imageconvolution')) {
+            @imageconvolution($ny, [
+                [0.0, -0.25, 0.0],
+                [-0.25, 2.0, -0.25],
+                [0.0, -0.25, 0.0],
+            ], 1.0, 0.0);
+        }
+
+        $ok = match ($andelse) {
+            'jpg' => imagejpeg($ny, $mal, 88),
+            'png' => imagepng($ny, $mal, 7),
+            'gif' => imagegif($ny, $mal),
+            'webp' => function_exists('imagewebp') ? imagewebp($ny, $mal, 88) : false,
+            default => false,
+        };
+        imagedestroy($ny);
+        if (!$ok) {
+            @unlink($mal);
+            return null;
+        }
+        @chmod($mal, 0600);
+        return $mal;
+    }
+
     public static function mimeTyp(string $sokvag): string
     {
         $info = @getimagesize($sokvag);

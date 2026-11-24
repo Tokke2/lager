@@ -29,9 +29,9 @@ foreach ($oversikt['rader'] as $rad) {
 <meta name="theme-color" content="<?= e($brand['farg_bakgrund']) ?>">
 <title><?= e($artikel['namn']) ?> – <?= e($brand['namn']) ?></title>
 <link rel="icon" type="image/svg+xml" href="<?= e(\TDL\Support\Varumarke::ikonUrl()) ?>">
-<link rel="apple-touch-icon" href="<?= e(u('/assets/ikoner/ikon-256.png?v=' . e(\TDL_VERSION))) ?>">
+<link rel="apple-touch-icon" href="<?= e(tdl_tillgang('assets/ikoner/ikon-256.png')) ?>">
 <link rel="manifest" href="<?= e(u('/site.webmanifest')) ?>">
-<link rel="stylesheet" href="<?= e(u('/assets/app.css?v=' . e(\TDL_VERSION))) ?>">
+<link rel="stylesheet" href="<?= e(tdl_tillgang('assets/app.css')) ?>">
 <style>
 :root {
     --accent: <?= e($brand['farg_primar']) ?>;
@@ -78,9 +78,16 @@ foreach ($oversikt['rader'] as $rad) {
     <?php if ($bilder !== []): ?>
         <div class="bild-ruta">
             <?php foreach ($bilder as $bild): ?>
-                <?php $bildUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil'], $nonce); ?>
+                <?php
+                $bildUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil'], $nonce);
+                $miniUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil'], $nonce, 480);
+                $storUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil'], $nonce, 960);
+                ?>
                 <a href="<?= e($bildUrl) ?>" target="_blank" rel="noopener">
-                    <img src="<?= e($bildUrl) ?>"
+                    <img src="<?= e($miniUrl) ?>"
+                         srcset="<?= e($miniUrl) ?> 480w, <?= e($storUrl) ?> 960w"
+                         sizes="(max-width: 620px) 44vw, 132px"
+                         width="132" height="132" decoding="async"
                          alt="<?= e($bild['text'] !== '' ? $bild['text'] : $artikel['namn']) ?>" loading="lazy">
                 </a>
             <?php endforeach; ?>

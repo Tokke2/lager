@@ -1,0 +1,1306 @@
+/* =====================================================================
+ * Tadega Lager · app.css
+ *
+ * Designprinciper
+ *  1. Skarpt före effektfullt: inga suddiga skuggor, inga halvtransparenta
+ *     lager ovanpå text, inga skalade fonter. 1 px-kanter och SVG-ikoner.
+ *  2. Läsbart på alla skärmar: flytande typografi (clamp), tabellsiffror,
+ *     radavstånd som tål solljus i en lagerlokal.
+ *  3. Snålt: en enda stilmall, inga webbfonter, inga externa anrop,
+ *     animationer som bara rör färg/opacitet (billigt för GPU och batteri).
+ *  4. Mörkt och ljust tema ur samma variabler – kundens färg är --accent.
+ * ===================================================================== */
+
+/* ---------------------------------------------------------- 1. Variabler */
+:root {
+    color-scheme: dark;
+
+    --bak: #0a0f16;
+    --bak2: #070b12;
+    --yta: #111a27;
+    --yta2: #16212f;
+    --yta3: #1c2a3b;
+    --falt: #0b131d;
+    --kant: #24344a;
+    --kant-stark: #354a63;
+    --text: #eaf1f9;
+    --text2: #c3d0e0;
+    --dampad: #93a5bb;
+    --accent: #4fb3ff;
+    --accent2: #22e0d0;
+    --ok: #34d399;
+    --varning: #fbbf24;
+    --fel: #f87171;
+    --fokus: color-mix(in srgb, var(--accent) 70%, #ffffff);
+    --lank: var(--accent);
+    --accent-text: var(--accent);
+    --accent-mjuk: color-mix(in srgb, var(--accent) 16%, transparent);
+    --accent-kant: color-mix(in srgb, var(--accent) 48%, var(--kant));
+
+    --radie: 14px;
+    --radie-liten: 10px;
+    --radie-pill: 999px;
+    --sido-bredd: 266px;
+    --topp-hojd: 62px;
+    --skugga: 0 1px 2px rgba(0, 0, 0, .28);
+    --skugga-lyft: 0 6px 18px rgba(0, 0, 0, .28);
+    --snabbt: 120ms cubic-bezier(.2, .7, .3, 1);
+
+    --steg-1: clamp(4px, .35vw, 6px);
+    --steg-2: clamp(8px, .6vw, 10px);
+    --steg-3: clamp(12px, .9vw, 16px);
+    --steg-4: clamp(16px, 1.3vw, 22px);
+    --steg-5: clamp(24px, 2vw, 34px);
+    --steg-6: clamp(34px, 3vw, 52px);
+}
+
+body.tema-ljus {
+    color-scheme: light;
+    --bak: #f1f5fa;
+    --bak2: #ffffff;
+    --yta: #ffffff;
+    --yta2: #f4f7fb;
+    --yta3: #e9eff7;
+    --falt: #fbfcfe;
+    --kant: #dce4ef;
+    --kant-stark: #c3d0e0;
+    --text: #101b28;
+    --text2: #33465c;
+    --dampad: #5d6f86;
+    /* På vit bakgrund behöver länk- och statusfärgerna mörkare nyanser för
+       att klara kontrastkravet (WCAG AA). Den kundvalda accentfärgen finns
+       kvar som --accent för ytor och markeringar. */
+    --lank: color-mix(in srgb, var(--accent) 55%, #0b1a2a);
+    --accent-text: color-mix(in srgb, var(--accent) 55%, #0b1a2a);
+    --fokus: color-mix(in srgb, var(--accent) 55%, #0b1a2a);
+    --varning: #a16207;
+    --fel: #b91c1c;
+    --ok: #0f766e;
+    --skugga: 0 1px 2px rgba(16, 27, 40, .06);
+    --skugga-lyft: 0 8px 24px rgba(16, 27, 40, .10);
+}
+
+/* ------------------------------------------------------------- 2. Reset */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+}
+
+body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bak);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable Text",
+        "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+    font-size: clamp(15.5px, .35vw + 14.5px, 17px);
+    line-height: 1.55;
+    font-kerning: normal;
+    font-variant-ligatures: common-ligatures;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-wrap: break-word;
+    overscroll-behavior-y: none;
+}
+
+body.meny-oppen { overflow: hidden; }
+
+img, svg, video, canvas { max-width: 100%; }
+img { height: auto; }
+
+h1, h2, h3, h4 {
+    margin: 0 0 .45em;
+    line-height: 1.22;
+    letter-spacing: -.015em;
+    font-weight: 700;
+    text-wrap: balance;
+}
+h1 { font-size: clamp(1.45rem, 1.05rem + 1.1vw, 2rem); }
+h2 { font-size: clamp(1.12rem, 1rem + .45vw, 1.32rem); margin-top: 1.4em; }
+h3 { font-size: clamp(1rem, .95rem + .2vw, 1.1rem); margin-top: 1.1em; }
+h2:first-child, h3:first-child { margin-top: 0; }
+p { margin: .35em 0 .85em; }
+p:last-child { margin-bottom: 0; }
+strong, b { font-weight: 700; }
+small { font-size: .85em; }
+
+a {
+    color: var(--lank, var(--accent));
+    text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    text-underline-offset: 2px;
+    transition: color var(--snabbt), text-decoration-color var(--snabbt);
+}
+a:hover { color: color-mix(in srgb, var(--lank, var(--accent)) 78%, var(--text)); text-decoration-color: currentColor; }
+
+::selection { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); }
+
+:focus-visible {
+    outline: 2px solid var(--fokus);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Skrollister som inte skriker (Chromium/WebKit) */
+* { scrollbar-width: thin; scrollbar-color: var(--kant-stark) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--kant-stark); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ------------------------------------------------------------- 3. Ikoner */
+.ikon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.ikon {
+    width: 1.3em;
+    height: 1.3em;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: -.19em;
+    shape-rendering: geometricPrecision;
+}
+.ikon-stor { width: 1.6em; height: 1.6em; }
+.ikon-liten { width: 1.05em; height: 1.05em; }
+
+/* -------------------------------------------------------------- 4. Skal */
+.app { min-height: 100dvh; }
+
+.hoppa-till {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    z-index: 200;
+    padding: 10px 16px;
+    border-radius: var(--radie-liten);
+    background: var(--accent);
+    color: #06111d;
+    font-weight: 700;
+    transform: translateY(-160%);
+    transition: transform var(--snabbt);
+}
+.hoppa-till:focus { transform: translateY(0); }
+
+/* ---- Sidhuvud ---- */
+.topp {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: var(--steg-3);
+    min-height: var(--topp-hojd);
+    padding: 8px clamp(12px, 2vw, 24px);
+    padding-top: max(8px, env(safe-area-inset-top));
+    background: color-mix(in srgb, var(--bak) 88%, var(--bak2));
+    border-bottom: 1px solid var(--kant);
+}
+@supports (backdrop-filter: blur(1px)) {
+    .topp { background: color-mix(in srgb, var(--bak) 80%, transparent); backdrop-filter: saturate(140%) blur(12px); }
+}
+
+.varumarke {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 800;
+}
+.varumarke:hover { color: var(--text); text-decoration: none; }
+.varumarke-ikon { width: 28px; height: 28px; }
+.varumarke-marke { display: none; height: 30px; width: auto; flex: 0 0 auto; shape-rendering: geometricPrecision; }
+.varumarke-svg { height: 30px; width: auto; max-width: min(46vw, 240px); display: block; shape-rendering: geometricPrecision; }
+.varumarke-logotyp { height: 30px; width: auto; max-width: 200px; object-fit: contain; }
+
+.topp-verktyg {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--steg-2);
+    min-width: 0;
+}
+.topp-verktyg form { margin: 0; }
+
+.stalle-val { margin: 0; }
+.stalle-knapp {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    min-height: 38px;
+    padding: 6px 12px;
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--yta2);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-pill);
+    max-width: 100%;
+}
+.stalle-knapp:hover { border-color: var(--kant-stark); background: var(--yta3); }
+.stalle-namn {
+    max-width: 18ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.stalle-punkt {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent);
+}
+.stalle-byt { font-size: .76rem; font-weight: 500; opacity: .65; }
+
+.konto-lank {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: 4px 10px 4px 4px;
+    border-radius: var(--radie-pill);
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background var(--snabbt), border-color var(--snabbt);
+    min-width: 0;
+}
+.konto-lank:hover { background: var(--yta2); border-color: var(--kant); color: var(--text); text-decoration: none; }
+.avatar {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-mjuk);
+    color: var(--accent);
+    border: 1px solid var(--accent-kant);
+    font-size: .9rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+}
+.konto-namn { font-size: .9rem; font-weight: 600; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bricka {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radie-pill);
+    border: 1px solid color-mix(in srgb, var(--varning) 38%, var(--kant));
+    background: color-mix(in srgb, var(--varning) 12%, transparent);
+    color: var(--varning);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.meny-knapp,
+.sido-stang,
+.botten-meny {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 6px;
+    background: var(--yta2);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-liten);
+    color: var(--text);
+}
+.meny-knapp .ikon,
+.sido-stang .ikon { width: 22px; height: 22px; }
+
+/* ---- Sidomeny ---- */
+.sido-nav {
+    display: none;
+    background: var(--bak2);
+    border-right: 1px solid var(--kant);
+}
+.sido-innre { padding: var(--steg-2) var(--steg-3) var(--steg-4); overflow-y: auto; overscroll-behavior: contain; flex: 1 1 auto; }
+.sido-grupp { margin-bottom: var(--steg-4); }
+.sido-grupp:last-child { margin-bottom: 0; }
+.sido-rubrik {
+    margin: 0 0 6px;
+    padding: 0 10px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--dampad);
+}
+.meny-lank {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radie-liten);
+    color: var(--text2);
+    text-decoration: none;
+    font-size: .93rem;
+    font-weight: 500;
+    line-height: 1.3;
+    border: 1px solid transparent;
+    transition: background var(--snabbt), color var(--snabbt), border-color var(--snabbt);
+}
+.meny-lank .ikon { width: 19px; height: 19px; color: var(--dampad); transition: color var(--snabbt); }
+.meny-lank:hover { background: var(--yta2); color: var(--text); text-decoration: none; }
+.meny-lank:hover .ikon { color: var(--accent-text); }
+.meny-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sido-grupp-admin { padding-top: var(--steg-2); border-top: 1px solid var(--kant); }
+.meny-lank.aktiv {
+    background: var(--accent-mjuk);
+    border-color: var(--accent-kant);
+    color: var(--text);
+    font-weight: 650;
+}
+.meny-lank.aktiv .ikon { color: var(--accent-text); }
+.meny-lank-admin .ikon { color: color-mix(in srgb, var(--varning) 75%, var(--dampad)); }
+.meny-lank .halso-prick {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: var(--radie-pill);
+    background: var(--fel);
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.sido-topp { display: none; }
+.sido-fot {
+    margin: 0;
+    padding: 12px var(--steg-3);
+    border-top: 1px solid var(--kant);
+    font-size: .74rem;
+    color: var(--dampad);
+}
+
+/* ---- Innehåll ---- */
+.innehall {
+    padding: var(--steg-4) clamp(12px, 2.4vw, 32px) var(--steg-6);
+    min-width: 0;
+}
+.innehall-inre { max-width: 1240px; margin: 0 auto; }
+
+/* ---- Bottenmeny (telefon) ---- */
+.botten-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 2px;
+    padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bak) 92%, var(--bak2));
+    border-top: 1px solid var(--kant);
+}
+@supports (backdrop-filter: blur(1px)) {
+    .botten-nav { background: color-mix(in srgb, var(--bak) 82%, transparent); backdrop-filter: blur(12px) saturate(140%); }
+}
+.botten-nav a,
+.botten-nav .botten-meny {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 52px;
+    padding: 4px 2px;
+    border: 0;
+    border-radius: var(--radie-liten);
+    background: transparent;
+    color: var(--dampad);
+    font-size: .69rem;
+    font-weight: 600;
+    text-decoration: none;
+    line-height: 1.1;
+}
+.botten-nav .ikon { width: 22px; height: 22px; }
+.botten-nav a:active { background: var(--yta2); }
+.botten-nav a.aktiv { color: var(--accent); background: var(--accent-mjuk); }
+
+/* ---- Sidfot ---- */
+.sidfot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .4rem;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 18px 4px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--kant);
+    color: var(--dampad);
+    font-size: .76rem;
+}
+
+/* ---- Meny på telefon ---- */
+.meny-skrim {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(3, 7, 12, .58);
+    opacity: 0;
+    transition: opacity 180ms ease;
+}
+.meny-skrim[hidden] { display: none; }
+body.meny-oppen .meny-skrim { opacity: 1; }
+
+@media (max-width: 1023px) {
+    .meny-knapp { display: inline-flex; }
+    .sido-nav {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 70;
+        width: min(88vw, 340px);
+        padding-top: max(0px, env(safe-area-inset-top));
+        transform: translateX(-102%);
+        transition: transform 220ms cubic-bezier(.2, .7, .3, 1);
+        box-shadow: 12px 0 40px rgba(0, 0, 0, .35);
+    }
+    body.meny-oppen .sido-nav { transform: translateX(0); }
+    .sido-topp {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px var(--steg-3);
+        border-bottom: 1px solid var(--kant);
+    }
+    .sido-topp .sido-rubrik { margin: 0; font-size: .78rem; }
+    .sido-stang { display: inline-flex; }
+    .sido-fot { font-size: .72rem; }
+    .innehall { padding-bottom: calc(var(--steg-6) + 68px); }
+    .sidfot { padding-bottom: calc(72px + env(safe-area-inset-bottom)); border-top: 0; }
+    .topp-verktyg .bricka { display: none; }
+    .topp-verktyg .stalle-byt { display: none; }
+    .konto-namn { display: none; }
+}
+
+/* ------------------------------------------------------- 5. Typografi i sidan */
+.dampad { color: var(--dampad); }
+.mono {
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: .92em;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .01em;
+}
+.kod {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--kant);
+    background: var(--falt);
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .86em;
+}
+.stor-siffra { font-size: clamp(2rem, 1.4rem + 2vw, 2.8rem); font-weight: 800; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.minskad { color: var(--fel); }
+.okad { color: var(--ok); }
+.avdelare { border: 0; border-top: 1px solid var(--kant); margin: var(--steg-3) 0; }
+.dold-mobil { }
+.tal-hoger { text-align: right; }
+.tal-kol { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.brist { color: var(--fel); font-weight: 700; font-variant-numeric: tabular-nums; }
+.hjalp { color: var(--dampad); font-size: .84rem; }
+.jamna { display: flex; align-items: center; justify-content: space-between; gap: var(--steg-2); }
+
+/* ------------------------------------------------------------ 6. Kort */
+.kort {
+    background: var(--yta);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie);
+    padding: clamp(14px, 1.6vw, 22px);
+    margin: 0 0 var(--steg-3);
+    box-shadow: var(--skugga);
+}
+.kort > :last-child { margin-bottom: 0; }
+.kort h2:first-child, .kort h3:first-child { margin-top: 0; }
+
+.rutnat {
+    display: grid;
+    gap: var(--steg-2);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+    margin-bottom: var(--steg-3);
+}
+.rutnat > .kort { margin: 0; }
+
+.stat { display: flex; flex-direction: column; gap: 2px; justify-content: center; }
+.stat .tal {
+    font-size: clamp(1.6rem, 1.2rem + 1vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.025em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
+.stat .etikett { color: var(--text2); font-size: .9rem; font-weight: 600; }
+.stat .falt-hjalp { margin-top: 2px; }
+.stat.varning { border-color: color-mix(in srgb, var(--varning) 45%, var(--kant)); }
+.stat.varning .tal { color: var(--varning); }
+span, em, strong, small { background-color: transparent; }
+
+/* ----------------------------------------------------------- 7. Tabeller */
+.tabell-rull {
+    overflow-x: auto;
+    margin: 0 calc(-1 * clamp(14px, 1.6vw, 22px));
+    padding: 0 clamp(14px, 1.6vw, 22px);
+    -webkit-overflow-scrolling: touch;
+}
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .93rem;
+}
+th, td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--kant);
+    vertical-align: top;
+    line-height: 1.45;
+}
+th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--yta);
+    color: var(--text2);
+    font-weight: 700;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+}
+td { color: var(--text2); }
+td strong, td a { color: var(--text); }
+tbody tr:hover td { background: color-mix(in srgb, var(--text) 3%, transparent); }
+tr:last-child td { border-bottom: none; }
+td.tal, th.tal { text-align: right; font-variant-numeric: tabular-nums; }
+th.tal { text-align: right; }
+td .mono { color: var(--text); }
+table + form, form + table { margin-top: var(--steg-2); }
+
+/* ------------------------------------------------- 8. Knappar och länkar */
+button, .knapp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 42px;
+    padding: 9px 16px;
+    font: inherit;
+    font-size: .94rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--yta2);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-liten);
+    cursor: pointer;
+    transition: background var(--snabbt), border-color var(--snabbt), color var(--snabbt);
+    -webkit-tap-highlight-color: transparent;
+}
+button:hover, .knapp:hover {
+    background: var(--yta3);
+    border-color: var(--kant-stark);
+    color: var(--text);
+    text-decoration: none;
+}
+button:active, .knapp:active { background: color-mix(in srgb, var(--yta3) 80%, var(--text) 6%); }
+button:disabled, .knapp[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+
+button.primar, .knapp.primar {
+    color: var(--text);
+    background: color-mix(in srgb, var(--accent) 22%, var(--yta2));
+    border-color: var(--accent-kant);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 14%, transparent);
+}
+button.primar:hover, .knapp.primar:hover {
+    background: color-mix(in srgb, var(--accent) 32%, var(--yta2));
+    border-color: var(--accent);
+}
+button.fara, .knapp.fara {
+    color: var(--fel);
+    background: color-mix(in srgb, var(--fel) 10%, var(--yta2));
+    border-color: color-mix(in srgb, var(--fel) 40%, var(--kant));
+}
+button.fara:hover, .knapp.fara:hover { background: color-mix(in srgb, var(--fel) 18%, var(--yta2)); }
+button.liten, .knapp.liten {
+    min-height: 34px;
+    padding: 5px 11px;
+    font-size: .84rem;
+}
+button.sekundar, .knapp.sekundar { background: transparent; }
+button.sekundar:hover, .knapp.sekundar:hover { background: var(--yta2); }
+.ikon-knapp { padding-inline: 9px; }
+.knappar { display: flex; flex-wrap: wrap; gap: var(--steg-2); }
+
+/* -------------------------------------------------------- 9. Formulär */
+label {
+    display: block;
+    margin: var(--steg-3) 0 5px;
+    font-size: .86rem;
+    font-weight: 600;
+    color: var(--text2);
+}
+label:first-child { margin-top: 0; }
+input, select, textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.35;
+    color: var(--text);
+    background: var(--falt);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-liten);
+    transition: border-color var(--snabbt), box-shadow var(--snabbt), background var(--snabbt);
+    -webkit-appearance: none;
+    appearance: none;
+}
+input:hover, select:hover, textarea:hover { border-color: var(--kant-stark); }
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--dampad) 80%, transparent); }
+select {
+    padding-right: 38px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--dampad) 50%),
+        linear-gradient(135deg, var(--dampad) 50%, transparent 50%);
+    background-position: calc(100% - 19px) calc(50% + 1px), calc(100% - 14px) calc(50% + 1px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+/* Kryssrutor och radioknappar ska se ut som webbläsarens egna kont roller.
+   Den allmänna regeln ovan tar bort appearance för textfält – utan detta
+   blev kryssrutan en tom cirkel med 10 px padding. */
+input[type="checkbox"], input[type="radio"] {
+    -webkit-appearance: auto;
+    appearance: auto;
+    width: 20px;
+    height: 20px;
+    min-height: 0;
+    padding: 0;
+    margin: 0 6px 0 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    box-shadow: none;
+    accent-color: var(--accent);
+    flex: 0 0 auto;
+    vertical-align: -4px;
+}
+input[type="checkbox"]:focus, input[type="radio"]:focus {
+    outline: 2px solid var(--fokus);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+input[type="file"] { min-height: 44px; padding: 8px 10px; background: var(--yta2); }
+input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: .86rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--yta3);
+    border: 1px solid var(--kant);
+    border-radius: 8px;
+    cursor: pointer;
+}
+input[type="color"] { padding: 4px; min-height: 44px; }
+textarea { min-height: 96px; resize: vertical; }
+fieldset { border: 1px solid var(--kant); border-radius: var(--radie); padding: var(--steg-3); margin: 0 0 var(--steg-3); }
+legend { padding: 0 6px; font-weight: 650; }
+
+.falt { margin-bottom: var(--steg-2); }
+.falt-hjalp { margin-top: 4px; font-size: .8rem; line-height: 1.4; color: var(--dampad); }
+.rad {
+    display: grid;
+    gap: var(--steg-3);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--steg-2);
+    margin-top: var(--steg-3);
+}
+.actions > form { margin: 0; }
+.actions .knapp, .actions button { flex: 0 0 auto; }
+
+label.kryss {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 10px 0;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    line-height: 1.4;
+}
+label.kryss input { flex: 0 0 auto; margin-top: 2px; }
+
+.godkannande {
+    margin: var(--steg-3) 0 0;
+    padding: var(--steg-3);
+    border: 1px solid var(--accent-kant);
+    border-radius: var(--radie);
+    background: color-mix(in srgb, var(--accent) 7%, var(--yta));
+}
+.godkannande legend { padding: 0 6px; font-weight: 700; font-size: .9rem; }
+
+/* ------------------------------------------------------------ 10. Flash */
+.flash {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0 0 var(--steg-3);
+    padding: 11px 14px;
+    border: 1px solid var(--kant);
+    border-left-width: 3px;
+    border-radius: var(--radie-liten);
+    font-size: .93rem;
+    line-height: 1.45;
+    background: var(--yta);
+    color: var(--text2);
+    text-decoration: none;
+}
+.flash .ikon { width: 20px; height: 20px; margin-top: 2px; }
+.flash > div { min-width: 0; }
+.flash strong { color: var(--text); }
+.flash.ok { border-left-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, var(--yta)); }
+.flash.ok .ikon { color: var(--ok); }
+.flash.info { border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--yta)); }
+.flash.info .ikon { color: var(--accent); }
+.flash.varning { border-left-color: var(--varning); background: color-mix(in srgb, var(--varning) 10%, var(--yta)); }
+.flash.varning .ikon { color: var(--varning); }
+.flash.fel { border-left-color: var(--fel); background: color-mix(in srgb, var(--fel) 10%, var(--yta)); }
+.flash.fel .ikon { color: var(--fel); }
+a.flash:hover { border-color: var(--kant-stark); text-decoration: none; }
+.larm-rad { align-items: center; flex-wrap: wrap; }
+.larm-lank { margin-left: auto; font-weight: 700; white-space: nowrap; }
+
+/* -------------------------------------------------------------- 11. Taggar */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 9px;
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-pill);
+    font-size: .74rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--dampad);
+    white-space: nowrap;
+}
+.tag.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, var(--kant)); background: color-mix(in srgb, var(--ok) 8%, transparent); }
+.tag.fel { color: var(--fel); border-color: color-mix(in srgb, var(--fel) 40%, var(--kant)); background: color-mix(in srgb, var(--fel) 8%, transparent); }
+.tag.varning { color: var(--varning); border-color: color-mix(in srgb, var(--varning) 40%, var(--kant)); background: color-mix(in srgb, var(--varning) 8%, transparent); }
+
+/* --------------------------------------------------------- 12. Etiketter */
+.etikett-ark { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.tryck-etikett {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 88px;
+    padding: 8px;
+    border: 1px dashed #9aa6b5;
+    border-radius: 4px;
+    background: #fff;
+    color: #000;
+    break-inside: avoid;
+}
+.tryck-etikett .qr { flex: 0 0 auto; width: 22mm; height: 22mm; line-height: 0; }
+.tryck-etikett .qr svg { display: block; width: 100% !important; height: 100% !important; max-width: 100%; shape-rendering: crispEdges; }
+.tryck-etikett .info { font-size: .68rem; line-height: 1.2; overflow: hidden; }
+.tryck-etikett .namn { display: block; margin-bottom: 2px; font-weight: 700; font-size: .75rem; }
+.tryck-etikett .kodtext { font-family: ui-monospace, monospace; font-size: .62rem; letter-spacing: .02em; }
+.qr { line-height: 0; }
+.qr svg { shape-rendering: crispEdges; }
+
+.bild-qr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; }
+.bild-qr > div:last-child { text-align: center; }
+@media (max-width: 620px) {
+    .bild-qr { grid-template-columns: minmax(0, 1fr); }
+    .bild-qr > div:last-child { justify-self: center; }
+    .bild-qr .falt-hjalp { max-width: 260px !important; }
+}
+
+/* ---------------------------------------------------------- 13. Kamera */
+video { width: 100%; max-height: 60dvh; border-radius: var(--radie); background: #000; object-fit: cover; }
+.kamera-box { position: relative; margin-top: 10px; }
+.kamera-overlay { position: absolute; inset: 0; border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent); border-radius: var(--radie); pointer-events: none; }
+
+/* ------------------------------------------------------ 14. Artikelbilder */
+.bild-ruta { display: flex; flex-wrap: wrap; gap: 10px; }
+.bild-ruta figure { margin: 0; width: clamp(112px, 16vw, 150px); }
+.bild-ruta img {
+    width: 100%;
+    aspect-ratio: 1;
+    height: auto;
+    object-fit: cover;
+    display: block;
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-liten);
+    background: var(--yta2);
+}
+.bild-ruta form { margin-top: 4px; }
+.bild-ruta button { width: 100%; min-height: 30px; padding: 4px 6px; font-size: .78rem; }
+
+/* ------------------------------------------------------ 15. Arbetsstället */
+.valj-stalle { max-width: 760px; margin: 0 auto; padding: var(--steg-3) 0 var(--steg-5); }
+.stalle-lista { display: grid; gap: var(--steg-2); margin-top: var(--steg-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+button.stalle-kort, a.stalle-kort {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 68px;
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 1.06rem;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--yta);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie);
+    box-shadow: var(--skugga);
+    cursor: pointer;
+}
+button.stalle-kort:hover, a.stalle-kort:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--yta));
+    text-decoration: none;
+}
+.stalle-kort .stalle-kod { font-size: .82rem; font-weight: 600; letter-spacing: .06em; opacity: .65; }
+.stalle-kort .ikon { color: var(--accent-text); }
+
+/* -------------------------------------------------------- 16. Startsidan */
+.start { max-width: 1120px; margin: 0 auto; }
+.start-topp { margin-bottom: var(--steg-4); }
+.start-topp h1 { margin-bottom: .18em; }
+.start-topp p { margin: 0; color: var(--dampad); }
+.start-topp strong { color: var(--text); }
+
+.start-siffror {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--steg-2);
+    margin: var(--steg-4) 0 0;
+}
+.start-siffra {
+    padding: 12px 14px;
+    border: 1px solid var(--kant);
+    border-radius: var(--radie);
+    background: var(--yta);
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.start-siffra:hover { border-color: var(--accent-kant); text-decoration: none; }
+.start-siffra .tal { font-size: clamp(1.3rem, 1rem + .9vw, 1.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.start-siffra .etikett { font-size: .74rem; color: var(--dampad); font-weight: 600; }
+.start-siffra.varning { border-color: color-mix(in srgb, var(--varning) 45%, var(--kant)); background: color-mix(in srgb, var(--varning) 7%, var(--yta)); }
+.start-siffra.varning .tal { color: var(--varning); }
+.start-siffror + .flash { margin-top: var(--steg-3); }
+
+.start-grupp { margin-top: var(--steg-5); }
+.start-grupp h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--dampad);
+}
+.start-rutnat {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: var(--steg-2);
+}
+.start-kort {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    text-align: left;
+    gap: 12px;
+    min-height: 72px;
+    padding: 13px 14px;
+    background: var(--yta);
+    border: 1px solid var(--kant);
+    border-radius: var(--radie);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color var(--snabbt), background var(--snabbt), box-shadow var(--snabbt);
+}
+.start-kort:hover, .start-kort:focus-visible {
+    border-color: var(--accent-kant);
+    background: color-mix(in srgb, var(--accent) 7%, var(--yta));
+    box-shadow: var(--skugga-lyft);
+    text-decoration: none;
+}
+.start-kort.stor { border-color: var(--accent-kant); background: color-mix(in srgb, var(--accent) 8%, var(--yta)); }
+.start-ikon {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: var(--accent-mjuk);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.start-ikon .ikon { width: 21px; height: 21px; }
+.start-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.start-text strong { font-size: .96rem; font-weight: 650; line-height: 1.3; }
+.start-text .dampad { font-size: .8rem; line-height: 1.35; }
+.start-pil { margin-left: auto; color: var(--dampad); opacity: .5; transition: opacity var(--snabbt), color var(--snabbt); }
+.start-pil .ikon { width: 18px; height: 18px; }
+.start-kort:hover .start-pil { opacity: 1; color: var(--accent-text); }
+.start-fot { margin-top: var(--steg-5); padding-top: var(--steg-3); border-top: 1px solid var(--kant); font-size: .8rem; text-align: center; color: var(--dampad); }
+
+/* ------------------------------------------------------------ 17. Inlogg */
+.inlogg { max-width: 460px; margin: clamp(24px, 8vh, 80px) auto 0; }
+.inlogg .kort { padding: clamp(20px, 3vw, 30px); }
+.inlogg-marke { margin: 0 0 20px; }
+.inlogg-marke .varumarke-svg { height: 42px; width: auto; max-width: 100%; }
+.valj-typ { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; margin: 0 0 18px; background: var(--yta2); border: 1px solid var(--kant); border-radius: var(--radie-liten); }
+.valj-knapp {
+    display: block;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text2);
+    font-size: .9rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    min-height: 0;
+}
+.valj-knapp:hover { background: transparent; border-color: var(--kant); }
+.valj-knapp.vald { background: var(--yta); border-color: var(--accent-kant); color: var(--text); box-shadow: var(--skugga); }
+
+/* ------------------------------------------------------------ 18. Arkiv */
+.arkiv-ar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--steg-3); }
+.arkiv-månader { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+.arkiv-manad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 12px 8px;
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-liten);
+    background: var(--yta);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color var(--snabbt), background var(--snabbt);
+}
+.arkiv-manad:hover { border-color: var(--accent); text-decoration: none; }
+.arkiv-manad.vald { border-color: var(--accent); background: var(--accent-mjuk); }
+.arkiv-manad.tom { opacity: .45; }
+.arkiv-manad .mn { font-weight: 650; font-size: .86rem; text-transform: capitalize; }
+.arkiv-manad .antal { font-size: 1.35rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.arkiv-manad .avv { font-size: .7rem; color: var(--fel); }
+
+/* ---------------------------------------------------- 19. Hälsokontroll */
+.halso-lista { display: grid; gap: 8px; }
+.halso-rad {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: start;
+    padding: 11px 14px;
+    border: 1px solid var(--kant);
+    border-radius: var(--radie-liten);
+}
+.halso-rad > .ikon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+.halso-rad .ikon .ikon { width: 17px; height: 17px; }
+.halso-rad.ok .ikon { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
+.halso-rad.varning .ikon { color: var(--varning); background: color-mix(in srgb, var(--varning) 14%, transparent); }
+.halso-rad.fel .ikon { color: var(--fel); background: color-mix(in srgb, var(--fel) 14%, transparent); }
+.halso-rad.fel { border-color: color-mix(in srgb, var(--fel) 45%, var(--kant)); }
+.halso-rad.varning { border-color: color-mix(in srgb, var(--varning) 45%, var(--kant)); }
+.halso-rad strong { display: block; color: var(--text); }
+
+/* ------------------------------------------- 20. Inventering (räknelistan) */
+.inventerings-tabell td { vertical-align: middle; }
+.inventerings-tabell tr.rad-ok { background: color-mix(in srgb, var(--ok) 7%, transparent); }
+.inventerings-tabell tr.rad-fattas { background: color-mix(in srgb, var(--fel) 8%, transparent); }
+.inventerings-tabell tr.rad-overskott { background: color-mix(in srgb, var(--varning) 8%, transparent); }
+.inventerings-tabell tr.sparad td { box-shadow: inset 0 0 0 9999px color-mix(in srgb, var(--ok) 10%, transparent); }
+.rakna-falt {
+    width: 76px;
+    min-height: 44px;
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.rakna-grupp { display: inline-flex; align-items: center; gap: 4px; }
+.rakna-knapp { min-width: 40px; min-height: 40px; padding: 0; font-size: 1.1rem; font-weight: 700; }
+.plocktabell td:nth-child(4), .plocktabell th:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
+.plocktabell td:nth-child(1) { font-weight: 700; color: var(--text); }
+.plocktabell tr.klar td { opacity: .55; }
+
+/* ---------------------------------------- 21. Lokalplan & lagerkarta: ljust */
+body.tema-ljus .karta-ruta { border-color: var(--kant); background: var(--yta2); }
+body.tema-ljus .karta-ruta:hover { border-color: var(--kant-stark); }
+body.tema-ljus .karta-ruta.tom { background: var(--yta2); }
+body.tema-ljus .karta-ruta.lag { background: color-mix(in srgb, var(--ok) 18%, var(--yta)); border-color: color-mix(in srgb, var(--ok) 40%, var(--kant)); }
+body.tema-ljus .karta-ruta.halv { background: color-mix(in srgb, var(--varning) 18%, var(--yta)); border-color: color-mix(in srgb, var(--varning) 42%, var(--kant)); }
+body.tema-ljus .karta-ruta.full { background: color-mix(in srgb, var(--fel) 14%, var(--yta)); border-color: color-mix(in srgb, var(--fel) 42%, var(--kant)); }
+body.tema-ljus .karta-punkt.tom { background: var(--yta3); border-color: var(--kant-stark); }
+body.tema-ljus .karta-3d-hylla .topp { color: #fff; border-color: rgba(0, 0, 0, .18); }
+body.tema-ljus .plan-yta {
+    background:
+        repeating-linear-gradient(0deg, rgba(16, 27, 40, .06) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(90deg, rgba(16, 27, 40, .06) 0 1px, transparent 1px 40px),
+        var(--yta2);
+}
+body.tema-ljus .vaning-flik { background: var(--yta2); }
+body.tema-ljus .vaning-flik.vald { background: var(--accent); color: #fff; }
+body.tema-ljus .lediga-zoner { background: var(--yta2); }
+body.tema-ljus .foto-kort { background: var(--yta2); }
+
+/* ------------------------------------------------------ 22. Diverse rutor */
+.inget-utskrift { }
+.print-only { display: none; }
+.kort-qr { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.streckkod, .strecktext { font-family: ui-monospace, monospace; letter-spacing: .08em; }
+.strecknotis { color: var(--dampad); font-size: .82rem; }
+.karta-ingen-qr { color: var(--varning); }
+
+/* ------------------------------------------------------------ 23. Responsivt */
+@media (min-width: 1024px) {
+    /* Sidomenyn är fast, innehållet flyttas åt sidan. Huvudet kan då vara
+       sticky mot hela fönstret – med CSS-grid hade det fastnat i sin egen
+       rutrad och slutat följa med vid scroll. */
+    .app { display: block; }
+    .sido-nav {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: var(--sido-bredd);
+        height: 100dvh;
+        z-index: 45;
+    }
+    .med-meny .topp,
+    .med-meny .innehall { margin-left: var(--sido-bredd); }
+    .botten-nav { display: none; }
+    .meny-skrim { display: none !important; }
+    .innehall { padding-top: var(--steg-5); }
+    .sidfot { padding-bottom: 24px; }
+}
+
+@media (max-width: 920px) {
+    .start-siffror { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 620px) {
+    body { line-height: 1.5; }
+    .innehall { padding: 14px 12px 80px; }
+    .topp { gap: 8px; }
+    .varumarke-svg { display: none; }
+    .varumarke-marke { display: inline-flex; height: 28px; }
+    .varumarke-logotyp { height: 26px; max-width: 110px; }
+    .topp-verktyg { gap: 4px; }
+    .stalle-knapp { min-height: 36px; padding: 5px 10px; }
+    .stalle-namn { max-width: 12ch; }
+    .konto-lank { padding: 2px; }
+    .avatar { width: 34px; height: 34px; }
+    .utlogg-form .knapp.liten { min-width: 38px; padding: 6px 8px; }
+    .dold-mobil { display: none; }
+    h1 { font-size: 1.42rem; }
+    .kort { padding: 14px; border-radius: 12px; }
+    .tabell-rull { margin: 0 -14px; padding: 0 14px; }
+    th, td { padding: 8px 7px; }
+    table { font-size: .9rem; }
+    .start-rutnat { grid-template-columns: 1fr; }
+    .start-kort { min-height: 64px; padding: 11px 12px; }
+    .start-grupp { margin-top: 28px; }
+    .start-siffror { gap: 8px; margin-top: 16px; }
+    .start-siffra { padding: 10px 12px; }
+    .etikett-ark { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    /* Tabeller med radetiketter blir kort i stället för att klippas */
+    .kort-tabell thead { display: none; }
+    .kort-tabell tr:first-child:has(th) { display: none; }
+    .kort-tabell, .kort-tabell tbody, .kort-tabell tr, .kort-tabell td { display: block; width: auto; }
+    .kort-tabell tr {
+        position: relative;
+        margin-bottom: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--kant);
+        border-radius: var(--radie-liten);
+        background: var(--yta2);
+    }
+    .kort-tabell td { border: 0; padding: 2px 0; text-align: left; color: var(--text2); }
+    .kort-tabell td[data-etikett] { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; }
+    .kort-tabell td[data-etikett]::before {
+        content: attr(data-etikett) ':';
+        flex: 0 0 88px;
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--dampad);
+    }
+    .kort-tabell td:first-child { font-size: 1rem; font-weight: 600; color: var(--text); padding-bottom: 4px; }
+    .kort-tabell td:last-child { margin-top: 8px; }
+    .kort-tabell td:last-child .knapp, .kort-tabell td:last-child button { width: 100%; }
+    .kort-tabell .tal-hoger { text-align: left; }
+    .sidfot { flex-direction: column; gap: 2px; }
+    .sidfot [aria-hidden="true"] { display: none; }
+}
+
+@media (max-width: 380px) {
+    .start-siffror { grid-template-columns: 1fr; }
+    .konto-lank .avatar { display: none; }
+    .etikett-ark { grid-template-columns: 1fr; }
+}
+
+@media (pointer: coarse) {
+    button, .knapp, input, select, textarea { min-height: 46px; }
+    button.liten, .knapp.liten { min-height: 40px; }
+    .meny-lank { min-height: 44px; }
+}
+
+/* Högupplöst skärm: håll hårlinjerna 1 px (inga halva pixlar som suddar) */
+@media (min-resolution: 2dppx) {
+    .kort, .topp, .sido-nav, .botten-nav, .flash { border-width: 1px; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .topp, .botten-nav { backdrop-filter: none; background: var(--bak2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+    }
+}
+
+@media (prefers-contrast: more) {
+    :root { --kant: #4a5f7a; --kant-stark: #6c829d; --dampad: #b8c6d6; }
+    body.tema-ljus { --kant: #9aa9bb; --kant-stark: #6c7d92; --dampad: #3d4d61; }
+    .meny-lank.aktiv, .botten-nav a.aktiv { outline: 1px solid currentColor; outline-offset: -2px; }
+}
+
+@media (forced-colors: active) {
+    .ikon { forced-color-adjust: auto; }
+    .kort, .flash, .tag, .knapp, button, input, select, textarea { border-color: CanvasText; }
+    .meny-lank.aktiv, .botten-nav a.aktiv { outline: 2px solid Highlight; }
+}
+
+/* -------------------------------------------------------------- 24. Utskrift */
+@media print {
+    @page { margin: 8mm; }
+    body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+    .topp, .sido-nav, .botten-nav, .sidfot, .flash, .inget-utskrift, .meny-skrim, .actions { display: none !important; }
+    .app { display: block !important; }
+    .innehall { padding: 0 !important; margin-left: 0 !important; }
+    .innehall-inre { max-width: none; }
+    .kort { border: none; box-shadow: none; padding: 0; margin: 0 0 8mm; }
+    .etikett-ark { gap: 4px; }
+    a { color: #000; text-decoration: none; }
+    .print-only { display: block; }
+}
+
+/* ------------------------------------------------- 25. Tabeller som kort (mobil)
+ * Artikellistan märks upp i vyn. Övriga tabeller får samma behandling av
+ * app.js när skärmen är smal: rubrikraden flyttas till <thead>, varje cell
+ * får data-etikett och raden blir ett kort i stället för en klippt tabell.
+ * Utan JavaScript ligger tabellen kvar och kan scrollas i sidled.
+ */
+@media (max-width: 620px) {
+    .mobil-kort thead { display: none; }
+    .mobil-kort, .mobil-kort tbody, .mobil-kort tr, .mobil-kort td { display: block; width: auto; }
+    .mobil-kort tr {
+        margin-bottom: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--kant);
+        border-radius: var(--radie-liten);
+        background: var(--yta2);
+    }
+    .mobil-kort td { border: 0; padding: 2px 0; text-align: left; color: var(--text2); }
+    .mobil-kort td[data-etikett] { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; }
+    .mobil-kort td[data-etikett]::before {
+        content: attr(data-etikett) ':';
+        flex: 0 0 96px;
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--dampad);
+    }
+    .mobil-kort td:empty { display: none; }
+    .mobil-kort td:first-child {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+        padding-bottom: 5px;
+    }
+    .mobil-kort td:first-child[data-etikett]::before { display: none; }
+    .mobil-kort td:last-child { margin-top: 8px; display: flex; gap: 8px; }
+    .mobil-kort td:last-child .knapp,
+    .mobil-kort td:last-child button { flex: 1 1 0; width: auto; }
+    .mobil-kort .tal, .mobil-kort .tal-hoger, .mobil-kort .tal-kol { text-align: left; white-space: normal; }
+    .kort-tabell td:last-child { display: flex; gap: 8px; }
+    .tabell-rull:has(.kort-tabell), .tabell-rull:has(.mobil-kort) { margin: 0; padding: 0; overflow: visible; }
+    .kort:has(> .tabell-rull > .kort-tabell),
+    .kort:has(> .tabell-rull > .mobil-kort) { padding: 0; border: 0; background: transparent; box-shadow: none; }
+    .kort-tabell td:last-child .knapp { flex: 1 1 0; width: auto; }
+    .kort-tabell td:first-child { font-weight: 600; }
+    .mobil-kort td.tom { display: none; }
+    .mobil-kort td.forst-siffra { font-size: .95rem; font-weight: 400; color: var(--text2); padding-bottom: 2px; }
+    .mobil-kort td.forst-siffra[data-etikett]::before { display: inline; }
+    /* Bilder, kategori och sekundär saldoinfo finns kvar på artikeln själv –
+       i listkortet räcker namn, nummer, plats och total. */
+    .kort-tabell td.dold-mobil, .kort-tabell td.kort-dold { display: none; }
+}

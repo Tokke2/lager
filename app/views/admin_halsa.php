@@ -7,7 +7,7 @@
  *
  * @var array $halso
  */
-$ikon = ['ok' => '✓', 'varning' => '!', 'fel' => '✕'];
+$ikon = ['ok' => 'bock', 'varning' => 'varning', 'fel' => 'kryss'];
 $ordning = ['fel' => 0, 'varning' => 1, 'ok' => 2];
 $punkter = $halso['punkter'];
 usort($punkter, fn ($a, $b) => ($ordning[$a['niva']] ?? 9) <=> ($ordning[$b['niva']] ?? 9));
@@ -43,7 +43,7 @@ usort($punkter, fn ($a, $b) => ($ordning[$a['niva']] ?? 9) <=> ($ordning[$b['niv
 <div class="halso-lista">
     <?php foreach ($punkter as $p): ?>
         <div class="halso-rad <?= e($p['niva']) ?>">
-            <span class="ikon" aria-hidden="true"><?= e($ikon[$p['niva']] ?? '?') ?></span>
+            <span class="ikon"><?= tdl_ikon($ikon[$p['niva']] ?? 'info') ?></span>
             <div>
                 <strong><?= e($p['rubrik']) ?></strong>
                 <span class="dampad"><?= $p['text'] /* HTML från kontrollerna – byggs internt */ ?></span>

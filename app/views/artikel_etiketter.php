@@ -57,7 +57,7 @@ $streckElement = $layout['element'];
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Artikel-QR – <?= e($artikel['namn']) ?></title>
-<link rel="stylesheet" href="<?= e(u('/assets/app.css?v=' . e(\TDL_VERSION))) ?>">
+<link rel="stylesheet" href="<?= e(tdl_tillgang('assets/app.css')) ?>">
 <style>
     /* Sidan ställs in efter den fysiska etiketten – etikettskrivaren tar måttet härifrån */
     @page { size: <?= $vald['mm'] ?>; margin: 0; }

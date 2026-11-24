@@ -1,5 +1,6 @@
 <?php /** @var array $aktiva */ $csrf = \TDL\Support\Sakerhet::csrfToken(); ?>
-<div class="kort" style="max-width:440px;margin:6vh auto 0">
+<div class="inlogg">
+<div class="kort">
     <?php $v = \TDL\Support\Varumarke::alla(); ?>
     <?php if ($v['logotyp_fil'] !== ''): ?>
         <img src="<?= e(\TDL\Support\Varumarke::logotypUrl()) ?>" alt="<?= e($v['namn']) ?>" style="max-width:260px;height:auto;margin-bottom:12px">
@@ -74,13 +75,4 @@
     <p class="falt-hjalp">Glömd PIN? En administratör kan sätta en ny.</p>
     <?php endif; ?>
 </div>
-
-<style>
-    .valj-typ { display: flex; gap: 8px; margin: 0 0 18px; }
-    .valj-knapp {
-        flex: 1; padding: 10px 8px; border-radius: 10px; cursor: pointer;
-        border: 1px solid var(--kant); background: var(--yta); color: var(--text);
-        font-weight: 600; font-size: .9rem; line-height: 1.3; text-align: center;
-    }
-    .valj-knapp.vald { border-color: var(--accent); background: rgba(52, 211, 153, .1); }
-</style>
+</div><!-- /.inlogg -->

@@ -25,7 +25,7 @@ define('TDL_JOURNAL', TDL_STORAGE . '/journal');
 define('TDL_LOGG', TDL_STORAGE . '/logg');
 define('TDL_BACKUP', TDL_STORAGE . '/backup');
 define('TDL_SESSION', TDL_STORAGE . '/sessions');
-define('TDL_VERSION', '1.0.0-fas1');
+define('TDL_VERSION', '1.1.0');
 
 // Miljö: "produktion" (standard) eller "utveckling". I utvecklingsläge tillåts
 // appen visas i en förhandsgranskningsram (se Support/Sakerhet::headers), så

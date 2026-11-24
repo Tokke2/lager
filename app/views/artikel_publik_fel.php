@@ -10,7 +10,7 @@ $brand = \TDL\Support\Varumarke::alla();
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="<?= e($brand['farg_bakgrund']) ?>">
 <title><?= e($rubrik) ?> – <?= e($brand['namn']) ?></title>
-<link rel="stylesheet" href="<?= e(u('/assets/app.css?v=' . e(\TDL_VERSION))) ?>">
+<link rel="stylesheet" href="<?= e(tdl_tillgang('assets/app.css')) ?>">
 <style>:root { --accent: <?= e($brand['farg_primar']) ?>; --ok: <?= e($brand['farg_accent']) ?>; --bak: <?= e($brand['farg_bakgrund']) ?>; }</style>
 </head>
 <body class="<?= e($brand['tema'] === 'ljus' ? 'tema-ljus' : 'tema-mork') ?>">

@@ -2,9 +2,12 @@
 /**
  * Engångsinstallation av Tadega Lager.
  *
- *   php bin/installera.php --namn="Anna" --pin=4821
  *   php bin/installera.php --namn="Anna" --pin=4821 --foretag="Nordiska Bygg AB"
- *   php bin/installera.php --namn="Anna" --pin=4821 --med-demodata
+ *   php bin/installera.php --namn="Anna" --pin=4821 --losenord="…" --med-demodata
+ *
+ * Administratörens lösenord anges med --losenord. Utelämnas det skapas ett
+ * slumpat engångslösenord som skrivs ut en enda gång i terminalen – aldrig
+ * sparat i klartext och aldrig förvalt i koden.
  *
  * Namn och PIN väljs här – de är inte tillfälliga och behöver inte bytas
  * efter första inloggningen. Företagsnamnet sätts med --foretag (eller
@@ -36,6 +39,8 @@ use TDL\Support\Transaktion;
 $argvOpt = $argv ?? [];
 $namn = null;
 $pin = null;
+$losenord = null;
+$foretag = null;
 $medDemo = false;
 
 foreach (array_slice($argvOpt, 1) as $arg) {
@@ -43,10 +48,15 @@ foreach (array_slice($argvOpt, 1) as $arg) {
         $namn = substr($arg, 7);
     } elseif (str_starts_with($arg, '--pin=')) {
         $pin = substr($arg, 6);
+    } elseif (str_starts_with($arg, '--losenord=')) {
+        $losenord = substr($arg, 11);
+    } elseif (str_starts_with($arg, '--foretag=')) {
+        $foretag = trim(substr($arg, 10));
     } elseif ($arg === '--med-demodata') {
         $medDemo = true;
     } elseif ($arg === '--hjalp' || $arg === '-h') {
-        echo "Användning: php bin/installera.php --namn=\"Anna\" --pin=4821 [--med-demodata]\n";
+        echo "Användning: php bin/installera.php --namn=\"Anna\" --pin=4821 "
+            . "[--foretag=\"Firma AB\"] [--losenord=\"…\"] [--med-demodata]\n";
         exit(0);
     }
 }
@@ -66,13 +76,30 @@ if (Konto::behoverForstaAdmin()) {
     try {
         // PIN-koden anges här av administratören själv – ingen tillfällig kod.
         $konto = Konto::skapaForstaAdmin($namn, $pin, false);
+        $forstaAdmin = $konto;
         echo 'Första administratören skapad: ' . $konto['namn'] . ' (' . $konto['id'] . ")\n";
         echo "Dela aldrig PIN-koden i klartext. Den kan bytas under Mitt konto.\n";
-        $foretag = null;
-        foreach ($argv as $arg) {
-            if (str_starts_with($arg, '--foretag=')) {
-                $foretag = substr($arg, 10);
+
+        // Admin måste ha ett lösenord utöver PIN-koden. Utan det går det
+        // inte att logga in alls – därför sätts det redan här.
+        $genererat = false;
+        $valt = $losenord;
+        if ($valt === null || trim($valt) === '') {
+            // 20 tecken, bokstäver + siffror, skapas i stunden och skrivs
+            // bara ut en gång. Inget lösenord finns i källkoden.
+            $valt = 'Tdl-' . bin2hex(random_bytes(6)) . '-' . random_int(1000, 9999);
+            $genererat = true;
+        }
+        try {
+            Konto::andraLosenord($konto['id'], $valt, '', $konto, true);
+            if ($genererat) {
+                echo "\nEngångslösenord för $konto[namn]: $valt\n";
+                echo "Skriv ner det nu – det visas inte igen. Byt till ett eget lösenord\n";
+                echo "under Mitt konto → Byt lösenord vid första inloggningen.\n\n";
             }
+        } catch (AppFel $e) {
+            echo 'Kunde inte sätta lösenord: ' . $e->getMessage() . "\n";
+            echo "Kör om med --losenord=\"...\" (minst " . \TDL\Support\Konto::LÖSENORD_MIN . " tecken, bokstäver och siffror).\n";
         }
         if ($foretag !== null && trim($foretag) !== '') {
             Varumarke::spara(['namn' => trim($foretag), 'kortnamn' => trim($foretag)], $konto);

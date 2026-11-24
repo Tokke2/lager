@@ -43,7 +43,7 @@ $arAdmin = ($konto['roll'] ?? '') === 'admin';
 
 <div class="kort" style="margin-top:14px">
     <h2>Bilder och QR</h2>
-    <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
+    <div class="bild-qr">
         <div>
             <?php if ($bilder === []): ?>
                 <p class="dampad" style="margin-top:0">Inga bilder ännu. Lägg till en bild på artikelns framsida eller etikett.</p>
@@ -51,9 +51,16 @@ $arAdmin = ($konto['roll'] ?? '') === 'admin';
                 <div class="bild-ruta">
                     <?php foreach ($bilder as $bild): ?>
                         <figure style="margin:0">
-                            <?php $bildUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil']); ?>
+                            <?php
+                            $bildUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil']);
+                            $miniUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil'], null, 480);
+                            $storUrl = \TDL\Http\ArtikelQr::bildUrl($artikel['id'], $bild['fil'], null, 960);
+                            ?>
                             <a href="<?= e($bildUrl) ?>" target="_blank" rel="noopener">
-                                <img src="<?= e($bildUrl) ?>"
+                                <img src="<?= e($miniUrl) ?>"
+                                     srcset="<?= e($miniUrl) ?> 480w, <?= e($storUrl) ?> 960w"
+                                     sizes="(max-width: 620px) 44vw, 132px"
+                                     width="132" height="132" decoding="async"
                                      alt="<?= e($bild['text'] !== '' ? $bild['text'] : $artikel['namn']) ?>" loading="lazy">
                             </a>
                             <?php if ($arAdmin): ?>

@@ -129,4 +129,4 @@ $antalRader = count($sorterade);
     </p>
 </form>
 
-<script src="<?= e(u('/assets/plocklista.js?v=' . e(\TDL_VERSION))) ?>"></script>
+<script src="<?= e(tdl_tillgang('assets/plocklista.js')) ?>"></script>

@@ -41,10 +41,13 @@
 
 <div class="kort" style="margin-top:14px">
     <div class="tabell-rull">
-    <table>
+    <table class="kort-tabell">
+        <thead>
         <tr>
             <th>Artikel</th><th>Nr</th><th>Plats</th><th class="dold-mobil">Kategori</th><th>Saldohantering</th><th class="tal">Totalt</th><th>Per arbetsställe</th><th class="dold-mobil">Bilder</th><th></th>
         </tr>
+        </thead>
+        <tbody>
         <?php foreach ($rader as $rad): $a = $rad['artikel']; ?>
             <tr>
                 <td>
@@ -55,8 +58,8 @@
                         <span class="tag varning">under miniminivå</span>
                     <?php endif; ?>
                 </td>
-                <td class="mono"><?= e($a['artikelnummer']) ?></td>
-                <td>
+                <td class="mono" data-etikett="Nr"><?= e($a['artikelnummer']) ?></td>
+                <td data-etikett="Plats">
                     <?php $plats = \TDL\Domain\Lagerplats::platsText($a); ?>
                     <?php if ($plats === ''): ?>
                         <a href="<?= e(u('/artiklar/' . e($a['id']) . '/redigera')) ?>" class="tag varning">plats saknas</a>
@@ -64,7 +67,7 @@
                         <span class="mono" style="white-space:nowrap"><?= e($plats) ?></span>
                     <?php endif; ?>
                 </td>
-                <td class="dold-mobil">
+                <td class="dold-mobil" data-etikett="Kategori">
                     <?php $kat = (string) ($a['kategori'] ?? ''); ?>
                     <?php if ($kat === ''): ?>
                         <span class="dampad">–</span>
@@ -72,9 +75,9 @@
                         <span class="tag"><?= e($kat) ?></span>
                     <?php endif; ?>
                 </td>
-                <td><?= $a['sparningssatt'] === 'qr' ? 'QR per enhet' : 'Antal' ?></td>
-                <td class="tal"><?= (int) $rad['total'] ?> <?= e($a['enhet']) ?></td>
-                <td>
+                <td class="kort-dold" data-etikett="Saldohantering"><?= $a['sparningssatt'] === 'qr' ? 'QR per enhet' : 'Antal' ?></td>
+                <td class="tal" data-etikett="Totalt"><?= (int) $rad['total'] ?> <?= e($a['enhet']) ?></td>
+                <td class="kort-dold" data-etikett="Per arbetsställe">
                     <?php
                     $delar = [];
                     foreach (\TDL\Domain\Lager::platser() as $p) {
@@ -86,9 +89,9 @@
                     echo $delar === [] ? '<span class="dampad">–</span>' : implode(' · ', $delar);
                     ?>
                 </td>
-                <td class="dold-mobil">
+                <td class="dold-mobil" data-etikett="Bilder">
                     <?php if (!empty($a['bilder'])): ?>
-                        <img src="<?= e(\TDL\Http\ArtikelQr::bildUrl($a['id'], $a['bilder'][0]['fil'])) ?>" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px">
+                        <img src="<?= e(\TDL\Http\ArtikelQr::bildUrl($a['id'], $a['bilder'][0]['fil'], null, 240)) ?>" alt="" width="44" height="44" loading="lazy" decoding="async" style="width:44px;height:44px;object-fit:cover;border-radius:8px">
                     <?php else: ?>
                         <span class="dampad">–</span>
                     <?php endif; ?>
@@ -103,6 +106,7 @@
         <?php if ($rader === []): ?>
             <tr><td colspan="8" class="dampad">Inga artiklar matchar sökningen.</td></tr>
         <?php endif; ?>
+        </tbody>
     </table>
     </div>
 </div>

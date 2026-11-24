@@ -17,56 +17,13 @@
 $arAdmin = ($konto['roll'] ?? '') === 'admin';
 $stalle = $aktivtStalle ?? null;
 
-/**
- * Ikonbibliotek. Varje ikon är en eller flera SVG-banor i 24×24-rutnät,
- * ritade med samma linjetjocklek så att de känns som en familj.
- */
-$ikoner = [
-    // Nedåtpil i en låda – ta emot
-    'in' => '<path d="M12 4v10m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2"/>',
-    // Uppåtpil i en låda – lämna ut
-    'ut' => '<path d="M12 15V5m0 0L8 9m4-4l4 4"/><path d="M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2"/>',
-    // Checklista – plocklista
-    'lista' => '<path d="M4 6h2m0 0L4.5 7.5 6.5 5M4 12h2m0 0l-1.5 1.5L6.5 11M4 18h2m0 0l-1.5 1.5L6.5 17"/><path d="M10 6h10M10 12h10M10 18h10"/>',
-    // Två pilar åt varsitt håll – överför
-    'byt' => '<path d="M4 8h13m0 0l-3-3m3 3l-3 3"/><path d="M20 16H7m0 0l3-3m-3 3l3 3"/>',
-    // Sökram med hörn – skanna
-    'skanna' => '<path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2"/><path d="M4 12h16"/>',
-    // Bock i cirkel – inventering
-    'bock' => '<circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>',
-    // Böcker – artiklar
-    'artiklar' => '<path d="M4 5.5A1.5 1.5 0 015.5 4H10v16H5.5A1.5 1.5 0 014 18.5z"/><path d="M10 4h4.5A1.5 1.5 0 0116 5.5v13a1.5 1.5 0 01-1.5 1.5H10"/>',
-    // Hus – översikt
-    'hus' => '<path d="M4 10.5L12 4l8 6.5V19a1 1 0 01-1 1h-4v-6H9v6H5a1 1 0 01-1-1z"/>',
-    // Varningstriangel – under miniminivå
-    'varning' => '<path d="M12 4.5L21 19H3z"/><path d="M12 10v4"/><circle cx="12" cy="16.6" r=".7" fill="currentColor" stroke="none"/>',
-    // Rader med text – historik
-    'historik' => '<path d="M4 7h16M4 12h16M4 17h10"/>',
-    // Arkivlåda
-    'arkiv' => '<rect x="3.5" y="5" width="17" height="4.5" rx="1"/><path d="M5 9.5V18a1 1 0 001 1h12a1 1 0 001-1V9.5"/><path d="M10 13h4"/>',
-    // Etikett med hål
-    'etikett' => '<path d="M11.6 3.5H19a1 1 0 011 1v7.4a1 1 0 01-.3.7l-7.6 7.6a1 1 0 01-1.4 0l-7.4-7.4a1 1 0 010-1.4l7.6-7.6a1 1 0 01.7-.3z"/><circle cx="16" cy="8" r="1.3"/>',
-    // Platsnål – arbetsställe
-    'nal' => '<path d="M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z"/><circle cx="12" cy="11" r="2.2"/>',
-    // Person – konto
-    'person' => '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0114 0"/>',
-    // Kugghjul – system
-    'kugghjul' => '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4L6 18M18 18l-1.6-1.6M7.6 7.6L6 6"/>',
-    // Diamant – varumärke
-    'diamant' => '<path d="M12 3.5l2.6 4.3 4.9.7-3.5 3.5.8 4.9L12 14.6l-4.8 2.3.8-4.9L4.5 8.5l4.9-.7z"/>',
-    // Plus i sköld – hälsokontroll
-    'halsa' => '<path d="M12 3.5l7 2.6v6c0 4-3 7-7 8.4-4-1.4-7-4.4-7-8.4v-6z"/><path d="M12 9v5M9.5 11.5h5"/>',
-    // Nyckel
-    'nyckel' => '<circle cx="8" cy="12" r="3.5"/><path d="M11.5 12H20m-3 0v3m3-3v2.5"/>',
-];
+require_once __DIR__ . '/ikoner.php';
 
-/** En ikon som inline-SVG. Ärver färg via currentColor. */
-$svg = function (string $namn) use ($ikoner): string {
-    $banor = $ikoner[$namn] ?? $ikoner['hus'];
-    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" '
-        . 'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" '
-        . 'focusable="false">' . $banor . '</svg>';
-};
+/**
+ * Ikonerna ligger i ikoner.php (en gemensam SVG-sprite). Här behålls bara
+ * en tunn hjälpare så att kortmarkeringen nedan blir läsbar.
+ */
+$svg = static fn (string $namn): string => tdl_ikon($namn);
 
 /** Ett kort på startsidan. */
 $kort = function (string $href, string $titel, string $text, string $ikon, string $extra = '') use ($svg): string {
@@ -77,7 +34,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
         . '<strong>' . e($titel) . '</strong>'
         . '<span class="dampad">' . e($text) . '</span>'
         . '</span>'
-        . '<span class="start-pil" aria-hidden="true">→</span>'
+        . '<span class="start-pil" aria-hidden="true">' . tdl_ikon('pil-hoger') . '</span>'
         . '</a>';
 };
 ?>
@@ -94,6 +51,26 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
             <?php endif; ?>
         </p>
     </header>
+
+    <?php // ---- Läget i siffror: det man oftast vill veta först ---- ?>
+    <div class="start-siffror" aria-label="Läget i korthet">
+        <a class="start-siffra" href="<?= e(u('/artiklar')) ?>">
+            <span class="tal"><?= (int) $antalArtiklar ?></span>
+            <span class="etikett">aktiva artiklar</span>
+        </a>
+        <a class="start-siffra" href="<?= e(u('/platser')) ?>">
+            <span class="tal"><?= (int) $antalPlatser ?></span>
+            <span class="etikett">arbetsställen</span>
+        </a>
+        <a class="start-siffra" href="<?= e(u('/skanna')) ?>">
+            <span class="tal"><?= (int) $antalEnheter ?></span>
+            <span class="etikett">QR-enheter</span>
+        </a>
+        <a class="start-siffra<?= $underMin > 0 ? ' varning' : '' ?>" href="<?= e(u('/miniminiva')) ?>">
+            <span class="tal"><?= (int) $underMin ?></span>
+            <span class="etikett">under miniminivå</span>
+        </a>
+    </div>
 
     <?php // ---- Första gången: kunden måste sätta sitt eget namn ---- ?>
     <?php if (($konto['roll'] ?? '') === 'admin' && !\TDL\Support\Varumarke::harEgetNamn()): ?>
@@ -178,7 +155,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
                         <strong>Byt arbetsställe</strong>
                         <span class="dampad">Välj ett annat ställe för passet</span>
                     </span>
-                    <span class="start-pil" aria-hidden="true">→</span>
+                    <span class="start-pil" aria-hidden="true"><?= tdl_ikon('pil-hoger') ?></span>
                 </button>
             </form>
         </div>

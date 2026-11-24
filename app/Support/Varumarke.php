@@ -123,9 +123,16 @@ final class Varumarke
         $namn = trim($namn) !== '' ? trim($namn) : 'Lager';
         $symbol = 24.0;
         $mellan = 9.0;
-        $textbredd = max(34.0, mb_strlen($namn) * 8.6);
+        // Textbredden är en uppskattning: 15,5 px fetstil ligger runt 9,5 px
+        // per tecken i de typsnitt som används. Tidigare räknades 8,6 px,
+        // vilket klippte långa företagsnamn (t.ex. "Nordiska Bygg AB").
+        // textLength nedan låser dessutom texten till rutan, så den aldrig
+        // kan rinna utanför oavsett vilket typsnitt som finns på enheten.
+        $tecken = mb_strlen($namn);
+        $textbredd = max(34.0, $tecken * 9.8 + 6.0);
         $bredd = $symbol + $mellan + $textbredd;
         $hojd = 26.0;
+        $textStorlek = $tecken > 28 ? 13.5 : 15.5;
 
         return sprintf(
             '<svg xmlns="http://www.w3.org/2000/svg" class="varumarke-svg" viewBox="0 0 %.0F %.0F" '
@@ -140,14 +147,39 @@ final class Varumarke
             . '<rect x="19" y="34" width="17" height="5.4" rx="2.7" fill="url(#vm-g)"/>'
             . '<circle cx="45.5" cy="46" r="5.4" fill="var(--ok)"/>'
             . '</g>'
-            . '<text x="%.1F" y="19" fill="var(--text)" font-size="15.5" font-weight="800" '
-            . 'font-family="Montserrat, system-ui, sans-serif" letter-spacing="-.2">%s</text>'
+            . '<text x="%.1F" y="19" fill="var(--text)" font-size="%.1F" font-weight="800" '
+            . 'font-family="Montserrat, system-ui, sans-serif" letter-spacing="-.2" '
+            . 'textLength="%.1F" lengthAdjust="spacingAndGlyphs">%s</text>'
             . '</svg>',
             $bredd, $hojd, $bredd, $hojd,
             htmlspecialchars($namn, ENT_QUOTES, 'UTF-8'),
             $symbol / 64.0, $symbol + $mellan,
+            $textStorlek, $textbredd - 6.0,
             htmlspecialchars($namn, ENT_QUOTES, 'UTF-8')
         );
+    }
+
+    /**
+     * Bara märket – utan företagsnamnet.
+     *
+     * Används i sidhuvudet på smala skärmar. Där ryms inte hela ordmärket
+     * utan att knapparna kläms ihop; symbolen är fortfarande skarp och
+     * klickytan har kvar sin aria-label från länken runt omkring.
+     */
+    public static function symbolSvg(): string
+    {
+        return '<svg xmlns="http://www.w3.org/2000/svg" class="varumarke-marke" viewBox="0 0 26 26" '
+            . 'width="26" height="26" role="img" aria-hidden="true" focusable="false">'
+            . '<defs><linearGradient id="vm-g-liten" x1="0" y1="0" x2="1" y2="1">'
+            . '<stop offset="0" stop-color="var(--accent)"/>'
+            . '<stop offset="1" stop-color="var(--accent2)"/></linearGradient></defs>'
+            . '<g transform="translate(0.5,0.5) scale(0.375)">'
+            . '<rect x="10.5" y="10.5" width="43" height="43" rx="14" fill="none" '
+            . 'stroke="url(#vm-g-liten)" stroke-width="5.8"/>'
+            . '<rect x="19" y="24" width="26" height="5.4" rx="2.7" fill="url(#vm-g-liten)"/>'
+            . '<rect x="19" y="34" width="17" height="5.4" rx="2.7" fill="url(#vm-g-liten)"/>'
+            . '<circle cx="45.5" cy="46" r="5.4" fill="var(--ok)"/>'
+            . '</g></svg>';
     }
 
     /** Skriv vitmärkningsinställningar. Kräver skrivlås och admin. */

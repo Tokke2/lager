@@ -25,6 +25,10 @@ $skrivarvarning = \TDL\Support\Skrivare::varning($vald, $skrivare);
 // Raderna räknas med sina riktiga radavstånd: 1 pt = 0,353 mm.
 // paddingen ligger inne i höjden (box-sizing: border-box) – räkna den en gång
 $padMm = 2 * max(1, round($vald['mm_hojd'] * 0.04, 1));
+
+// Namnstorleken måste räknas ut innan radhöjderna – den används i alla
+// tre. (Tidigare låg raden efter beräkningen och gav PHP-varningar.)
+$namnPt = $arArk ? 14 : round(min(16, max(7, 0.16 * $vald['mm_hojd'])), 1);
 $namnMm = $namnPt * 1.05 * 0.353;
 $kodMm = max(6, $namnPt * 0.62) * 1.1 * 0.353;
 $regelMm = max(5, $namnPt * 0.42) * 1.2 * 0.353 * 2;      // två rader
@@ -39,7 +43,6 @@ $qrMm = $arArk
         $vald['mm_bredd'] > 40 ? round($vald['mm_bredd'] * 0.9, 1) : round($vald['mm_bredd'] - 4, 1)
     ));
 
-$namnPt = $arArk ? 14 : round(min(16, max(7, 0.16 * $vald['mm_hojd'])), 1);
 $kod = \TDL\Support\Koder::visa($plats['qr']);
 ?>
 <!doctype html>
@@ -48,7 +51,7 @@ $kod = \TDL\Support\Koder::visa($plats['qr']);
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arbetsplatsetikett – <?= e($plats['namn']) ?></title>
-<link rel="stylesheet" href="<?= e(u('/assets/app.css?v=' . e(\TDL_VERSION))) ?>">
+<link rel="stylesheet" href="<?= e(tdl_tillgang('assets/app.css')) ?>">
 <style>
     @page { size: <?= $vald['mm'] ?>; margin: 0; }
 

@@ -280,7 +280,10 @@ final class Installation
             omdirigera('/mitt-konto/losenord');
         }
         try {
-            Konto::andraLosenord($konto['id'], $nytt, post('nuvarande'), $konto, true);
+            // false = bytet görs av kontot självt, alltså måste nuvarande lösenord
+            // anges och verifieras. admin-flaggan är bara för administratörens
+            // återställning av någon annans lösenord.
+            Konto::andraLosenord($konto['id'], $nytt, post('nuvarande'), $konto, false);
         } catch (AppFel $e) {
             flash('fel', $e->getMessage());
             omdirigera('/mitt-konto/losenord');

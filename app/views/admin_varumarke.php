@@ -92,8 +92,8 @@ $csrf = \TDL\Support\Sakerhet::csrfToken();
             <?= \TDL\Support\Varumarke::menyLogotyp((string) $v['namn']) ?>
         </div>
         <?php if ($v['logotyp_fil'] === ''): ?>
-        <img src="<?= e(u('/assets/marke.svg?v=' . e(\TDL_VERSION))) ?>" alt="" style="height:56px;width:auto">
-        <img src="<?= e(u('/assets/ikon.svg?v=' . e(\TDL_VERSION))) ?>" alt="" style="height:56px;width:auto;border-radius:10px">
+        <img src="<?= e(tdl_tillgang('assets/marke.svg')) ?>" alt="" style="height:56px;width:auto">
+        <img src="<?= e(tdl_tillgang('assets/ikon.svg')) ?>" alt="" style="height:56px;width:auto;border-radius:10px">
         <?php endif; ?>
     </div>
 </div>

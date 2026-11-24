@@ -1,0 +1,13 @@
+# Lagerdata hör till installationen, inte till källkoden.
+# Innehåller konton, PIN-hashar, saldon och uppladdade bilder.
+/storage/
+
+# Operativsystemets skräpfiler
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Redigerarnas egna mappar
+.idea/
+.vscode/
+*.swp

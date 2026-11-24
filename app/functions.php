@@ -23,6 +23,22 @@ function u(string $vag): string
     return \TDL\Support\Bas::url($vag);
 }
 
+/**
+ * Adress till en statisk fil med innehållsversion.
+ *
+ * Appen installeras som PWA och service workern cachar skalet. Om adressen
+ * är konstant (?v=1.0.0) kan en uppdaterad CSS/JS bli kvar i cachen hur
+ * många gånger användaren än laddar om. Här används filens ändringstid som
+ * version: när filen ändras ändras adressen, och då hämtas den nya filen
+ * automatiskt – utan att någon behöver komma ihåg att bumpa en siffra.
+ */
+function tdl_tillgang(string $sokvag): string
+{
+    $fil = TDL_PUBLIC . '/' . ltrim($sokvag, '/');
+    $version = is_file($fil) ? (string) filemtime($fil) : \TDL_VERSION;
+    return u('/' . ltrim($sokvag, '/')) . '?v=' . rawurlencode($version);
+}
+
 /** JSON-kodning med konsekventa flaggor (används även för ledger-hashar). */
 function tdl_json(mixed $data): string
 {

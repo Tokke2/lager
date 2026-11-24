@@ -244,9 +244,27 @@ final class ArtikelQr
             http_response_code(404);
             exit;
         }
+
+        // ?w=480 ger en cachad miniatyr i stället för originalet. Listor och
+        // rutnät använder den, så telefonen slipper avkoda megapixelbilder
+        // för att visa en liten ruta. Bara kända bredder tillåts.
+        $bredd = (int) ($_GET['w'] ?? 0);
+        if ($bredd > 0 && in_array($bredd, [240, 480, 720, 960], true)) {
+            $mini = Bilder::miniatyr($sokvag, $bredd);
+            if ($mini !== null) {
+                $sokvag = $mini;
+            }
+        }
+
+        $etag = '"' . md5_file($sokvag) . '"';
+        if (($_SERVER['HTTP_IF_NONE_MATCH'] ?? '') === $etag) {
+            http_response_code(304);
+            exit;
+        }
         header('Content-Type: ' . Bilder::mimeTyp($sokvag));
         header('Content-Length: ' . (string) filesize($sokvag));
-        header('Cache-Control: private, max-age=3600');
+        header('ETag: ' . $etag);
+        header('Cache-Control: private, max-age=604800');
         header('X-Content-Type-Options: nosniff');
         readfile($sokvag);
         exit;
@@ -385,12 +403,15 @@ final class ArtikelQr
     }
 
     /** Signerad bild-URL – fungerar utan inloggning så länge QR-länken är giltig. */
-    public static function bildUrl(string $artikelId, string $fil, ?string $nonce = null): string
+    public static function bildUrl(string $artikelId, string $fil, ?string $nonce = null, ?int $bredd = null): string
     {
         $nonce ??= self::nonce($artikelId);
         $url = '/bilder/' . rawurlencode(strtoupper($artikelId)) . '/' . rawurlencode($fil)
             . '?n=' . rawurlencode($nonce)
             . '&s=' . rawurlencode(self::signatur($artikelId, $nonce));
+        if ($bredd !== null && $bredd > 0) {
+            $url .= '&w=' . (int) $bredd;
+        }
         // Förhandsgranskningsläget har inga cookies – då måste sessions-id:t följa
         // med i bildadressen, annars svarar /bilder/ 404.
         $sid = \TDL\Support\Auth::sidFraga();
