@@ -45,6 +45,7 @@ final class HalsoKontroll
             'rättigheter' => 'rattigheter',
             'sessionskatalog' => 'sessioner',
             'installation' => 'installation',
+            'prestanda' => 'prestanda',
         ] as $id => $metod) {
             $punkt = self::{'kontroll_' . str_replace('ä', 'a', $metod)}();
             $punkt['id'] = $id;
@@ -243,6 +244,49 @@ final class HalsoKontroll
     private static function punkt(string $niva, string $rubrik, string $text, string $rad): array
     {
         return ['niva' => $niva, 'rubrik' => $rubrik, 'text' => $text, 'rad' => $rad];
+    }
+
+    /**
+     * Prestandabudget: hur stor är baslasten som varje sida hämtar?
+     *
+     * app.css och app.js laddas på alla sidor; resten laddas bara där det
+     * behövs (t.ex. QR-läsaren på skanna). Stora filer mäts okomprimerat
+     * och som gzip, eftersom webbservern komprimerar dem. Budgeten är satt
+     * med marginal – går en ändring över syns det här i stället för hos
+     * användaren med långsam laddning i kassan.
+     */
+    private static function kontroll_prestanda(): array
+    {
+        $granser = ['css' => 70_000, 'js' => 70_000, 'gzip' => 45_000];
+        $filer = [TDL_PUBLIC . '/assets/app.css', TDL_PUBLIC . '/assets/app.js'];
+        $rå = 0;
+        $gzip = 0;
+        $saknas = [];
+        foreach ($filer as $fil) {
+            if (!is_file($fil)) {
+                $saknas[] = basename($fil);
+                continue;
+            }
+            $innehall = (string) file_get_contents($fil);
+            $rå += strlen($innehall);
+            $packat = @gzencode($innehall, 6);
+            $gzip += $packat === false ? strlen($innehall) : strlen($packat);
+        }
+        if ($saknas !== []) {
+            return self::punkt(self::NIVA_FEL, 'Tillgångsfilerna saknas',
+                'Hittar inte ' . implode(', ', array_map(static fn ($f) => e($f), $saknas)) . ' i public/assets. Ladda upp dem igen.', '');
+        }
+        $kb = static fn (int $b): string => number_format($b / 1000, 1, ',', ' ') . ' kB';
+        $over = $rå > ($granser['css'] + $granser['js']) || $gzip > $granser['gzip'];
+        $text = 'CSS och JS som varje sida hämtar: ' . $kb($rå) . ' okomprimerat, '
+            . $kb($gzip) . ' komprimerat. Budget: '
+            . $kb($granser['css'] + $granser['js']) . ' / ' . $kb($granser['gzip']) . '.'
+            . ' QR-läsaren (jsqr.js) laddas bara på skanna-sidan och räknas inte hit.';
+        if ($over) {
+            return self::punkt(self::NIVA_VARNING, 'Baslasten är över budget', $text
+                . ' Kontrollera att inget nytt bibliotek laddas på alla sidor.', '');
+        }
+        return self::punkt(self::NIVA_OK, 'Baslasten håller sig inom budget', $text, '');
     }
 
     /** Kort text till menyn: tom sträng när allt är bra. */

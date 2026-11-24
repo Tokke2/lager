@@ -33,7 +33,7 @@ första dagen.** Allt nedan kan byggas i PHP/JS i den här kodbasen.
 | 21 | Flera skrivarprofiler per hylla | Utskrift | Medel | S | Förslag |
 | 22 | Web Push från service workern | Notiser | Medel | M | Förslag |
 | 23 | Energisparläge med batteribudget | Drift | Medel | S | Delvis |
-| 24 | Prestandabudget i Hälsokontrollen | Drift | Medel | S | Förslag |
+| 24 | Prestandabudget i Hälsokontrollen | Drift | Medel | S | **Klar** |
 | 25 | Gäst-PIN och läsbehörighet per ställe | Säkerhet | Hög | S | Förslag |
 
 Status: **Delvis** = en grund finns i koden men funktionen är inte komplett.
@@ -200,6 +200,12 @@ Hälsokontrollen får tre nya rader: tid till första ritning (LCP),
 JavaScript-arbete per sidladdning och överförd CSS/JS-mängd. Gränserna
 ligger i koden, så en framtida ändring som gör appen tung syns direkt i
 adminpanelen i stället för hos användaren.
+
+**Klart (CSS/JS-mängd):** Hälsokontrollen mäter `app.css` + `app.js` både
+okomprimerat och som gzip och jämför mot en budget i
+`HalsoKontroll::kontroll_prestanda()`. Stora lazy-filer som QR-läsaren
+räknas inte in, eftersom de bara hämtas på skanna-sidan. LCP och
+JavaScript-arbete kräver mätning i webbläsaren och återstår.
 
 ---
 
