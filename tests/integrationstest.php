@@ -2763,6 +2763,71 @@ prov('DU-05 äldre öppen inventering syns även utanför senaste listan', funct
     }
 });
 
+/* ---------------------------------------------------------- Sessionsskydd */
+prov('SS-01 PIN-byte upphäver gamla sessioner men ny PIN fungerar', function () use ($admin) {
+    $u = Konto::skapaKonto('Session Prov', '5837', 'personal', $admin);
+    \TDL\Support\Auth::startaSession();
+    \TDL\Support\Auth::loggaIn(Konto::verifieraInloggning('Session Prov', '5837'));
+    krav((\TDL\Support\Auth::inloggad()['id'] ?? '') === $u['id'], 'ny session ska fungera');
+    $gammal = $_SESSION;
+    Konto::andraPin($u['id'], '8457', $admin, true, true);
+    krav(\TDL\Support\Auth::inloggad() === null, 'sessionen ska upphöra efter återställning');
+    // En annan enhet med samma gamla inloggning är också spärrad.
+    $_SESSION = $gammal;
+    krav(\TDL\Support\Auth::inloggad() === null, 'även den andra sessionen ska upphöra');
+    \TDL\Support\Auth::loggaIn(Konto::verifieraInloggning('Session Prov', '8457'));
+    krav((\TDL\Support\Auth::inloggad()['id'] ?? '') === $u['id'], 'ny PIN ska fungera');
+    krav(!empty(\TDL\Support\Auth::inloggad()['maste_byta_pin']), 'återställningen är tillfällig');
+    \TDL\Support\Auth::loggaUt();
+});
+prov('SS-02 gamla sessioner utan PIN-bindning kan inte användas', function () use ($admin) {
+    \TDL\Support\Auth::startaSession();
+    $_SESSION = ['konto_id' => $admin['id'], 'senast_aktiv' => time(), 'loggad_in' => time()];
+    krav(\TDL\Support\Auth::inloggad() === null, 'äldre session måste logga in igen');
+    \TDL\Support\Auth::loggaUt();
+});
+prov('SS-03 sessionen går ut efter inaktivitet och maximal livslängd', function () use ($admin) {
+    \TDL\Support\Auth::startaSession();
+    \TDL\Support\Auth::loggaIn(Konto::aktivAnvandare($admin['id']));
+    $_SESSION['senast_aktiv'] = time() - (\TDL\Support\Auth::IDLE_MINUTER * 60 + 1);
+    krav(\TDL\Support\Auth::inloggad() === null, 'inaktiv session ska gå ut');
+    \TDL\Support\Auth::loggaIn(Konto::aktivAnvandare($admin['id']));
+    $_SESSION['loggad_in'] = time() - (\TDL\Support\Auth::MAX_TIMMAR * 3600 + 1);
+    $_SESSION['senast_aktiv'] = time();
+    krav(\TDL\Support\Auth::inloggad() === null, 'även en aktiv session har en maximal livslängd');
+    \TDL\Support\Auth::loggaUt();
+});
+prov('SS-04 avstängt och återaktiverat konto återupplivar inte gamla sessioner', function () use ($admin) {
+    $u = Konto::skapaKonto('Session Avstängd', '6938', 'personal', $admin);
+    \TDL\Support\Auth::startaSession();
+    \TDL\Support\Auth::loggaIn(Konto::verifieraInloggning('Session Avstängd', '6938'));
+    $gammal = $_SESSION;
+    Konto::stangAv($u['id'], $admin);
+    krav(\TDL\Support\Auth::inloggad() === null, 'avstängt konto saknar session');
+    Konto::aktivera($u['id'], $admin);
+    \TDL\Support\Auth::startaSession();
+    $_SESSION = $gammal;
+    krav(\TDL\Support\Auth::inloggad() === null, 'återaktivering får inte återuppliva session');
+    \TDL\Support\Auth::loggaUt();
+});
+
+prov('SS-05 utloggning med meddelande skapar en ny anonym session', function () use ($admin) {
+    \TDL\Support\Auth::startaSession();
+    \TDL\Support\Auth::loggaIn(Konto::aktivAnvandare($admin['id']));
+    $id = session_id();
+    \TDL\Support\Auth::loggaUt('Logga in igen.');
+    krav(session_id() !== '' && session_id() !== $id, 'den nya anonyma sessionen ska ha ett nytt id');
+    krav(\TDL\Support\Auth::inloggad() === null, 'nya sessionen är inte inloggad');
+    krav(($_SESSION['flash'][0]['text'] ?? '') === 'Logga in igen.', 'meddelandet finns i nya sessionen');
+    \TDL\Support\Auth::loggaUt();
+});
+prov('SS-06 PIN-återställning via konton kräver byte och eget byte loggar ut', function () {
+    $kod = file_get_contents(dirname(__DIR__) . '/app/Http/Sidor.php');
+    krav(str_contains($kod, 'Konto::andraPin($id, $pin, $konto, true, true)'), 'administratörens återställning ska vara tillfällig');
+    krav(str_contains($kod, "Auth::loggaUt('Din PIN-kod är bytt."), 'eget PIN-byte ska logga ut');
+    krav(str_contains($kod, "omdirigera('/login')"), 'det ska gå att logga in på nytt');
+});
+
 /* ---------------------------------------------------------- Sammanställning */
 echo "Tadega Lager – integrationstest\n";
 echo str_repeat('=', 60) . "\n";

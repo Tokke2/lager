@@ -4,7 +4,8 @@
     <br><strong>Stäng av</strong> ett konto direkt när någon slutar – personen kan då inte logga in,
     och PIN-koden slutar gälla omedelbart. Återaktiverar du kontot senare behöver personen en ny PIN.
     Allt lagras hashat och kan inte läsas ut –
-    vid skapande eller återställning visas den en gång så att du kan lämna den till personen.</p>
+    vid skapande eller återställning visas den en gång så att du kan lämna den till personen.
+    Personen måste sedan välja sin egen PIN vid inloggning.</p>
 
 <div class="kort">
     <h2>Nytt konto</h2>

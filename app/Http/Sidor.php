@@ -1699,8 +1699,8 @@ final class Sidor
         if ($pin === '') {
             $pin = Kontohantering::slumpaPin();
         }
-        Konto::andraPin($id, $pin, $konto, true);
-        flash('ok', 'Ny PIN-kod satt: ' . $pin . ' (visas bara nu).');
+        Konto::andraPin($id, $pin, $konto, true, true);
+        flash('ok', 'Tillfällig PIN-kod satt: ' . $pin . ' (visas bara nu). Personen måste välja en egen PIN vid inloggning.');
         omdirigera('/konton');
     }
 
@@ -1741,7 +1741,7 @@ final class Sidor
             throw new AppFel('De nya PIN-koderna stämmer inte överens.');
         }
         Konto::bytaPin($konto['id'], post('nuvarande_pin'), post('pin'));
-        flash('ok', 'Din PIN-kod är bytt.');
-        omdirigera('/mitt-konto');
+        Auth::loggaUt('Din PIN-kod är bytt. Logga in med den nya PIN-koden.');
+        omdirigera('/login');
     }
 }

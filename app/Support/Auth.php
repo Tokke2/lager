@@ -83,6 +83,22 @@ final class Auth
             self::loggaUt();
             return null;
         }
+        // Bind sessionen till den PIN-hash som faktiskt verifierades vid
+        // inloggning. Äldre sessioner utan bindning får logga in på nytt.
+        // PIN-byte/återställning och avstängning byter hash och upphäver då
+        // alla gamla sessioner på nästa begäran, även efter återaktivering.
+        $fingeravtryck = $_SESSION['pin_fingeravtryck'] ?? null;
+        $pinHash = $konto['pin_hash'] ?? null;
+        if (!is_string($fingeravtryck) || !is_string($pinHash) || $pinHash === ''
+            || !hash_equals($fingeravtryck, hash('sha256', $pinHash))) {
+            self::loggaUt('Sessionen är inte längre giltig. Logga in igen.');
+            return null;
+        }
+        $start = (int) ($_SESSION['loggad_in'] ?? 0);
+        if ($start <= 0 || (time() - $start) > self::MAX_TIMMAR * 3600) {
+            self::loggaUt('Sessionen har gått ut. Logga in igen.');
+            return null;
+        }
         // Idle-timeout
         $senast = (int) ($_SESSION['senast_aktiv'] ?? 0);
         if ($senast > 0 && (time() - $senast) > self::IDLE_MINUTER * 60) {
@@ -115,6 +131,7 @@ final class Auth
     {
         session_regenerate_id(true);
         $_SESSION['konto_id'] = $konto['id'];
+        $_SESSION['pin_fingeravtryck'] = hash('sha256', (string) $konto['pin_hash']);
         $_SESSION['senast_aktiv'] = time();
         $_SESSION['loggad_in'] = time();
         unset($_SESSION['csrf']);
@@ -136,6 +153,10 @@ final class Auth
         }
         session_destroy();
         if ($meddelande !== null) {
+            // Skapa en ny anonym session för meddelandet efter utloggningen.
+            // Det gamla id:t ska inte återanvändas, och webbläsaren behöver
+            // en ny kaka för att flash-meddelandet ska överleva redirecten.
+            session_id('');
             session_start();
             flash('info', $meddelande);
         }

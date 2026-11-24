@@ -53,29 +53,29 @@ final class Konto
      */
     public static function verifieraInloggning(string $namn, string $pin): array
     {
-        $konto = self::kontoViaNamn($namn);
-        if ($konto === null) {
-            throw new AppFel('Fel namn eller PIN-kod.');
-        }
-        if (empty($konto['aktiv'])) {
-            throw new AppFel('Kontot är avstängt. Kontakta en administratör.');
-        }
-        $nu = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        if (!empty($konto['sparrad_till'])) {
-            $till = new \DateTimeImmutable((string) $konto['sparrad_till']);
-            if ($till > $nu) {
-                $kvar = max(1, (int) ceil((($till->getTimestamp() - $nu->getTimestamp()) / 60)));
-                throw new AppFel('För många felaktiga försök. Försök igen om ' . $kvar . ' minut(er).');
+        return Las::under(function () use ($namn, $pin) {
+            $konto = self::kontoViaNamn($namn);
+            if ($konto === null) {
+                throw new AppFel('Fel namn eller PIN-kod.');
             }
-        }
+            if (empty($konto['aktiv'])) {
+                throw new AppFel('Kontot är avstängt. Kontakta en administratör.');
+            }
+            $nu = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+            if (!empty($konto['sparrad_till'])) {
+                $till = new \DateTimeImmutable((string) $konto['sparrad_till']);
+                if ($till > $nu) {
+                    $kvar = max(1, (int) ceil((($till->getTimestamp() - $nu->getTimestamp()) / 60)));
+                    throw new AppFel('För många felaktiga försök. Försök igen om ' . $kvar . ' minut(er).');
+                }
+            }
 
-        if (!password_verify($pin, (string) $konto['pin_hash'])) {
-            self::registreraMisslyckande($konto);
-            throw new AppFel('Fel namn eller PIN-kod.');
-        }
+            if (!password_verify($pin, (string) $konto['pin_hash'])) {
+                self::registreraMisslyckande($konto);
+                throw new AppFel('Fel namn eller PIN-kod.');
+            }
 
-        // Lyckat försök: nollställ räknaren.
-        Las::under(function () use ($konto) {
+            // Lyckat försök: nollställ räknaren medan samma skrivlås hålls.
             $tx = new Transaktion('konto_andrad', null);
             $fil = $tx->fil('anvandare');
             // Befintliga lösenordsuppgifter används inte längre. Rensa dem
@@ -93,8 +93,8 @@ final class Konto
             });
             $tx->sattFil('anvandare', $fil);
             $tx->spara();
+            return Json::hitta($fil, $konto['id']);
         });
-        return self::aktivAnvandare($konto['id']) ?? $konto;
     }
 
     public static function valideraPin(string $pin): string
@@ -249,14 +249,18 @@ final class Konto
 
     public static function bytaPin(string $kontoId, string $nuvarandePin, string $nyPin): void
     {
-        $konto = self::aktivAnvandare($kontoId);
-        if ($konto === null) {
-            throw new AppFel('Kontot är inte aktivt.');
-        }
-        if (!password_verify($nuvarandePin, (string) $konto['pin_hash'])) {
-            throw new AppFel('Den nuvarande PIN-koden stämmer inte.');
-        }
-        self::andraPin($kontoId, $nyPin, $konto);
+        // Verifiering och byte hör ihop: en samtidig återställning får inte
+        // hinna byta PIN mellan kontrollen och själva skrivningen.
+        Las::under(function () use ($kontoId, $nuvarandePin, $nyPin) {
+            $konto = self::aktivAnvandare($kontoId);
+            if ($konto === null) {
+                throw new AppFel('Kontot är inte aktivt.');
+            }
+            if (!password_verify($nuvarandePin, (string) $konto['pin_hash'])) {
+                throw new AppFel('Den nuvarande PIN-koden stämmer inte.');
+            }
+            self::andraPin($kontoId, $nyPin, $konto);
+        });
     }
 
     public static function stangAv(string $kontoId, array $av): void
