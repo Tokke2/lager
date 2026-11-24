@@ -316,6 +316,19 @@ final class Sidor
             $fonster = 90;
         }
 
+        // Historiken kan vara stor. Samma svar återanvänds i 60 sekunder;
+        // ett nytt uttag syns alltså inom en minut, vilket är gott nog för
+        // en inköpslista och sparar en full genomläsning per sidladdning.
+        $cache = $_SESSION['bestallning_cache'] ?? null;
+        if (session_status() === PHP_SESSION_ACTIVE && is_array($cache)
+            && ($cache['ledtid'] ?? null) === $ledtid
+            && ($cache['tackning'] ?? null) === $tackning
+            && ($cache['fonster'] ?? null) === $fonster
+            && (time() - (int) ($cache['tid'] ?? 0)) < 60
+            && is_array($cache['svar'] ?? null)) {
+            return $cache['svar'];
+        }
+
         $start = gmdate('Y-m-d\TH:i:s\Z', time() - $fonster * 86400);
         $forbrukning = [];
         try {
