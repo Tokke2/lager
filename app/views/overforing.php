@@ -2,6 +2,12 @@
 <h1>Överföring</h1>
 <p class="dampad">Flytta antal eller QR-enheter mellan två arbetsställen. Käll- och målsaldo uppdateras sammanhängande.</p>
 
+<?php if (($valdArtikel ?? '') !== ''): ?>
+    <div class="flash info">
+        Förslaget är förifyllt från listan under miniminivå. Kontrollera antalet och genomför.
+    </div>
+<?php endif; ?>
+
 <form method="post" action="<?= e(u('/overforing')) ?>" class="kort">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
 
@@ -9,7 +15,7 @@
     <select id="artikel_id" name="artikel_id" required>
         <option value="">Välj artikel …</option>
         <?php foreach ($artiklar as $a): ?>
-            <option value="<?= e($a['id']) ?>" data-spar="<?= e($a['sparningssatt']) ?>">
+            <option value="<?= e($a['id']) ?>" data-spar="<?= e($a['sparningssatt']) ?>" <?= ($valdArtikel ?? '') === $a['id'] ? 'selected' : '' ?>>
                 <?= e($a['namn']) ?> (<?= e($a['artikelnummer']) ?>) – <?= $a['sparningssatt'] === 'qr' ? 'QR per enhet' : 'antal' ?>
             </option>
         <?php endforeach; ?>
@@ -35,7 +41,7 @@
             <select id="till_plats_id" name="till_plats_id" required>
                 <option value="">Välj …</option>
                 <?php foreach ($platser as $p): ?>
-                    <option value="<?= e($p['id']) ?>"><?= e($p['namn']) ?> (<?= e($p['kod']) ?>)</option>
+                    <option value="<?= e($p['id']) ?>" <?= ($valdTill ?? '') === $p['id'] ? 'selected' : '' ?>><?= e($p['namn']) ?> (<?= e($p['kod']) ?>)</option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -43,7 +49,7 @@
 
     <div id="antal-falt">
         <label for="antal">Antal</label>
-        <input id="antal" name="antal" type="number" min="0" step="1">
+        <input id="antal" name="antal" type="number" min="0" step="1" value="<?= (int) ($valdAntal ?? 0) ?: '' ?>">
     </div>
 
     <div id="koder-falt" style="display:none">

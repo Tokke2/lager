@@ -1194,7 +1194,7 @@ body.tema-ljus .foto-kort { background: var(--yta2); }
     .kort-tabell td:last-child { margin-top: 8px; }
     .kort-tabell td:last-child .knapp, .kort-tabell td:last-child button { width: 100%; }
     .kort-tabell .tal-hoger { text-align: left; }
-    .sidfot { flex-direction: column; gap: 2px; }
+    .sidfot { flex-wrap: wrap; gap: 4px 8px; }
     .sidfot [aria-hidden="true"] { display: none; }
 }
 

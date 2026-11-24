@@ -18,7 +18,7 @@ första dagen.** Allt nedan kan byggas i PHP/JS i den här kodbasen.
 | 6 | Alla streckkoder: EAN, GS1, DataMatrix | Skanning | Hög | S | Förslag |
 | 7 | Leverantörsföljesedel till inleverans | Inleverans | Hög | M | Förslag |
 | 8 | Påfyllnadsförslag med ledtid | Inköp | Hög | S | Förslag |
-| 9 | Överskott→brist-förslag mellan ställen | Lager | Hög | S | Förslag |
+| 9 | Överskott→brist-förslag mellan ställen | Lager | Hög | S | **Klar** |
 | 10 | Reservera saldo mot order/projekt | Order | Hög | M | Förslag |
 | 11 | Utlämning med ansvarig och återlämning | Uthyrning | Hög | S | Förslag |
 | 12 | Verktyg och fordon som ”utcheckade” | Uthyrning | Hög | S | Förslag |
@@ -104,6 +104,12 @@ ut. Bygger på historiken som redan är hashkedjad.
 Appen jämför saldon: ”Örebro har 40 fler än behovet, Laxå saknar 12”.
 Ett klick skapar en överföring – med samma allt-eller-inget-kontroll som
 i dag. Konkurrenterna visar saldon, men sällan *vad man ska flytta*.
+
+**Klart:** listan *Under miniminivå* räknar ut förslag per artikel och
+arbetsställe, visar från/till/antal och förifyller appens vanliga
+överföringsformulär. Givaren lämnas aldrig under miniminivån och inget
+saldo kan bli negativt. Se `Sidor::flyttforslag()` och avsnittet
+”Flytta i stället för att beställa” i `app/views/miniminiva.php`.
 
 ### 10. Reservera saldo mot order/projekt
 Ett uttag kan reserveras innan det plockas: saldot låses för ordern,

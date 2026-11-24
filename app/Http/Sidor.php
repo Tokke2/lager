@@ -232,6 +232,71 @@ final class Sidor
     }
 
     /** Sida: allt under miniminivå. */
+    /**
+     * Överskott → brist: var kan en brist fyllas utan att beställa?
+     *
+     * För varje artikel jämförs saldot på alla öppna arbetsställen med
+     * miniminivån. Ställen över nivån är givare, ställen under är mottagare.
+     * Förslaget tar aldrig mer än givaren har över miniminivån och aldrig
+     * mer än mottagaren saknar – alltså kan det genomföras direkt med
+     * appens vanliga överföring, utan att något saldo blir negativt.
+     *
+     * @return list<array{artikel: array, fran: array, till: array, antal: int}>
+     */
+    private static function flyttforslag(): array
+    {
+        $platser = array_values(array_filter(
+            Lager::platser(),
+            fn ($p) => empty($p['system']) && !empty($p['aktiv'])
+        ));
+        if (count($platser) < 2) {
+            return [];
+        }
+        $enheter = Lager::enheter();
+        $forslag = [];
+        foreach (Lager::artiklar(true) as $a) {
+            $min = (int) ($a['miniminiva'] ?? 0);
+            if ($min <= 0) {
+                continue;
+            }
+            $saldo = Lager::saldoPerPlats($a, $enheter);
+            $givare = [];
+            $mottagare = [];
+            foreach ($platser as $p) {
+                $n = (int) ($saldo[$p['id']] ?? 0);
+                if ($n > $min) {
+                    $givare[] = ['plats' => $p, 'kvar' => $n - $min];
+                } elseif ($n < $min) {
+                    $mottagare[] = ['plats' => $p, 'behov' => $min - $n];
+                }
+            }
+            if ($givare === [] || $mottagare === []) {
+                continue;
+            }
+            usort($givare, fn ($x, $y) => $y['kvar'] <=> $x['kvar']);
+            usort($mottagare, fn ($x, $y) => $y['behov'] <=> $x['behov']);
+            foreach ($mottagare as $m) {
+                while ($m['behov'] > 0 && $givare !== []) {
+                    $antal = min($m['behov'], $givare[0]['kvar']);
+                    if ($antal > 0) {
+                        $forslag[] = [
+                            'artikel' => $a,
+                            'fran' => $givare[0]['plats'],
+                            'till' => $m['plats'],
+                            'antal' => $antal,
+                        ];
+                        $m['behov'] -= $antal;
+                        $givare[0]['kvar'] -= $antal;
+                    }
+                    if ($givare[0]['kvar'] <= 0) {
+                        array_shift($givare);
+                    }
+                }
+            }
+        }
+        return $forslag;
+    }
+
     public static function miniminiva(): void
     {
         $konto = Auth::kravInloggning();
@@ -241,6 +306,7 @@ final class Sidor
             'konto' => $konto,
             'aktiv' => 'start',
             'rader' => $rader,
+            'flyttningar' => self::flyttforslag(),
             'larmPa' => (bool) Installningar::hamta('miniminiva_larm'),
         ]);
     }
@@ -905,7 +971,13 @@ final class Sidor
         $data['titel'] = 'Överföring';
         $data['konto'] = $konto;
         $data['aktiv'] = 'overforing';
-        $data['valdFran'] = Arbetsstalle::forvalt();
+        // Förvalda värden när man kommer från ett flyttförslag på
+        // miniminivåsidan. Allt valideras igen av Rorelser::overforing.
+        $fran = get('fran');
+        $data['valdFran'] = $fran !== '' ? $fran : Arbetsstalle::forvalt();
+        $data['valdArtikel'] = get('artikel');
+        $data['valdTill'] = get('till');
+        $data['valdAntal'] = max(0, (int) get('antal'));
         Vyer::rendera('overforing', $data);
     }
 
