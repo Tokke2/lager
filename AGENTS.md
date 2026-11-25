@@ -33,9 +33,17 @@ här; hitta inte på deras innebörd och ändra inte en annan checkout.
   Bevara ordinarie manuella och schemalagda backuper. Vid fel eller osäkert
   resultat ska återställningsunderlaget inte raderas. Det finns ännu ingen
   automatisk installerare; filkontrollen skapar eller raderar inga backuper.
-- Rensa roterade tekniska loggar efter sju dygn enligt
-  `dokument/21_varumarke-uppdatering-loggar.md`. Radera inte inventeringsarkiv,
-  revisionshistorik eller aktiva loggar med denna regel.
+- Tekniska loggar ska ha en applogg och en fellogg över aktiva fel. Det ska gå
+  att markera åtgärdade fel och ta bort dem från listan över aktiva fel.
+  Loggning får inte exponera PIN-koder, sessioner, tokens eller andra hemligheter.
+- Gårdagens tekniska loggar ska arkiveras och arkiv äldre än sju dygn rensas.
+  Olösta fel måste fortsatt finnas i felloggens aktiva fellista. Radera inte
+  inventeringsarkiv eller Lager-historik med denna regel. Rensning ska bara
+  omfatta avsedda tekniska loggar, utan att följa symboliska länkar.
+- Status: `Loggstadning` rensar i dag vissa redan roterade tekniska loggar;
+  automatisk daglig arkivering samt en fullständig aktiv fellogg och hantering
+  av åtgärdade fel är ännu inte implementerade. Se
+  `dokument/21_varumarke-uppdatering-loggar.md`. Påstå inte att det är klart.
 - Inga tysta beroende- eller gränssnittsbrott: bevara befintliga API:er,
   användarflöden, filformat, lagrad data, roller och befintliga integrationer.
   Om en ändring måste bryta kompatibilitet, redovisa den uttryckligen, fråga
@@ -57,8 +65,14 @@ här; hitta inte på deras innebörd och ändra inte en annan checkout.
 - Anpassa layout, kolumner, text, bilder och ikoner till olika skärmstorlekar,
   zoomnivåer och hög DPI. Prioritera läsbarhet, god kontrast, skärpa och att
   allt väsentligt är synligt utan onödig scroll. Testa relevanta storlekar.
-- Där det är relevant för en skrivbordsapp: anpassa startfönstrets höjd och
-  bredd till skärmen utan att innehåll hamnar utanför dess arbetsyta.
+- Skrivbordsappen ska starta minimerad och kunna öppnas igen, utan synligt
+  terminalfönster vid start eller skanning. När fönstret öppnas ska dess höjd
+  och bredd anpassas till skärmens arbetsyta. Detta är ett önskat beteende,
+  inte något som redan är verifierat eller fullt implementerat i Lager.
+- Där tabeller finns ska användaren kunna sortera och flytta kolumner utan att
+  ändra lagerdata eller göra tabellen otillgänglig på små skärmar. Bevara en
+  fungerande tangentbordsväg. Kontrollera faktisk funktion före påståenden om
+  att detta är genomfört.
 - Förbättra minneshantering, hastighet och energianvändning utan att kompromissa
   med korrekthet eller säkerhet. Påstå inte uppmätta förbättringar utan mätning.
 - Håll standardlogotyp och ikoner konsekventa i appen. Bevara redigerbara
