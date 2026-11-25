@@ -36,7 +36,7 @@ function tdl_tillgang(string $sokvag): string
 {
     $fil = TDL_PUBLIC . '/' . ltrim($sokvag, '/');
     $version = is_file($fil) ? (string) filemtime($fil) : \TDL_VERSION;
-    return u('/' . ltrim($sokvag, '/')) . '?v=' . rawurlencode($version);
+    return u('/' . ltrim($sokvag, '/') . '?v=' . rawurlencode($version));
 }
 
 /** JSON-kodning med konsekventa flaggor (används även för ledger-hashar). */

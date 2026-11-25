@@ -1,4 +1,8 @@
-# 25 nya förslag – det konkurrenterna saknar och användarna efterfrågar
+# 25 tidigare förslag – idéer att verifiera
+
+> Obs: Den tidigare texten nedan saknar källhänvisningar för intervjuer,
+> supportärenden och jämförelser. Påståendena bör därför inte ses som
+> verifierade. Se även [den nyare listan med källor](18_25-ideer-efterfragade-behov.md).
 
 Underlag: intervjuer med lagerpersonal, önskemål i supportärenden och en
 genomgång av vad etablerade lagerappar (Fortnox, Visma, Ongoing, Zetes,

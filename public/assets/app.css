@@ -103,9 +103,6 @@ body {
     line-height: 1.55;
     font-kerning: normal;
     font-variant-ligatures: common-ligatures;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
     overflow-wrap: break-word;
     overscroll-behavior-y: none;
 }
@@ -202,9 +199,6 @@ a:hover { color: color-mix(in srgb, var(--lank, var(--accent)) 78%, var(--text))
     padding-top: max(8px, env(safe-area-inset-top));
     background: color-mix(in srgb, var(--bak) 88%, var(--bak2));
     border-bottom: 1px solid var(--kant);
-}
-@supports (backdrop-filter: blur(1px)) {
-    .topp { background: color-mix(in srgb, var(--bak) 80%, transparent); backdrop-filter: saturate(140%) blur(12px); }
 }
 
 .varumarke {
@@ -412,9 +406,6 @@ a:hover { color: color-mix(in srgb, var(--lank, var(--accent)) 78%, var(--text))
     padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--bak) 92%, var(--bak2));
     border-top: 1px solid var(--kant);
-}
-@supports (backdrop-filter: blur(1px)) {
-    .botten-nav { background: color-mix(in srgb, var(--bak) 82%, transparent); backdrop-filter: blur(12px) saturate(140%); }
 }
 .botten-nav a,
 .botten-nav .botten-meny {
@@ -1364,7 +1355,7 @@ body.tema-ljus .foto-kort { background: var(--yta2); }
     overflow: hidden;
 }
 .kommando[open] { display: flex; flex-direction: column; }
-.kommando::backdrop { background: rgba(3, 8, 15, .62); backdrop-filter: blur(2px); }
+.kommando::backdrop { background: rgba(3, 8, 15, .72); }
 .kommando:focus-within { border-color: color-mix(in srgb, var(--accent) 60%, var(--kant)); }
 
 .kommando-topp {
@@ -1478,3 +1469,34 @@ body.energispar .kommando::backdrop { backdrop-filter: none; }
 /* Sökträff på lagerkartan: tydlig även utan färgskillnad. */
 .karta-ruta.karta-markerad { outline: 4px solid #ffb000; outline-offset: -4px; font-weight: 800; }
 .karta-3d-hylla.karta-markerad { outline: 4px solid #ffb000; outline-offset: 2px; }
+
+/* Läsbarhet och anpassning utan skalade textlager eller tunga filter. */
+@media screen {
+    .topp, .botten-nav { background: var(--bak2); }
+    .innehall-inre, .start, .kort, .tabell-rull, .rad > *, .start-text { min-width: 0; }
+    .start-text, .start-siffra, td, th { overflow-wrap: anywhere; }
+    .start-kort:focus-visible, .start-siffra:focus-visible { outline-width: 3px; }
+    .start-ikon { flex-shrink: 0; }
+    .falt-hjalp { font-size: .875rem; line-height: 1.5; }
+    .start-siffra .etikett { font-size: .82rem; line-height: 1.35; }
+    .start-text .dampad { font-size: .875rem; line-height: 1.4; }
+    .bild-ruta figure { max-width: 100%; }
+    .qr svg { display: block; max-width: 100%; height: auto; }
+}
+@media screen and (max-width: 620px) {
+    .innehall { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    .start-kort { min-width: 0; }
+    .kort-tabell td[data-etikett]::before, .mobil-kort td[data-etikett]::before {
+        flex-basis: clamp(64px, 26vw, 96px); overflow-wrap: anywhere;
+    }
+    .kort-tabell td[data-etikett] > *, .mobil-kort td[data-etikett] > * { min-width: 0; }
+    .mobil-kort td:last-child, .kort-tabell td:last-child { flex-wrap: wrap; }
+    .actions > * { min-width: 0; }
+}
+@media screen and (max-width: 380px) {
+    .stalle-namn { max-width: 7ch; }
+    .topp { padding-inline: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}

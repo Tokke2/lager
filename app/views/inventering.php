@@ -440,7 +440,7 @@ $procent = $lage['antal_artiklar'] > 0
 </div>
 <div class="kort" style="margin-top:16px">
     <h3>Signatur</h3>
-    <canvas id="signatur-canvas" width="420" height="120" style="border:1px solid #cbd5e1;border-radius:6px;background:#fff;touch-action:none;max-width:100%"></canvas>
+    <canvas id="signatur-canvas" width="420" height="120" style="width:420px;height:120px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;touch-action:none;max-width:100%"></canvas>
     <div class="no-print" style="margin-top:6px">
         <button type="button" class="knapp liten sekundar" data-rensa-signatur>Rensa signatur</button>
     </div>

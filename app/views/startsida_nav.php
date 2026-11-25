@@ -105,7 +105,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
             <?= $kort('/utlan', 'Utlåning', 'Låna ut och registrera återlämning', 'person') ?>
             <?= $kort('/plocklista', 'Plocklista', 'Plocka flera artiklar på en gång', 'lista') ?>
             <?= $kort('/overforing', 'Överför', 'Flytta mellan arbetsställen', 'byt') ?>
-            <?= $kort('/skanna', 'Skanna', 'Läs QR-kod med kameran', 'skanna') ?>
+            <?= $kort('/skanna', 'Skanna', 'Läs QR och EAN eller skriv koden', 'skanna') ?>
             <?= $kort('/inventering', 'Inventering', 'Räkna av ett helt arbetsställe', 'bock') ?>
         </div>
     </section>
@@ -116,6 +116,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
         <div class="start-rutnat">
             <?= $kort('/artiklar', 'Artiklar', $antalArtiklar . ' aktiva · sök, filtrera, redigera', 'artiklar') ?>
             <?= $kort('/oversikt', 'Översikt', 'Saldo per ställe, larm och status', 'hus') ?>
+            <?= $kort('/lagerkarta', 'Lagerkarta', 'Hitta artikelns zon, rad och fack', 'lagerkarta') ?>
             <?= $kort('/miniminiva', 'Under miniminivå', $underMin > 0 ? $underMin . ($underMin === 1 ? ' bristrad' : ' bristrader') : 'Allt är över miniminivå', 'varning') ?>
             <?= $kort('/historik', 'Historik', 'Allt som hänt, spårbart', 'historik') ?>
             <?= $kort('/arkiv', 'Arkiv', 'Äldre månader och år', 'arkiv') ?>

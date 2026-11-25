@@ -96,7 +96,9 @@ php bin/verifiera-historik.php                    # kontrollera hashkedjan
 php bin/backup.php                                # zip med manifest
 php bin/aterlas.php --fil=... --till-testkatalog  # prova återläsning
 php bin/aterhamta.php                             # efter avbruten skrivning
-php tests/integrationstest.php                    # 92 prov
+php tests/integrationstest.php                    # integrationsprov
+php tests/tillgangstest.php                       # versionsadress i förhandsvisning
+node tests/klienttest.mjs                         # signatur och energisparläge
 ```
 
 ---
@@ -121,6 +123,8 @@ php tests/integrationstest.php                    # 92 prov
 | `dokument/13_genomfort-1-3-20.md` | Vad som byggdes av förslag 1, 3 och 20 |
 | `dokument/14_arbetsstalle-och-utskrift.md` | Arbetsställevalet, utskriftscentralen och etikettstorlekar |
 | `dokument/17_karta-ean-utlan.md` | Artikel på kartan, EAN-skanning och utlåning |
+| `dokument/18_25-ideer-efterfragade-behov.md` | 25 nya idéer, prioritering och källor |
+| `dokument/19_skarp-responsiv-och-energismart.md` | Skärpan, responsivitet och resurshantering |
 
 ---
 

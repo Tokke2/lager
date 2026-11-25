@@ -88,6 +88,7 @@ function TDLKamera(opts) {
                     if (eanFormat.length) eanLasare = new BarcodeDetector({ formats: eanFormat });
                 } catch (e) { eanLasare = null; }
             }
+            if (generation !== minGeneration || document.hidden) return;
             stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
                 audio: false
@@ -126,6 +127,8 @@ function TDLKamera(opts) {
             stream = null;
         }
         if (video) video.srcObject = null;
+        if (canvas) { canvas.width = 1; canvas.height = 1; }
+        canvas = null; ctx = null; eanLasare = null;
         if (knapp) knapp.textContent = 'Starta kamera';
         sattStatus('Kameran är avstängd.');
     }
@@ -137,11 +140,13 @@ function TDLKamera(opts) {
 
     async function avlas() {
         if (!aktiv) return;
+        var minGeneration = generation;
         try {
             if (eanLasare && video && video.readyState >= 2 && video.videoWidth) {
                 var streck = [];
-                try { streck = await eanLasare.detect(video); } catch (e) { eanLasare = null; }
-                if (!aktiv) return;
+                try { streck = await eanLasare.detect(video); }
+                catch (e) { if (generation === minGeneration) eanLasare = null; }
+                if (!aktiv || generation !== minGeneration) return;
                 if (streck.length && streck[0].rawValue) {
                     var ean = streck[0].rawValue.trim();
                     stoppa();
@@ -167,7 +172,7 @@ function TDLKamera(opts) {
         } catch (e) {
             /* Enstaka avläsningsfel ska inte stoppa kameran. */
         }
-        schema();
+        if (generation === minGeneration) schema();
     }
 
     if (knapp) {
@@ -841,10 +846,18 @@ document.addEventListener('submit', function (e) {
         }
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', gorOmTabeller);
-    } else {
+    function initieraTabeller() {
         gorOmTabeller();
+        // Även ett fönster som ändrar storlek eller en surfplatta som roteras.
+        var smal = window.matchMedia('(max-width: 620px)');
+        var vidAndring = function (e) { if (e.matches) gorOmTabeller(); };
+        if (smal.addEventListener) smal.addEventListener('change', vidAndring);
+        else if (smal.addListener) smal.addListener(vidAndring);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initieraTabeller);
+    } else {
+        initieraTabeller();
     }
 })();
 
@@ -1030,21 +1043,21 @@ document.addEventListener('submit', function (e) {
 (function () {
     var kropp = document.body;
     if (!kropp) return;
-    function satt(pa) { kropp.classList.toggle('energispar', !!pa); }
-
-    try {
-        var nat = navigator.connection;
-        if (nat && nat.saveData) satt(true);
-    } catch (e) { /* äldre webbläsare saknar connection */ }
-
+    var nat = navigator.connection;
+    var batteri = null;
+    function uppdatera() {
+        var spararData = !!(nat && nat.saveData);
+        var lagtBatteri = !!(batteri && batteri.level <= 0.2 && !batteri.charging);
+        kropp.classList.toggle('energispar', spararData || lagtBatteri);
+    }
+    uppdatera();
+    if (nat && nat.addEventListener) nat.addEventListener('change', uppdatera);
     if (typeof navigator.getBattery === 'function') {
-        navigator.getBattery().then(function (batteri) {
-            function uppdatera() {
-                satt(batteri.level <= 0.2 && !batteri.charging);
-            }
+        navigator.getBattery().then(function (info) {
+            batteri = info;
             batteri.addEventListener('levelchange', uppdatera);
             batteri.addEventListener('chargingchange', uppdatera);
             uppdatera();
-        }).catch(function () { /* ingen batteristatus – inget att göra */ });
+        }).catch(function () { /* ingen batteristatus – databesparing gäller ändå */ });
     }
 })();
