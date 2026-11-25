@@ -1100,7 +1100,7 @@ prov('VM-01 symbolen är fristående och namnet skrivs vid sidan om', function (
     $svg = \TDL\Support\Varumarke::menyLogotyp('Testbolaget AB');
     krav(str_starts_with($svg, '<svg'), 'menylogotypen ska vara en SVG');
     krav(str_contains($svg, 'var(--accent)'), 'märket ska följa varumärkets färg');
-    krav(str_contains($svg, '<circle'), 'statusnoden ska finnas');
+    krav(str_contains($svg, 'M35 35 55 24 55 46 35 57Z'), 'paketets högra sida ska finnas');
     krav(str_contains($svg, '<text'), 'namnet ska skrivas som text, inte ritas in i märket');
     krav(!str_contains(\TDL\Support\Varumarke::menyLogotyp('"><script>'), '<script'),
         'namnet ska escapas');
@@ -1139,13 +1139,13 @@ prov('VM-03 tryckoriginalen finns och är fristående SVG', function () {
 
 prov('VM-04 märket har samma proportioner i alla filer', function () {
     $krav = [
-        'marke.svg' => 'cx="45.5" cy="46" r="5.4"',
-        'ikon.svg' => 'cx="45.5" cy="46" r="5.4"',
-        'marke-enfarg.svg' => 'width="43" height="43" rx="14"',
+        'marke.svg' => 'M35 35 55 24 55 46 35 57Z',
+        'ikon.svg' => 'M35 35 55 24 55 46 35 57Z',
+        'marke-enfarg.svg' => 'M32 6 54 18 32 30 10 18Z',
     ];
     foreach ($krav as $fil => $nod) {
         krav(str_contains((string) file_get_contents(__DIR__ . '/../brand/' . $fil), $nod),
-            $fil . ' har inte märkets statusnod på rätt plats');
+            $fil . ' har inte märkets form på rätt plats');
     }
 });
 
@@ -3096,6 +3096,39 @@ prov('NY-04B öppen hyllrapport skyddas vid zonkrympning', function () use ($adm
     kastar(fn () => \TDL\Domain\Lagerplats::andraZon($z['id'], ['namn'=>'Krymprapport','kod'=>'KF','rader'=>1,'fack'=>2], $admin), 'felrapport');
     \TDL\Domain\Lagerplats::atgardaRapport($h['id'], $r['id'], $admin);
     \TDL\Domain\Lagerplats::andraZon($z['id'], ['namn'=>'Krymprapport','kod'=>'KF','rader'=>1,'fack'=>2], $admin);
+});
+
+prov('LOG-01 endast gamla roterade tekniska loggar rensas', function () {
+    $dir = TDL_STORAGE . '/logg-prov'; @mkdir($dir, 0700, true); $nu = time();
+    foreach (['server.log', 'server.log.1', 'server.log.2.gz', 'server.log-20261101.gz', 'server.log.3', 'historik.json', 'arkiv.logg.1'] as $n) file_put_contents($dir . '/' . $n, 'behåll eller ta bort');
+    foreach (['server.log', 'server.log.1', 'server.log.2.gz', 'server.log-20261101.gz', 'historik.json', 'arkiv.logg.1'] as $n) touch($dir . '/' . $n, $nu - 8 * 86400);
+    touch($dir . '/server.log.3', $nu - 6 * 86400);
+    $harLank = @symlink($dir . '/historik.json', $dir . '/extern.log.1');
+    $r = \TDL\Support\Loggstadning::rensa($dir, $nu);
+    if ($harLank) krav(is_link($dir . '/extern.log.1') && is_file($dir . '/historik.json'), 'symboliska länkar och deras mål bevaras');
+    krav($r['borttagna'] === 3 && $r['fel'] === 0, 'tre gamla roterade loggar tas bort');
+    foreach (['server.log', 'server.log.3', 'historik.json', 'arkiv.logg.1'] as $n) krav(is_file($dir . '/' . $n), $n . ' måste behållas');
+    foreach (glob($dir . '/*') ?: [] as $n) @unlink($n); @rmdir($dir);
+});
+prov('LOG-02 automatisk städning begränsas till roterade loggar och körs högst två gånger per dygn', function () {
+    $lock = TDL_LOCK . '/loggstadning.lock'; @unlink($lock);
+    $gammal = TDL_LOGG . '/testrotation.log.1'; $senare = TDL_LOGG . '/testrotation.log.2';
+    file_put_contents($gammal, 'gammal'); touch($gammal, time() - 8 * 86400);
+    \TDL\Support\Loggstadning::vidAnvandning(); krav(!is_file($gammal), 'gammal rotation tas bort');
+    file_put_contents($senare, 'gammal'); touch($senare, time() - 8 * 86400);
+    \TDL\Support\Loggstadning::vidAnvandning(); krav(is_file($senare), 'upprepade förfrågningar är begränsade');
+    file_put_contents($lock, (string) (time() - 13 * 3600));
+    \TDL\Support\Loggstadning::vidAnvandning(); krav(!is_file($senare), 'nästa städning sker efter tidsgränsen');
+    @unlink($lock);
+});
+prov('UPD-01 endast nyare stabil release i tillåten grenhistorik godkänns', function () {
+    $r = ['tag_name'=>'v1.2.0','draft'=>false,'prerelease'=>false];
+    krav(\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.1.0'), 'nyare tagg på grenen');
+    foreach (['ahead', 'diverged', 'unknown'] as $status) krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>$status], '1.1.0'), 'okänd eller annan gren får inte användas');
+    krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.2.0'), 'samma version avvisas');
+    krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '2.0.0'), 'nedgradering avvisas');
+    $r['prerelease'] = true; krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.1.0'), 'förhandsversion avvisas');
+    $r['prerelease'] = false; $r['tag_name'] = '../../main'; krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.1.0'), 'ogiltig tagg avvisas');
 });
 
 /* ---------------------------------------------------------- Sammanställning */

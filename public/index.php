@@ -72,6 +72,9 @@ if (PHP_SAPI === 'cli-server') {
     }
 }
 
+// Begränsad städning av roterade tekniska loggar, aldrig historik eller arkiv.
+\TDL\Support\Loggstadning::vidAnvandning();
+
 Auth::startaSession();
 
 $rutt = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
@@ -249,6 +252,7 @@ try {
         $rutt === '/admin/varumarke' && $metod === 'POST' => \TDL\Http\Admin::varumarkeSpara(),
         $rutt === '/admin/varumarke/logotyp' && $metod === 'POST' => \TDL\Http\Admin::varumarkeLogotyp(),
         $rutt === '/admin/varumarke/aterstall' && $metod === 'POST' => \TDL\Http\Admin::varumarkeAterstall(),
+        $rutt === '/admin/uppdatering/kontrollera' && $metod === 'POST' => \TDL\Http\Admin::uppdateringKontrollera(),
         $rutt === '/admin/system' && $metod === 'GET' => \TDL\Http\Admin::system(),
         $rutt === '/admin/halsa' && $metod === 'GET' => \TDL\Http\Admin::halsa(),
         $rutt === '/admin/system/backup' && $metod === 'POST' => \TDL\Http\Admin::systemBackup(),

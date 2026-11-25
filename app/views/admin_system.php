@@ -79,6 +79,16 @@ $halsoFarg = $halso['niva'] === 'fel' ? 'fel' : ($halso['niva'] === 'varning' ? 
 <?php endif; ?>
 
 <div class="kort">
+    <h2>Uppdatering av webbappen</h2>
+    <p>Kontrollera manuellt om GitHub har en nyare stabil release vars tagg finns i den tillåtna grenens historik.</p>
+    <p class="falt-hjalp">Kontrollen installerar inte kod. Den verifierar inte en releases signatur och ersätter inte test och säkerhetskopiering. Inga ordinarie säkerhetskopior raderas.</p>
+    <form method="post" action="<?= e(u('/admin/uppdatering/kontrollera')) ?>">
+        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+        <button type="submit">Kontrollera GitHub-releaser</button>
+    </form>
+</div>
+
+<div class="kort">
     <h2>Larm och säkerhet</h2>
     <form method="post" action="<?= e(u('/admin/system/installningar')) ?>">
         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">

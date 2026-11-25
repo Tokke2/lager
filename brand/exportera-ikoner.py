@@ -5,6 +5,7 @@ Kräver: cairosvg, Pillow.
 """
 
 from pathlib import Path
+from shutil import copy2
 
 import cairosvg
 from PIL import Image
@@ -14,7 +15,7 @@ IKONER = ROT / "ikoner"
 IKONER.mkdir(exist_ok=True)
 
 # Storlekar som används av favicon, PWA, Electron/macOS/Windows/Linux
-STORLEKAR = [16, 24, 32, 48, 64, 128, 256, 512, 1024]
+STORLEKAR = [16, 24, 32, 48, 64, 128, 192, 256, 512, 1024]
 
 
 def png(svg: Path, storlek: int, ut: Path) -> None:
@@ -63,5 +64,12 @@ for namn, storlek, bak in [("ikon", 1200, None), ("ikon-ljus", 1200, None), ("ma
     cairosvg.svg2png(url=str(ROT / f"{namn}.svg"), write_to=str(IKONER / f"{namn}.png"),
                      output_width=storlek, background_color=bak)
     print(f"  {namn}.png ({storlek} px)")
+
+# Samma genererade ikoner används av webben och PWA-manifestet.
+webb = ROT.parent / "public" / "assets" / "ikoner"
+webb.mkdir(parents=True, exist_ok=True)
+for s in [16, 24, 32, 192, 256, 512]:
+    copy2(IKONER / f"ikon-{s}.png", webb / f"ikon-{s}.png")
+copy2(IKONER / "marke-32.png", webb / "marke-32.png")
 
 print(f"\nKlart: {IKONER}")

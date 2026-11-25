@@ -43,21 +43,19 @@ Den serveras via `/varumarke/logotyp.svg` med korrekt Content-Type – aldrig so
 
 ### Märket är fristående
 
-Symbolen är en **hylla sedd framifrån**: en rundad ram med två hyllplan och en
-grön statusnod i nedre höger hörn.
+Symbolen är ett **paket i tre tydliga vektorytor**, med en grön sida.
 
 - **Inga bokstäver.** Inget T, ingen initial, inget monogram.
 - **Inget företagsnamn.** Märket nämner ingen firma och ingen produkt.
 - Det fungerar därför för vilken installation som helst – även efter
   vitmärkning – och kan användas av kunden i egen marknadsföring.
-- Den gröna noden är samma punkt som appen använder för "i lager": hyllan visar
-  vad appen gör, noden att enheten är kontrollerad.
+- De tre separata ytorna gör märket enkelt att redigera och tydligt även i liten storlek.
 
 I appen ritas märket som inline-SVG med varumärkets färger. Företagsnamnet står
 som **text bredvid** symbolen – det är alltså inte en del av märket, och byts ut
 när kunden byter namn. Ingen logotypfil behöver ritas om vid vitmärkning.
 
-![Märket i appens meny](skarmbilder/marke-i-menyn.png)
+Se de aktuella SVG-filerna i `brand/` för den senaste utformningen.
 
 ### Filerna
 
@@ -77,17 +75,16 @@ allt). Det finns ingen lös fil att hålla reda på.
 | `etikett-80x50.svg` | Etikettmall för termisk etikettskrivare 80 × 50 mm |
 | `ikoner/` | PNG i 16–1024 px, `.ico` för Windows, `trayTemplate` för macOS |
 
-![Tryckark A3 med alla varianter](skarmbilder/marke-tryckark.png)
+Det aktuella tryckarket finns i `brand/tryck/marke-tryckark.svg`.
 
 ### Trycktekniska krav
 
 - **Format:** SVG 1.1, `viewBox` satt, mått i mm på tryckarket. Öppnas i
   Illustrator, Inkscape, Affinity.
 - **Färger:** `#2F6BFF` (primär), `#22D3EE` (gradientens slut), `#0D1420`
-  (mörk yta), `#34D399` (statusnod). CMYK-värden finns på tryckarket
+  (mörk yta), `#34D399` (paketets högra sida). CMYK-värden finns på tryckarket
   (vägledande – be tryckeriet konvertera).
-- **Minimistorlek:** 6 mm i tryck, 16 × 16 px på skärm. Under 8 mm tappas
-  hyllplanen – använd då ikonen.
+- **Minimistorlek:** 6 mm i tryck, 16 × 16 px på skärm. Kontrollera små storlekar med ett provtryck.
 - **Frizon:** minst ¼ av märkets höjd runt om.
 - **Får inte:** roteras, sträckas, läggas på rörig bakgrund utan platta, byta
   färg utanför listan. Vid enfärgstryck och brodyr används heldragen `#2F6BFF`

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 50" width="80mm" height="50mm" role="img" aria-label="Etikett 80 x 50 mm">
   <title>Etikett 80 × 50 mm</title>
   <rect x="0.2" y="0.2" width="79.6" height="49.6" fill="#FFFFFF" stroke="#000000" stroke-width="0.3"/>
-  <g transform="translate(1.4,1.0) scale(0.145)"><rect x="10.5" y="10.5" width="43" height="43" rx="14" fill="none" stroke="#000000" stroke-width="5.8"/><rect x="19" y="24" width="26" height="5.4" rx="2.7" fill="#000000"/><rect x="19" y="34" width="17" height="5.4" rx="2.7" fill="#000000"/><circle cx="45.5" cy="46" r="5.4" fill="#000000"/></g>
+  <g transform="translate(1.4,1.0) scale(0.145)"><path d="M32 6 54 18 32 30 10 18Z" fill="#000000"/><path d="M9 24 29 35 29 57 9 46Z" fill="#000000"/><path d="M35 35 55 24 55 46 35 57Z" fill="#000000"/></g>
   <text x="12.5" y="6.4" font-family="Helvetica, Arial, sans-serif" font-size="3.4" font-weight="700" fill="#000000">ETIKETT</text>
   <text x="12.5" y="9.4" font-family="Helvetica, Arial, sans-serif" font-size="2.2" fill="#555555">LAGER &amp; INVENTERING</text>
   <line x1="1.6" y1="11.6" x2="78.4" y2="11.6" stroke="#000000" stroke-width="0.25"/>

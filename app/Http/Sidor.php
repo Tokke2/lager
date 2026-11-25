@@ -1197,9 +1197,9 @@ final class Sidor
         if ($harEgen) {
             $ikoner[] = ['src' => '/varumarke/ikon.svg', 'sizes' => 'any', 'type' => 'image/svg+xml', 'purpose' => 'any'];
         }
-        $ikoner[] = ['src' => '/assets/ikoner/ikon-192.png', 'sizes' => '192x192', 'type' => 'image/png'];
-        $ikoner[] = ['src' => '/assets/ikoner/ikon-256.png', 'sizes' => '256x256', 'type' => 'image/png'];
-        $ikoner[] = ['src' => '/assets/ikoner/ikon-512.png', 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any maskable'];
+        $ikoner[] = ['src' => tdl_tillgang('assets/ikoner/ikon-192.png'), 'sizes' => '192x192', 'type' => 'image/png'];
+        $ikoner[] = ['src' => tdl_tillgang('assets/ikoner/ikon-256.png'), 'sizes' => '256x256', 'type' => 'image/png'];
+        $ikoner[] = ['src' => tdl_tillgang('assets/ikoner/ikon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any maskable'];
         echo json_encode([
             'name' => $namn,
             'short_name' => \TDL\Support\Varumarke::v('kortnamn') ?: mb_substr($namn, 0, 12),

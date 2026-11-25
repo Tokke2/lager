@@ -54,7 +54,7 @@ foreach ($oversikt['rader'] as $rad) {
         <?php if ($harLogotyp): ?>
             <img class="varumarke-logotyp" src="<?= e(\TDL\Support\Varumarke::logotypUrl()) ?>" alt="<?= e($brand['namn']) ?>">
         <?php else: ?>
-            <svg class="varumarke-ikon" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="<?= e($brand['farg_primar']) ?>"/><path d="M9 10h14M16 10v13" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><circle cx="23" cy="21" r="2.4" fill="<?= e($brand['farg_accent']) ?>"/></svg>
+            <img class="varumarke-ikon" src="<?= e(tdl_tillgang('assets/ikon.svg')) ?>" alt="" width="32" height="32">
             <?= e($brand['namn']) ?>
         <?php endif; ?>
     </a>

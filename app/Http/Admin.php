@@ -162,6 +162,17 @@ final class Admin
         exit;
     }
 
+    /** Enbart manuell kontroll; inga filer laddas ner eller installeras. */
+    public static function uppdateringKontrollera(): void
+    {
+        $konto = Auth::kravRoll('admin');
+        Sakerhet::kravCsrf();
+        $release = \TDL\Support\Uppdateringskontroll::kontrollera();
+        Vyer::rendera('admin_uppdatering', [
+            'titel' => 'Uppdateringskontroll', 'konto' => $konto, 'aktiv' => 'system', 'release' => $release,
+        ]);
+    }
+
     public static function system(): void
     {
         $konto = Auth::kravRoll('admin');

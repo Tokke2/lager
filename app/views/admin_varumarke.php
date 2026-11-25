@@ -13,11 +13,9 @@ $csrf = \TDL\Support\Sakerhet::csrfToken();
             <img src="<?= e(\TDL\Support\Varumarke::logotypUrl()) ?>" alt="" style="height:44px;max-width:280px;object-fit:contain">
         <?php else: ?>
             <svg viewBox="0 0 64 64" style="width:44px;height:44px;flex:0 0 auto" aria-hidden="true">
-                <rect x="10.5" y="10.5" width="43" height="43" rx="14" fill="none"
-                      stroke="<?= e($v['farg_primar']) ?>" stroke-width="5.8"/>
-                <rect x="19" y="24" width="26" height="5.4" rx="2.7" fill="<?= e($v['farg_primar']) ?>"/>
-                <rect x="19" y="34" width="17" height="5.4" rx="2.7" fill="<?= e($v['farg_primar']) ?>"/>
-                <circle cx="45.5" cy="46" r="5.4" fill="<?= e($v['farg_accent']) ?>"/>
+                <path d="M32 6 54 18 32 30 10 18Z" fill="<?= e($v['farg_primar']) ?>"/>
+                <path d="M9 24 29 35 29 57 9 46Z" fill="<?= e($v['farg_primar']) ?>"/>
+                <path d="M35 35 55 24 55 46 35 57Z" fill="<?= e($v['farg_accent']) ?>"/>
             </svg>
             <strong style="color:#fff;font-size:1.2rem"><?= e($v['namn']) ?></strong>
         <?php endif; ?>

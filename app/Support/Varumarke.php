@@ -106,14 +106,14 @@ final class Varumarke
         return \TDL\Support\Bas::url(
             $fil !== ''
                 ? '/varumarke/ikon.svg?v=' . substr(sha1($fil), 0, 8)
-                : '/assets/marke.svg?v=' . rawurlencode(TDL_VERSION)
+                : '/assets/ikon.svg?v=' . rawurlencode((string) (@filemtime(TDL_PUBLIC . '/assets/ikon.svg') ?: TDL_VERSION))
         );
     }
 
     /**
      * Märket i toppmenyn som inline-SVG: symbolen + företagsnamnet.
      *
-     * Symbolen är fristående (hylla med statusnod, inga bokstäver) och följer
+     * Symbolen är fristående (paket med tre vektorytor, inga bokstäver) och följer
      * varumärkets färger via CSS-variablerna. Namnet skrivs som text bredvid –
      * inte som en del av märket – så att det byts ut vid vitmärkning utan att
      * någon logotypfil behöver ritas om.
@@ -141,11 +141,9 @@ final class Varumarke
             . '<stop offset="0" stop-color="var(--accent)"/>'
             . '<stop offset="1" stop-color="var(--accent2)"/></linearGradient></defs>'
             . '<g transform="translate(0,1) scale(%.5F)">'
-            . '<rect x="10.5" y="10.5" width="43" height="43" rx="14" fill="none" '
-            . 'stroke="url(#vm-g)" stroke-width="5.8"/>'
-            . '<rect x="19" y="24" width="26" height="5.4" rx="2.7" fill="url(#vm-g)"/>'
-            . '<rect x="19" y="34" width="17" height="5.4" rx="2.7" fill="url(#vm-g)"/>'
-            . '<circle cx="45.5" cy="46" r="5.4" fill="var(--ok)"/>'
+            . '<path d="M32 6 54 18 32 30 10 18Z" fill="url(#vm-g)"/>'
+            . '<path d="M9 24 29 35 29 57 9 46Z" fill="url(#vm-g)"/>'
+            . '<path d="M35 35 55 24 55 46 35 57Z" fill="var(--ok)"/>'
             . '</g>'
             . '<text x="%.1F" y="19" fill="var(--text)" font-size="%.1F" font-weight="800" '
             . 'font-family="Montserrat, system-ui, sans-serif" letter-spacing="-.2" '
@@ -174,11 +172,9 @@ final class Varumarke
             . '<stop offset="0" stop-color="var(--accent)"/>'
             . '<stop offset="1" stop-color="var(--accent2)"/></linearGradient></defs>'
             . '<g transform="translate(0.5,0.5) scale(0.375)">'
-            . '<rect x="10.5" y="10.5" width="43" height="43" rx="14" fill="none" '
-            . 'stroke="url(#vm-g-liten)" stroke-width="5.8"/>'
-            . '<rect x="19" y="24" width="26" height="5.4" rx="2.7" fill="url(#vm-g-liten)"/>'
-            . '<rect x="19" y="34" width="17" height="5.4" rx="2.7" fill="url(#vm-g-liten)"/>'
-            . '<circle cx="45.5" cy="46" r="5.4" fill="var(--ok)"/>'
+            . '<path d="M32 6 54 18 32 30 10 18Z" fill="url(#vm-g-liten)"/>'
+            . '<path d="M9 24 29 35 29 57 9 46Z" fill="url(#vm-g-liten)"/>'
+            . '<path d="M35 35 55 24 55 46 35 57Z" fill="var(--ok)"/>'
             . '</g></svg>';
     }
 

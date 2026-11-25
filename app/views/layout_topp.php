@@ -107,8 +107,8 @@ if ($konto !== null) {
 <meta name="theme-color" content="<?= e($varumarke['farg_bakgrund']) ?>">
 <meta name="description" content="Lager, inventering och QR-etiketter – saldo per arbetsställe med spårbar historik.">
 <title><?= e($titel) ?> · <?= e($foretagsnamn) ?></title>
-<link rel="icon" type="image/svg+xml" href="<?= e(\TDL\Support\Varumarke::ikonUrl()) ?>?v=<?= e(\TDL_VERSION) ?>">
-<link rel="icon" type="image/png" sizes="32x32" href="<?= e(tdl_tillgang('assets/ikoner/marke-32.png')) ?>">
+<link rel="icon" type="image/svg+xml" href="<?= e(\TDL\Support\Varumarke::ikonUrl()) ?>">
+<link rel="icon" type="image/png" sizes="32x32" href="<?= e(tdl_tillgang('assets/ikoner/ikon-32.png')) ?>">
 <link rel="apple-touch-icon" href="<?= e(tdl_tillgang('assets/ikoner/ikon-256.png')) ?>">
 <link rel="manifest" href="<?= e(u('/site.webmanifest')) ?>">
 <meta name="mobile-web-app-capable" content="yes">

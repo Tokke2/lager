@@ -153,7 +153,7 @@ for i, mm in enumerate([24, 16, 12, 8, 6]):
     g, b, h = plats("marke.svg", sx + i * 34, 168 + (24 - mm), bredd_mm=mm)
     d.append(g)
     d.append(brodtext(sx + i * 34, 202, "%d mm" % mm, 2.2))
-d.append(brodtext(sx, 216, "Under 8 mm tappas hyllplanen – använd ikonen i stället.", 2.3))
+d.append(brodtext(sx, 216, "Kontrollera små storlekar med ett provtryck.", 2.3))
 d.append(brodtext(sx, 220, "Minsta tillåtna: 6 mm i tryck, 16 × 16 px på skärm.", 2.3))
 
 # ------------------------------------------------------------------ 5 färger
@@ -163,7 +163,7 @@ färger = [
     ("#2F6BFF", "Primär blå", "C85 M55 Y0 K0"),
     ("#22D3EE", "Cyan, gradientens slut", "C62 M0 Y15 K0"),
     ("#0D1420", "Mörk yta", "C85 M65 Y45 K70"),
-    ("#34D399", "Statusnod, grön", "C62 M0 Y50 K0"),
+    ("#34D399", "Paketets högra sida, grön", "C62 M0 Y50 K0"),
 ]
 for i, (hex_, namn, cmyk) in enumerate(färger):
     x = 18 + i * 96

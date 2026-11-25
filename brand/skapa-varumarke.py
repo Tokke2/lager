@@ -1,7 +1,7 @@
 """Bygger märket, appikonen och etikettmallen som ren SVG.
 
-Märket är en **hylla sedd framifrån**: en rundad ram med två hyllplan och en
-grön statusnod i nedre höger hörn. Det innehåller inga bokstäver och inget
+Märket är ett **paket i tre plana, redigerbara delar**: en övre och två
+sidoytor med en grön detalj. Det innehåller inga bokstäver och inget
 företagsnamn – det går att använda för vilken installation som helst, även
 efter vitmärkning, och knyts inte till någon firma.
 
@@ -12,6 +12,7 @@ Kör:  python3 brand/skapa-varumarke.py
 """
 
 from pathlib import Path
+from shutil import copy2
 
 from fontTools.misc.transform import Transform
 from fontTools.pens.svgPathPen import SVGPathPen
@@ -66,17 +67,14 @@ BOLD = Text(FONTMAPP / "Montserrat-Bold.ttf")
 
 
 # ---------------------------------------------------------------------------
-# Märket: hyllan med två plan och en statusnod. Ritas i en 64 × 64-ruta.
+# Märket: ett paket i tre tydliga ytor, med luft mellan ytorna.
+# Alla former är separata vektorbanor, även i tryckoriginalen.
 # ---------------------------------------------------------------------------
 def marke(kropp: str, nod: str) -> str:
-    """Rundad ram + två hyllplan + nod. Alla mått är valda för att fungera
-    ner till 16 px: ramen är 5,8 enheter tjock (≈1,5 px vid 16 px)."""
     return (
-        f'<rect x="10.5" y="10.5" width="43" height="43" rx="14" fill="none" '
-        f'stroke="{kropp}" stroke-width="5.8"/>'
-        f'<rect x="19" y="24" width="26" height="5.4" rx="2.7" fill="{kropp}"/>'
-        f'<rect x="19" y="34" width="17" height="5.4" rx="2.7" fill="{kropp}"/>'
-        f'<circle cx="45.5" cy="46" r="5.4" fill="{nod}"/>'
+        f'<path d="M32 6 54 18 32 30 10 18Z" fill="{kropp}"/>'
+        f'<path d="M9 24 29 35 29 57 9 46Z" fill="{kropp}"/>'
+        f'<path d="M35 35 55 24 55 46 35 57Z" fill="{nod}"/>'
     )
 
 
@@ -170,5 +168,12 @@ skriv("etikett-80x50.svg", (
     '  <text x="1.8" y="48.4" font-family="Helvetica, Arial, sans-serif" font-size="2" fill="#555555">Inventerad senast: –  Ansvarig: –</text>\n'
     "</svg>\n"
 ) % marke("#000000", "#000000"))
+
+# Samma original används i webbappen; annars riskerar en ny export att
+# skrivbordsapp, webb och tryck visar olika märken.
+webb = ROT.parent / "public" / "assets"
+webb.mkdir(parents=True, exist_ok=True)
+for namn in ("marke.svg", "marke-ljus.svg", "ikon.svg"):
+    copy2(ROT / namn, webb / namn)
 
 print("\nSVG:er skrivna till %s" % UT)
