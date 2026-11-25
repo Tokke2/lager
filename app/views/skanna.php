@@ -4,9 +4,11 @@
 
 <div class="kort">
     <button type="button" id="starta-kamera" class="primar">Starta kamera</button>
+    <button type="button" id="kamera-ficklampa" hidden aria-pressed="false">Tänd ficklampan</button>
     <div class="kamera-box">
         <video id="kamera" playsinline muted></video>
     </div>
+    <p class="falt-hjalp">Håll koden stilla i bra ljus, fyll en del av bilden och undvik blänk. Flytta kameran närmare eller längre bort för att få skärpa.</p>
     <p id="kamera-status" class="falt-hjalp" aria-live="polite">Kameran är avstängd.</p>
 
     <hr class="avdelare">

@@ -346,7 +346,7 @@ final class Lager
                 }
             }
             foreach (($tx->fil('enheter'))['poster'] as $en) {
-                if (($en['plats_id'] ?? '') === $id && in_array($en['status'] ?? '', ['aktiv', 'vantande', 'saknad'], true)) {
+                if (($en['plats_id'] ?? '') === $id && in_array($en['status'] ?? '', ['aktiv', 'vantande', 'saknad', 'skadad'], true)) {
                     $problem[] = 'enhet ' . Koder::visa($en['id']) . ' (' . $en['status'] . ')';
                 }
             }

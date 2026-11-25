@@ -469,7 +469,44 @@ final class LagerplatsSidor
             'zon' => $zon,
             'hyllplats' => $h,
             'artiklar' => Lagerplats::artiklarPa($h['zon_id'], (int) $h['rad'], (int) $h['fack']),
+            'valbaraArtiklar' => Lager::artiklar(true),
+            'rapporter' => Lagerplats::rapporter($id),
             'arAdmin' => ($konto['roll'] ?? '') === 'admin',
         ]);
     }
+    public static function hyllrapport(string $id): void
+    {
+        $konto = Auth::kravInloggning(); Sakerhet::kravCsrf();
+        $artikelId = post('artikel_id');
+        if (Lagerplats::hyllplats($id) === null || Lager::artikel($artikelId) === null) throw new AppFel('Hylla eller artikel finns inte.', 404);
+        $kommentar = post('kommentar');
+        if ($kommentar === '' || mb_strlen($kommentar) > 500) throw new AppFel('Beskriv felet med 1–500 tecken.');
+        $bild = null;
+        if (isset($_FILES['bild']) && ($_FILES['bild']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            $bild = \TDL\Support\Bilder::spara($_FILES['bild'], $artikelId, 'Hyllrapport');
+        }
+        // Om en transaktion avbryts kan journalen återhämtas; lämna då bilden kvar.
+        try {
+            Lagerplats::rapportera($id, $artikelId, $kommentar, $bild, $konto);
+        } catch (\Throwable $e) {
+            // Behåll filen om en journal behöver återhämtas; annars städa en
+            // misslyckad uppladdning som ingen datatransaktion refererar till.
+            if ($bild !== null && \TDL\Support\Las::oppnaJournaler() === []) {
+                $fil = \TDL\Support\Bilder::sokvag($artikelId, $bild['fil']);
+                if ($fil !== null) @unlink($fil);
+            }
+            throw $e;
+        }
+        flash('ok', 'Hyllrapporten är sparad. Inget saldo har ändrats.');
+        omdirigera('/hylla/' . $id);
+    }
+
+    public static function hyllrapportAtgarda(string $id, string $rapportId): void
+    {
+        $konto = Auth::kravRoll('admin'); Sakerhet::kravCsrf();
+        Lagerplats::atgardaRapport($id, $rapportId, $konto);
+        flash('ok', 'Rapporten är markerad som åtgärdad. Inget saldo har ändrats.');
+        omdirigera('/hylla/' . $id);
+    }
+
 }

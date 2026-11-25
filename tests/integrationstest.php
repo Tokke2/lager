@@ -2969,6 +2969,135 @@ prov('UL-10 utlåningsformulär och routning har skydd', function () use ($admin
     krav(str_contains($kod, 'function utlanSkapa()') && str_contains($kod, 'Konto::verifieraInloggning($namn, $pin)'), 'bekräftelse ska verifiera PIN på servern');
 });
 
+prov('DEL-01 delåterlämning kvitto och gammal blankett', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Delverktyg', 'artikelnummer'=>'DEL1', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 5, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 5, [], 'Maria', gmdate('Y-m-d'), $admin);
+    $version = \TDL\Domain\Utlan::version($lan);
+    $r = \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 2, [], $version);
+    krav($r['kvar'] === 3 && (Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 2, 'två returnerade och tre kvar');
+    krav((\TDL\Domain\Utlan::kvitto($lan['id'], $r['kvittokod'])['antal'] ?? 0) === 2, 'kvitto visar antal');
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 2, [], $version), 'ändrats');
+    $oppen = array_values(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id']))[0];
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 4, [], $oppen['version']), 'antal');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 3, [], $oppen['version']);
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 5, 'saldo återställt exakt en gång');
+});
+prov('DEL-02 enskilda QR-enheter återlämnas', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Del QR', 'artikelnummer'=>'DELQR', 'sparningssatt'=>'qr']), $admin);
+    $res = Rorelser::inleverans($a['id'], $platsUtlan['id'], 2, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 0, $res['enheter'], 'Maria', gmdate('Y-m-d'), $admin);
+    $r = \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 0, [$res['enheter'][0]], \TDL\Domain\Utlan::version($lan));
+    krav($r['kvar'] === 1 && Lager::enhet($res['enheter'][0])['status'] === 'aktiv' && Lager::enhet($res['enheter'][1])['status'] === 'utlanad', 'endast vald enhet återlämnas');
+    $oppen = array_values(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id']))[0];
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 0, [$res['enheter'][0]], $oppen['version']), 'ingår inte');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 0, [$res['enheter'][1]], $oppen['version']);
+});
+
+prov('NY-04 hyllrapport ändrar inte saldo och kan åtgärdas endast av admin', function () use ($admin, $platsUtlan) {
+    $z = \TDL\Domain\Lagerplats::skapaZon('Rapportzon', 'RF', 1, 2, $admin);
+    $hyllor = \TDL\Domain\Lagerplats::skapaHyllplatser($z['id'], $admin); $hylla = $hyllor[0];
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Fel hylla', 'artikelnummer'=>'RAP1', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 3, [], $admin);
+    $r = \TDL\Domain\Lagerplats::rapportera($hylla['id'], $a['id'], 'Står på fel plats', null, $admin);
+    krav(count(\TDL\Domain\Lagerplats::rapporter($hylla['id'])) === 1, 'rapport finns på hyllan');
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 3, 'rapport ändrar inte saldo');
+    kastar(fn () => \TDL\Domain\Lagerplats::atgardaRapport($hylla['id'], $r['id'], ['roll'=>'personal']), 'administratör');
+    \TDL\Domain\Lagerplats::atgardaRapport($hylla['id'], $r['id'], $admin);
+    krav(\TDL\Domain\Lagerplats::rapporter($hylla['id'])[0]['status'] === 'atgardad', 'rapport är åtgärdad');
+    kastar(fn () => \TDL\Domain\Lagerplats::atgardaRapport($hylla['id'], $r['id'], $admin), 'redan');
+});
+prov('NY-10 skadad enhet spärras tills admin godkänner', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Skadad maskin', 'artikelnummer'=>'SKAD1', 'sparningssatt'=>'qr']), $admin);
+    $r = Rorelser::inleverans($a['id'], $platsUtlan['id'], 1, [], $admin); $kod = $r['enheter'][0];
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 0, [$kod], 'Anna', gmdate('Y-m-d'), $admin);
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 0, [$kod], \TDL\Domain\Utlan::version($lan), 'skadad', ''), 'beskrivning');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 0, [$kod], \TDL\Domain\Utlan::version($lan), 'skadad', 'Sprucket handtag');
+    krav(Lager::enhet($kod)['status'] === 'skadad' && (Lager::saldoPerPlats(Lager::artikel($a['id']))[$platsUtlan['id']] ?? 0) === 0, 'spärrad ingår inte i saldo');
+    kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 0, [$kod], 'Anna', gmdate('Y-m-d'), $admin), 'inte tillgänglig');
+    kastar(fn () => \TDL\Domain\Utlan::godkannEnhet($kod, 'Kontrollerad', ['roll'=>'personal']), 'administratör');
+    \TDL\Domain\Utlan::godkannEnhet($kod, 'Handtag utbytt', $admin);
+    krav(Lager::enhet($kod)['status'] === 'aktiv' && (Lager::saldoPerPlats(Lager::artikel($a['id']))[$platsUtlan['id']] ?? 0) === 1, 'tillgänglig efter godkännande');
+    kastar(fn () => \TDL\Domain\Utlan::godkannEnhet($kod, 'igen', $admin), 'inte spärrad');
+});
+prov('NY-11 båda konton behövs för överlämning utan saldoflytt', function () use ($admin, $platsUtlan) {
+    Konto::skapaKonto('Nuvarande låntagare', '5749', 'personal', $admin);
+    Konto::skapaKonto('Ny mottagare', '5839', 'personal', $admin);
+    $fran = Konto::verifieraInloggning('Nuvarande låntagare', '5749');
+    $till = Konto::verifieraInloggning('Ny mottagare', '5839');
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Överlämning', 'artikelnummer'=>'OVERL1', 'sparningssatt'=>'antal']), $fran);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 2, [], $fran);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 2, [], $fran['namn'], gmdate('Y-m-d'), $fran);
+    $kvitto = \TDL\Domain\Utlan::aterlamna($lan['id'], $fran, 1, [], \TDL\Domain\Utlan::version($lan));
+    $aktuell = array_values(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id']))[0];
+    $version = $aktuell['version'];
+    kastar(fn () => \TDL\Domain\Utlan::overlamna($lan['id'], $version, $till, $fran), 'låntagaren');
+    \TDL\Domain\Utlan::overlamna($lan['id'], $version, $fran, $till);
+    $oppen = array_values(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id']))[0];
+    krav($oppen['lanare'] === $till['namn'] && (Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 1, 'mottagare ändras utan saldo');
+    kastar(fn () => \TDL\Domain\Utlan::overlamna($lan['id'], $version, $fran, $till), 'ändrats');
+    krav(\TDL\Domain\Utlan::kvitto($lan['id'], $kvitto['kvittokod'])['lanare'] === $fran['namn'], 'tidigare kvitto behåller ursprunglig låntagare');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $fran);
+});
+prov('NY-13 saknadrapport utan saldoändring och bekräftad avskrivning', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Saknat verktyg', 'artikelnummer'=>'SAK1', 'sparningssatt'=>'qr']), $admin);
+    $r = Rorelser::inleverans($a['id'], $platsUtlan['id'], 1, [], $admin); $kod = $r['enheter'][0];
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 0, [$kod], 'Anna', gmdate('Y-m-d'), $admin);
+    \TDL\Domain\Utlan::anmalSaknad($lan['id'], \TDL\Domain\Utlan::version($lan), $admin['id'], 'Sök i verkstaden', $admin);
+    krav(Lager::enhet($kod)['status'] === 'utlanad', 'rapport ändrar inte enhetens status');
+    $oppen = array_values(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id']))[0];
+    kastar(fn () => \TDL\Domain\Utlan::avskrivSaknad($lan['id'], $oppen['version'], 'Saknas', ['roll'=>'personal']), 'administratör');
+    \TDL\Domain\Utlan::avskrivSaknad($lan['id'], $oppen['version'], 'Utrett och saknas', $admin);
+    krav(Lager::enhet($kod)['status'] === 'utgang', 'avskrivning avslutar spårad enhet');
+    kastar(fn () => \TDL\Domain\Utlan::avskrivSaknad($lan['id'], $oppen['version'], 'igen', $admin), 'ingen öppen');
+    krav(\TDL\Support\Historik::verifiera(\TDL\Support\Json::las('historik')) === [], 'kedjan intakt');
+});
+prov('NY-14 flyttförslag redovisar underlag och ändrar inte artikeln', function () use ($admin) {
+    $z = \TDL\Domain\Lagerplats::skapaZon('Förslagszon', 'FX', 3, 3, $admin);
+    $a = Lager::skapaArtikel(['namn'=>'Frekvent vara', 'artikelnummer'=>'FLYTT1', 'sparningssatt'=>'antal', 'zon_id'=>$z['id'], 'rad'=>3, 'fack'=>1], $admin);
+    $historik = array_fill(0, 3, ['typ'=>'uttag', 'artikel_id'=>$a['id'], 'tid'=>nu()]);
+    $f = \TDL\Domain\Lagerplats::flyttforslag($a, $historik, Lager::artiklar(true));
+    krav($f !== null && $f['rad'] === 1 && $f['handelser'] === 3, 'förslaget visar antal händelser och plats');
+    krav(Lager::artikel($a['id'])['rad'] === 3, 'inget har flyttats');
+    krav(\TDL\Domain\Lagerplats::flyttforslag($a, array_slice($historik, 0, 2), Lager::artiklar(true)) === null, 'för få rörelser ger inget förslag');
+});
+
+prov('NY-10B skadad enhet skyddas vid inventering och platsstängning', function () use ($admin) {
+    $plats = Lager::skapaPlats('Verktygskontroll', 'VKTEST', $admin);
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Kontrollverktyg', 'artikelnummer'=>'SKAD2', 'sparningssatt'=>'qr']), $admin);
+    $r = Rorelser::inleverans($a['id'], $plats['id'], 1, [], $admin); $kod = $r['enheter'][0];
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $plats['id'], 0, [$kod], 'Anna', gmdate('Y-m-d'), $admin);
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 0, [$kod], \TDL\Domain\Utlan::version($lan), 'skadad', 'Defekt');
+    kastar(fn () => Lager::stangPlats($plats['id'], $admin), 'skadad');
+    $inv = Inventering::startaInventering($plats['id'], [$a['id']], $admin);
+    kastar(fn () => \TDL\Domain\Utlan::godkannEnhet($kod, 'Lagats', $admin), 'inventeringen');
+    krav(Lager::enhet($kod)['status'] === 'skadad', 'fortsatt spärrad');
+    Inventering::annullera($inv['id'], $admin, 'Test avslutat');
+    \TDL\Domain\Utlan::godkannEnhet($kod, 'Lagats', $admin);
+});
+prov('NY-13B delåterlämning följt av avskrivning av resterande antal', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Saknade antal', 'artikelnummer'=>'SAKANT1', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 5, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 5, [], 'Lånare', gmdate('Y-m-d'), $admin);
+    \TDL\Domain\Utlan::anmalSaknad($lan['id'], \TDL\Domain\Utlan::version($lan), $admin['id'], 'Sök', $admin);
+    $oppna = \TDL\Domain\Utlan::oppna(); $oppen = array_values(array_filter($oppna, fn ($x) => $x['id'] === $lan['id']))[0];
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 2, [], $oppen['version']);
+    $oppen2 = array_values(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id']))[0];
+    kastar(fn () => \TDL\Domain\Utlan::avskrivSaknad($lan['id'], $oppen['version'], 'Bekräftad', $admin), 'ändrats');
+    \TDL\Domain\Utlan::avskrivSaknad($lan['id'], $oppen2['version'], 'Utredd och saknas', $admin);
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 2, 'saldo dras inte en andra gång');
+});
+prov('NY-04B öppen hyllrapport skyddas vid zonkrympning', function () use ($admin) {
+    $z = \TDL\Domain\Lagerplats::skapaZon('Krymprapport', 'KF', 2, 2, $admin);
+    $hyllor = \TDL\Domain\Lagerplats::skapaHyllplatser($z['id'], $admin);
+    $h = array_values(array_filter($hyllor, fn ($x) => (int) $x['rad'] === 2))[0];
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Rapportobjekt', 'artikelnummer'=>'RAP2', 'sparningssatt'=>'antal']), $admin);
+    $r = \TDL\Domain\Lagerplats::rapportera($h['id'], $a['id'], 'Kontroll behövs', null, $admin);
+    kastar(fn () => \TDL\Domain\Lagerplats::andraZon($z['id'], ['namn'=>'Krymprapport','kod'=>'KF','rader'=>1,'fack'=>2], $admin), 'felrapport');
+    \TDL\Domain\Lagerplats::atgardaRapport($h['id'], $r['id'], $admin);
+    \TDL\Domain\Lagerplats::andraZon($z['id'], ['namn'=>'Krymprapport','kod'=>'KF','rader'=>1,'fack'=>2], $admin);
+});
+
 /* ---------------------------------------------------------- Sammanställning */
 echo "Tadega Lager – integrationstest\n";
 echo str_repeat('=', 60) . "\n";

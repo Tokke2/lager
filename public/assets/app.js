@@ -31,6 +31,8 @@ function TDLKamera(opts) {
     var knapp = document.getElementById(opts.knappId || 'starta-kamera');
     var status = document.getElementById(opts.statusId || 'kamera-status');
     var manuell = document.getElementById(opts.manuellId || 'enhetskod');
+    var ficklampa = document.getElementById(opts.ficklampaId || 'kamera-ficklampa');
+    var lampaPa = false;
     var stream = null;
     var aktiv = false;
     var timer = null;
@@ -104,6 +106,12 @@ function TDLKamera(opts) {
             if (generation !== minGeneration || document.hidden) { stoppa(); return; }
             aktiv = true;
             if (knapp) knapp.textContent = 'Stoppa kameran';
+            var formaga = {};
+            try {
+                var spar = stream.getVideoTracks()[0];
+                formaga = spar && typeof spar.getCapabilities === 'function' ? spar.getCapabilities() : {};
+            } catch (e) { /* inget stöd – kameran fungerar ändå */ }
+            if (ficklampa) ficklampa.hidden = !formaga.torch;
             sattStatus(eanLasare ? 'Rikta kameran mot QR- eller EAN-koden.' : (opts.ean ? 'Rikta kameran mot QR-koden. För EAN: skriv koden eller använd en streckkodsläsare.' : 'Rikta kameran mot QR-koden.'));
             schema();
         } catch (e) {
@@ -126,6 +134,8 @@ function TDLKamera(opts) {
             stream.getTracks().forEach(function (t) { t.stop(); });
             stream = null;
         }
+        if (ficklampa) { ficklampa.hidden = true; ficklampa.disabled = false; ficklampa.setAttribute('aria-pressed', 'false'); ficklampa.textContent = 'Tänd ficklampan'; }
+        lampaPa = false;
         if (video) video.srcObject = null;
         if (canvas) { canvas.width = 1; canvas.height = 1; }
         canvas = null; ctx = null; eanLasare = null;
@@ -180,6 +190,24 @@ function TDLKamera(opts) {
             if (aktiv) stoppa(); else starta();
         });
     }
+
+    if (ficklampa) ficklampa.addEventListener('click', async function () {
+        if (!aktiv || !stream) return;
+        var spar = stream.getVideoTracks()[0];
+        if (!spar || !spar.applyConstraints) return;
+        var minGeneration = generation;
+        ficklampa.disabled = true;
+        try {
+            var ny = !lampaPa;
+            await spar.applyConstraints({ advanced: [{ torch: ny }] });
+            if (minGeneration !== generation) return;
+            lampaPa = ny;
+            ficklampa.setAttribute('aria-pressed', String(ny));
+            ficklampa.textContent = ny ? 'Släck ficklampan' : 'Tänd ficklampan';
+        } catch (e) {
+            if (minGeneration === generation) sattStatus('Ficklampan kunde inte ändras. Prova bättre belysning eller skriv koden manuellt.');
+        } finally { if (minGeneration === generation) ficklampa.disabled = false; }
+    });
 
     // Stoppa kameran när fliken döljs eller sidan lämnas – ingen ström
     // eller timer får ligga kvar i bakgrunden och dra batteri.

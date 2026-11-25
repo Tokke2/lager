@@ -599,6 +599,7 @@ final class Sidor
             'oversikt' => $oversikt,
             'enheter' => $enheter,
             'historik' => array_slice($historik, 0, 40),
+            'flyttforslag' => ($konto['roll'] ?? '') === 'admin' ? \TDL\Domain\Lagerplats::flyttforslag($artikel, $historik, Lager::artiklar(true)) : null,
             'delar' => $delar,
             'valjbara' => $valjbara,
             // Tavlor man kan flytta en del till (alla andra tavlor)
@@ -1401,6 +1402,7 @@ final class Sidor
             'titel' => 'Utlåning', 'konto' => $konto, 'aktiv' => 'utlan',
             'artiklar' => Lager::artiklar(true), 'platser' => Arbetsstalle::valbara(),
             'utlan' => \TDL\Domain\Utlan::oppna(),
+            'skadade' => Lager::enheter(['status' => 'skadad']),
             'kollegor' => array_values(array_filter(Konto::anvandare(), static fn ($u) => !empty($u['aktiv']) && $u['id'] !== $konto['id'])),
             'valdArtikel' => get('artikel'), 'valdPlats' => Arbetsstalle::id(),
         ]);
@@ -1427,9 +1429,67 @@ final class Sidor
     {
         $konto = Auth::kravInloggning();
         Sakerhet::kravCsrf();
-        \TDL\Domain\Utlan::aterlamna($id, $konto);
-        flash('ok', 'Utlåningen är återlämnad till sitt ursprungliga arbetsställe.');
+        $version = post('version');
+        if (!preg_match('/^[0-9a-f]{64}$/D', $version)) throw new AppFel('Blanketten är inaktuell. Ladda om sidan.');
+        $antalText = post('antal');
+        if ($antalText !== '' && !preg_match('/^[0-9]{1,9}$/D', $antalText)) throw new AppFel('Ange ett giltigt antal.');
+        $bild = null; $artikelId = '';
+        if (isset($_FILES['bild']) && ($_FILES['bild']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            foreach (\TDL\Domain\Utlan::oppna() as $lan) if ($lan['id'] === $id) { $artikelId = $lan['artikel_id']; break; }
+            if ($artikelId === '') throw new AppFel('Utlåningen finns inte.', 404);
+            $bild = \TDL\Support\Bilder::spara($_FILES['bild'], $artikelId, 'Verktygets skick');
+        }
+        try {
+            $resultat = \TDL\Domain\Utlan::aterlamna($id, $konto, $antalText === '' ? 0 : (int) $antalText, post_lista('enheter'), $version, post('skick', 'ok'), post('notering'), $bild);
+        } catch (\Throwable $e) {
+            if ($bild !== null && \TDL\Support\Las::oppnaJournaler() === []) {
+                $fil = \TDL\Support\Bilder::sokvag($artikelId, $bild['fil']);
+                if ($fil !== null) @unlink($fil);
+            }
+            throw $e;
+        }
+        omdirigera('/utlan/' . $id . '/kvitto/' . $resultat['kvittokod']);
+    }
+
+    public static function utlanAnmalSaknad(string $id): void
+    {
+        $konto = Auth::kravInloggning(); Sakerhet::kravCsrf();
+        \TDL\Domain\Utlan::anmalSaknad($id, post('version'), post('ansvarig'), post('plan'), $konto);
+        flash('ok', 'Saknadrapporten är sparad. Saldo och utlåning är oförändrade.'); omdirigera('/utlan');
+    }
+
+    public static function utlanAvskrivSaknad(string $id): void
+    {
+        $konto = Auth::kravRoll('admin'); Sakerhet::kravCsrf();
+        if (post('bekrafta') !== '1') throw new AppFel('Bekräfta avskrivningen.');
+        \TDL\Domain\Utlan::avskrivSaknad($id, post('version'), post('motivering'), $konto);
+        flash('ok', 'Återstoden har skrivits av. Historiken är bevarad.'); omdirigera('/utlan');
+    }
+
+    public static function utlanGodkannEnhet(string $kod): void
+    {
+        $konto = Auth::kravRoll('admin'); Sakerhet::kravCsrf();
+        \TDL\Domain\Utlan::godkannEnhet($kod, post('notering'), $konto);
+        flash('ok', 'Enheten är kontrollerad och tillgänglig igen.'); omdirigera('/utlan');
+    }
+
+    public static function utlanOverlamna(string $id): void
+    {
+        $konto = Auth::kravInloggning(); Sakerhet::kravCsrf();
+        $version = post('version');
+        if (!preg_match('/^[0-9a-f]{64}$/D', $version)) throw new AppFel('Blanketten är inaktuell. Ladda om sidan.');
+        $mottagare = Konto::verifieraInloggning(post('mottagare'), post('mottagare_pin'));
+        \TDL\Domain\Utlan::overlamna($id, $version, $konto, $mottagare);
+        flash('ok', 'Lånet är överlämnat utan att flyttas till lagret.');
         omdirigera('/utlan');
+    }
+
+    public static function utlanKvitto(string $id, string $kvittoId): void
+    {
+        $konto = Auth::kravInloggning();
+        $kvitto = \TDL\Domain\Utlan::kvitto($id, $kvittoId);
+        if ($kvitto === null) throw new AppFel('Kvittot finns inte.', 404);
+        Vyer::rendera('utlan_kvitto', ['titel' => 'Återlämningskvitto', 'konto' => $konto, 'aktiv' => 'utlan', 'kvitto' => $kvitto]);
     }
 
     public static function skanna(): void
@@ -1445,6 +1505,12 @@ final class Sidor
     /* ================================================================
      *  Inventering
      * ================================================================ */
+
+    public static function inventeringOvning(): void
+    {
+        $konto = Auth::kravInloggning();
+        Vyer::rendera('inventering_ovning', ['titel' => 'Inventeringsövning', 'konto' => $konto, 'aktiv' => 'inventering']);
+    }
 
     public static function inventeringar(): void
     {

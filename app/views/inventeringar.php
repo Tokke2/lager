@@ -12,6 +12,7 @@ foreach ($oppna as $s) {
 }
 ?>
 <h1>Inventering</h1>
+<p><a class="knapp" href="<?= e(u('/inventering/ovning')) ?>">Öva inventering</a></p>
 <p class="dampad">
     En inventering gäller ett <strong>arbetsställe</strong> och räknar alla artiklar som finns där.
     Förväntade antal frysas vid start, och differensen visas alltid innan något stäms av.

@@ -34,6 +34,81 @@ final class Lagerplats
     public const MAX_FACK = 40;
     public const NAMN_MAX = 40;
 
+    /** Enkel hypotes, inte en verklig uppmätt gångväg. Ändrar aldrig en artikel. */
+    public static function flyttforslag(array $artikel, array $historik, array $artiklar): ?array
+    {
+        if (empty($artikel['aktiv']) || (int) ($artikel['rad'] ?? 0) <= 1) return null;
+        $zon = self::zon((string) ($artikel['zon_id'] ?? ''));
+        if ($zon === null || (int) ($zon['fack'] ?? 0) < 1) return null;
+        $nu = time(); $antal = 0;
+        foreach ($historik as $h) {
+            $tid = strtotime((string) ($h['tid'] ?? ''));
+            if (($h['artikel_id'] ?? '') === $artikel['id'] && in_array($h['typ'] ?? '', ['uttag', 'utlan'], true)
+                && $tid !== false && $tid >= $nu - 90 * 86400 && $tid <= $nu) $antal++;
+        }
+        if ($antal < 3) return null;
+        $upptagna = [];
+        foreach ($artiklar as $a) {
+            if (!empty($a['aktiv']) && ($a['zon_id'] ?? '') === $zon['id'] && (int) ($a['rad'] ?? 0) === 1) $upptagna[(int) ($a['fack'] ?? 0)] = true;
+        }
+        for ($fack = 1; $fack <= (int) $zon['fack']; $fack++) {
+            if (!isset($upptagna[$fack])) return ['zon' => $zon['kod'], 'rad' => 1, 'fack' => $fack, 'handelser' => $antal];
+        }
+        return null;
+    }
+
+    /** Hyllrapporter sparas i artikeln så att de följer med ordinarie backup. */
+    public static function rapporter(string $hyllaId): array
+    {
+        $ut = [];
+        foreach (Lager::artiklar() as $artikel) foreach ($artikel['hyllrapporter'] ?? [] as $r) {
+            if (($r['hylla_id'] ?? '') === $hyllaId) $ut[] = $r + ['artikel_id' => $artikel['id'], 'artikelnamn' => $artikel['namn']];
+        }
+        usort($ut, static fn ($a, $b) => strcmp($b['skapad'], $a['skapad']));
+        return $ut;
+    }
+
+    public static function rapportera(string $hyllaId, string $artikelId, string $kommentar, ?array $bild, array $av): array
+    {
+        $kommentar = trim($kommentar);
+        if ($kommentar === '' || mb_strlen($kommentar) > 500) throw new AppFel('Beskriv felet med 1–500 tecken.');
+        return Las::under(function () use ($hyllaId, $artikelId, $kommentar, $bild, $av) {
+            $tx = new Transaktion('hylla_felrapporterad', $av);
+            $hylla = Json::hitta($tx->fil('hyllplatser'), $hyllaId);
+            $artiklar = $tx->fil('artiklar'); $a = Json::hitta($artiklar, $artikelId);
+            if ($hylla === null) throw new AppFel('Hyllan finns inte.', 404);
+            if ($a === null || empty($a['aktiv'])) throw new AppFel('Välj en aktiv artikel.');
+            $zon = Json::hitta($tx->fil('zoner'), $hylla['zon_id']);
+            if ($zon === null) throw new AppFel('Zonen finns inte.');
+            $r = ['id' => 'F' . strtoupper(bin2hex(random_bytes(8))), 'hylla_id' => $hyllaId, 'zon_id' => $hylla['zon_id'], 'rad' => (int) $hylla['rad'], 'fack' => (int) $hylla['fack'], 'kommentar' => $kommentar, 'bild' => $bild, 'status' => 'oppen', 'skapad' => nu(), 'av' => $av['namn'] ?? ''];
+            Json::uppdatera($artiklar, $artikelId, static function ($art) use ($r) { $art['hyllrapporter'][] = $r; return $art; });
+            $tx->sattFil('artiklar', $artiklar);
+            $tx->historik(['typ' => 'hylla_felrapporterad', 'artikel_id' => $artikelId, 'artikelnamn' => $a['namn'], 'artikelnummer' => $a['artikelnummer'], 'kommentar' => $kommentar, 'detaljer' => ['rapport_id' => $r['id'], 'hylla' => $zon['kod'] . '-' . $hylla['rad'] . '-' . $hylla['fack'], 'bild' => $bild['fil'] ?? null]]);
+            $tx->spara();
+            return $r;
+        });
+    }
+
+    public static function atgardaRapport(string $hyllaId, string $rapportId, array $av): void
+    {
+        Lager::kravAdmin($av);
+        Las::under(function () use ($hyllaId, $rapportId, $av) {
+            $tx = new Transaktion('hylla_rapport_atgardad', $av); $artiklar = $tx->fil('artiklar'); $funnits = false;
+            foreach ($artiklar['poster'] as &$a) {
+                foreach ($a['hyllrapporter'] ?? [] as $i => $r) {
+                    if (($r['id'] ?? '') !== $rapportId || ($r['hylla_id'] ?? '') !== $hyllaId) continue;
+                    if (($r['status'] ?? '') !== 'oppen') throw new AppFel('Rapporten är redan åtgärdad.');
+                    $a['hyllrapporter'][$i]['status'] = 'atgardad'; $a['hyllrapporter'][$i]['atgardad'] = nu();
+                    $tx->historik(['typ' => 'hylla_rapport_atgardad', 'artikel_id' => $a['id'], 'artikelnamn' => $a['namn'], 'detaljer' => ['rapport_id' => $rapportId, 'hylla_id' => $hyllaId]]);
+                    $funnits = true; break 2;
+                }
+            }
+            unset($a);
+            if (!$funnits) throw new AppFel('Rapporten finns inte.', 404);
+            $tx->sattFil('artiklar', $artiklar); $tx->spara();
+        });
+    }
+
     /* ================================================================
      *  Zoner
      * ================================================================ */
@@ -167,6 +242,11 @@ final class Lagerplats
                     continue;
                 }
                 if ((int) $h['rad'] > $rader || (int) $h['fack'] > $fack) {
+                    foreach ($artiklar['poster'] as $a) foreach ($a['hyllrapporter'] ?? [] as $r) {
+                        if (($r['hylla_id'] ?? '') === $h['id'] && ($r['status'] ?? '') === 'oppen') {
+                            throw new AppFel('Hyllan har en öppen felrapport. Åtgärda den innan zonen krymps.');
+                        }
+                    }
                     $bort++;
                     unset($hyllor['poster'][$i]);
                 }

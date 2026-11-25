@@ -125,6 +125,7 @@ node tests/klienttest.mjs                         # signatur och energisparläge
 | `dokument/17_karta-ean-utlan.md` | Artikel på kartan, EAN-skanning och utlåning |
 | `dokument/18_25-ideer-efterfragade-behov.md` | 25 nya idéer, prioritering och källor |
 | `dokument/19_skarp-responsiv-och-energismart.md` | Skärpan, responsivitet och resurshantering |
+| `dokument/20_valda-forbattringar.md` | Hyllrapport, skanning, övning och verktygsflöden |
 
 ---
 

@@ -2,7 +2,12 @@
 /** @var array $rader @var array $typer @var array $artiklar @var string $typ @var string $artikelFilter @var int $sida @var int $antalSidor */
 $beskrivning = [
     'inleverans' => 'Inleverans',
+    'hylla_felrapporterad' => 'Felplacerad vara rapporterad',
+    'hylla_rapport_atgardad' => 'Hyllrapport åtgärdad',
     'utlan' => 'Utlåning',
+    'utlan_overlamnad' => 'Utlåning överlämnad',
+    'utlan_saknad' => 'Saknad utlåning rapporterad',
+    'utlan_avskriven' => 'Saknad utlåning avskriven',
     'aterlamning' => 'Återlämning',
     'uttag' => 'Uttag',
     'overforing' => 'Överföring',
@@ -12,6 +17,7 @@ $beskrivning = [
     'avstamning_uttag' => 'Avstämning',
     'etikett_skapad' => 'Etikett skapad',
     'enhet_aktiverad' => 'Enhet aktiverad',
+    'verktyg_godkand' => 'Verktyg kontrollerat och godkänt',
     'enhet_utgang' => 'Enhet uttagen',
     'artikel_skapad' => 'Artikel skapad',
     'artikel_andrad' => 'Artikel ändrad',
@@ -82,6 +88,9 @@ $beskrivning = [
                     <?php endif; ?>
                     <?php if (!empty($h['kommentar'])): ?>
                         <?= e(mb_substr((string) $h['kommentar'], 0, 60)) ?>
+                    <?php endif; ?>
+                    <?php if (($h['typ'] ?? '') === 'aterlamning' && !empty($h['detaljer']['utlan_id']) && !empty($h['detaljer']['kvitto_id'])): ?>
+                        · <a href="<?= e(u('/utlan/' . rawurlencode($h['detaljer']['utlan_id']) . '/kvitto/' . rawurlencode($h['detaljer']['kvitto_id']))) ?>">Visa kvitto</a>
                     <?php endif; ?>
                     <?php if (!empty($h['session_id'])): ?>
                         · <a href="<?= e(u('/inventering/' . e($h['session_id']))) ?>"><?= e($h['session_id']) ?></a>

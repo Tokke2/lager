@@ -1,6 +1,6 @@
 # 25 nya idéer – behov att undersöka
 
-Detta är **förslag, inte implementerade funktioner**. De utgår från problem
+Detta är idéunderlag. Förslag 4, 5, 8, 9, 10, 11, 13 och 14 har nu en första implementation; se dokument/20_valda-forbattringar.md för begränsningar. Övriga är förslag. De utgår från problem
 som beskrivs i öppna användarrecensioner: långsamhet och sökning, rapporter
 som behöver sammanställas, begränsningar i mobilflöden och behov av smidig
 skanning. Källorna belägger behoven på en övergripande nivå, inte att varje

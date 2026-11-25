@@ -47,6 +47,16 @@ $arAdmin = ($konto['roll'] ?? '') === 'admin';
     <?php endif; ?>
 </div>
 
+<?php if ($arAdmin && !empty($flyttforslag)): ?>
+<div class="kort">
+    <h2>Förslag på hyllplacering</h2>
+    <p>Artikeln har <?= (int) $flyttforslag['handelser'] ?> registrerade uttag eller utlåningar de senaste 90 dagarna.
+        Rad 1 fack <?= (int) $flyttforslag['fack'] ?> i zon <?= e($flyttforslag['zon']) ?> saknar registrerade aktiva artiklar.</p>
+    <p class="falt-hjalp">Förslaget antar att rad 1 är lättare att nå; appen känner inte till verklig gångväg, fysiskt utrymme eller om hyllan är lämplig. Kontrollera på plats. Inget ändras automatiskt.</p>
+    <a class="knapp" href="<?= e(u('/artiklar/' . $artikel['id'] . '/redigera')) ?>">Granska och ändra hyllplats</a>
+</div>
+<?php endif; ?>
+
 <div class="kort" style="margin-top:14px">
     <h2>Bilder och QR</h2>
     <div class="bild-qr">
@@ -153,13 +163,24 @@ $arAdmin = ($konto['roll'] ?? '') === 'admin';
                         'vantande' => 'varning',
                         'utgang' => 'fel',
                         'saknad' => 'fel',
+                        'skadad' => 'fel',
                         default => '',
                     };
                     echo '<span class="tag ' . $klass . '">' . e($en['status']) . '</span>';
                     ?>
                 </td>
                 <td><?= $plats ? e($plats['namn']) : '<span class="dampad">–</span>' ?></td>
-                <td class="dampad"><?= e(sv_tid($en['senast_skannad'] ?? null)) ?></td>
+                <td class="dampad"><?= e(sv_tid($en['senast_skannad'] ?? null)) ?>
+                    <?php if (!empty($en['halsokort'])): ?>
+                    <details><summary>Visa hälsokort</summary><ul>
+                        <?php foreach ($en['halsokort'] as $kort): ?><li>
+                            <?= e(sv_tid($kort['tid'] ?? null)) ?> · <?= e($kort['skick'] ?? '') ?> · <?= e($kort['av'] ?? '') ?>
+                            <?php if (!empty($kort['notering'])): ?> – <?= e($kort['notering']) ?><?php endif; ?>
+                            <?php if (!empty($kort['bild']['fil'])): ?> · <a href="<?= e(u('/bilder/' . $artikel['id'] . '/' . $kort['bild']['fil'])) ?>">Bild</a><?php endif; ?>
+                        </li><?php endforeach; ?>
+                    </ul></details>
+                    <?php endif; ?>
+                </td>
             </tr>
         <?php endforeach; ?>
     </table>

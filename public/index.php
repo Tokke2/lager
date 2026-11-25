@@ -184,6 +184,8 @@ try {
         $rutt === '/lokalplan/foto/ta-bort' && $metod === 'POST' => \TDL\Http\LagerplatsSidor::planTaBortFoto(),
         $rutt === '/lokalplan/zon' && $metod === 'POST' => \TDL\Http\LagerplatsSidor::planPlaceraZon(),
         $rutt === '/lokalplan/bild.jpg' && $metod === 'GET' => \TDL\Http\LagerplatsSidor::planBild(),
+        preg_match('#^/hylla/([A-Z0-9]+)/rapport$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\LagerplatsSidor::hyllrapport($m[1]),
+        preg_match('#^/hylla/([A-Z0-9]+)/rapport/([A-Z0-9]+)/atgarda$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\LagerplatsSidor::hyllrapportAtgarda($m[1], $m[2]),
         preg_match('#^/hylla/([A-Z0-9]+)$#', $rutt, $m) && $metod === 'GET' => \TDL\Http\LagerplatsSidor::hylla($m[1]),
         preg_match('#^/artiklar/([A-Z0-9]+)/redigera$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::artikelAndra($m[1]),
         preg_match('#^/artiklar/([A-Z0-9]+)/inaktivera$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::artikelInaktivera($m[1]),
@@ -200,6 +202,11 @@ try {
         $rutt === '/inleverans' && $metod === 'POST' => \TDL\Http\Sidor::inleverans(),
         $rutt === '/utlan' && $metod === 'GET' => \TDL\Http\Sidor::utlanForm(),
         $rutt === '/utlan' && $metod === 'POST' => \TDL\Http\Sidor::utlanSkapa(),
+        preg_match('#^/utlan/([A-Z0-9]+)/kvitto/([A-Z0-9]+)$#', $rutt, $m) && $metod === 'GET' => \TDL\Http\Sidor::utlanKvitto($m[1], $m[2]),
+        preg_match('#^/utlan/([A-Z0-9]+)/saknad$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::utlanAnmalSaknad($m[1]),
+        preg_match('#^/utlan/([A-Z0-9]+)/avskriv$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::utlanAvskrivSaknad($m[1]),
+        preg_match('#^/utlan/enhet/([A-Z0-9]+)/godkann$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::utlanGodkannEnhet($m[1]),
+        preg_match('#^/utlan/([A-Z0-9]+)/overlamna$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::utlanOverlamna($m[1]),
         preg_match('#^/utlan/([A-Z0-9]+)/aterlamna$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::utlanAterlamna($m[1]),
         $rutt === '/uttag' && $metod === 'GET' => \TDL\Http\Sidor::uttagForm(),
         $rutt === '/uttag' && $metod === 'POST' => \TDL\Http\Sidor::uttag(),
@@ -216,6 +223,7 @@ try {
         $rutt === '/skanna' && $metod === 'GET' => \TDL\Http\Sidor::skanna(),
 
         // Inventering
+        $rutt === '/inventering/ovning' && $metod === 'GET' => \TDL\Http\Sidor::inventeringOvning(),
         $rutt === '/inventering' && $metod === 'GET' => \TDL\Http\Sidor::inventeringar(),
         $rutt === '/inventering/start' && $metod === 'POST' => \TDL\Http\Sidor::inventeringStart(),
         preg_match('#^/inventering/([A-Z0-9]+)$#', $rutt, $m) && $metod === 'GET' => \TDL\Http\Sidor::inventering($m[1]),
