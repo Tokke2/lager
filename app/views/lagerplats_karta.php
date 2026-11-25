@@ -11,7 +11,29 @@ $max = max(1, (int) $karta['max']);
     </div>
 </div>
 
+<form method="get" action="<?= e(u('/lagerkarta')) ?>" class="kort">
+    <?php if (\TDL\Support\Auth::iRutaMiljo()): ?><input type="hidden" name="tdlagersid" value="<?= e(session_id()) ?>"><?php endif; ?>
+    <label for="karta-artikel">Hitta en artikel på kartan</label>
+    <div class="actions" style="margin:0">
+        <select id="karta-artikel" name="artikel" required>
+            <option value="">Välj artikel …</option>
+            <?php foreach ($sokArtiklar as $a): ?>
+                <option value="<?= e($a['id']) ?>" <?= ($soktArtikel['id'] ?? '') === $a['id'] ? 'selected' : '' ?>><?= e($a['namn']) ?> (<?= e($a['artikelnummer']) ?>)</option>
+            <?php endforeach; ?>
+        </select>
+        <button type="submit">Visa plats</button>
+    </div>
+</form>
+<?php if ($soktArtikel !== null): ?>
+    <?php if (($soktArtikel['zon_id'] ?? '') === $z['id'] && (int) ($soktArtikel['rad'] ?? 0) >= 1 && (int) $soktArtikel['rad'] <= (int) $z['rader'] && (int) ($soktArtikel['fack'] ?? 0) >= 1 && (int) $soktArtikel['fack'] <= (int) $z['fack']): ?>
+        <p class="flash info"><strong><?= e($soktArtikel['namn']) ?></strong> finns på <?= e($z['kod']) ?>–<?= (int) $soktArtikel['rad'] ?>–<?= (int) $soktArtikel['fack'] ?>. Den markerade rutan visar platsen.</p>
+    <?php else: ?>
+        <p class="flash varning">Artikeln saknar en giltig plats på kartan.</p>
+    <?php endif; ?>
+<?php endif; ?>
+
 <form method="get" action="<?= e(u('/lagerkarta')) ?>" class="actions" style="margin-top:0">
+    <?php if (\TDL\Support\Auth::iRutaMiljo()): ?><input type="hidden" name="tdlagersid" value="<?= e(session_id()) ?>"><?php endif; ?>
     <select name="zon" data-skicka-vid-andring style="width:auto;min-width:220px">
         <?php foreach ($zoner as $zz): ?>
             <option value="<?= e($zz['id']) ?>" <?= $zz['id'] === $z['id'] ? 'selected' : '' ?>>
@@ -44,6 +66,9 @@ $max = max(1, (int) $karta['max']);
                     <?php foreach ($kolumner as $ruta): ?>
                         <?php
                         $antal = (int) $ruta['antal'];
+                        $markerad = $soktArtikel !== null && ($soktArtikel['zon_id'] ?? '') === $z['id']
+                            && (int) ($soktArtikel['rad'] ?? 0) === (int) $ruta['rad']
+                            && (int) ($soktArtikel['fack'] ?? 0) === (int) $ruta['fack'];
                         // 0 artiklar = tom, annars färg efter andel av max
                         $styrka = $max > 0 ? $antal / $max : 0;
                         $klass = $antal === 0 ? 'tom' : ($styrka >= 0.66 ? 'full' : ($styrka >= 0.33 ? 'halv' : 'lag'));
@@ -61,7 +86,7 @@ $max = max(1, (int) $karta['max']);
                             ? '/hylla/' . $ruta['hyllplats']['id']
                             : '/lagerkarta/ruta?zon=' . $z['id'] . '&rad=' . $ruta['rad'] . '&fack=' . $ruta['fack'];
                         ?>
-                        <a class="karta-ruta <?= $klass ?>" href="<?= e(u($lank)) ?>" title="<?= e($tips) ?>">
+                        <a class="karta-ruta <?= $klass ?><?= $markerad ? ' karta-markerad' : '' ?>" <?= $markerad ? 'data-karta-markerad aria-current="location"' : '' ?> href="<?= e(u($lank)) ?>" title="<?= e($tips) ?>">
                             <span class="karta-koord mono"><?= (int) $ruta['rad'] ?>-<?= (int) $ruta['fack'] ?></span>
                             <?php if ($antal > 0): ?>
                                 <span class="karta-antal"><?= $antal ?></span>
@@ -101,6 +126,9 @@ $max = max(1, (int) $karta['max']);
                     <?php foreach ($kolumner as $ruta): ?>
                         <?php
                         $antal = (int) $ruta['antal'];
+                        $markerad = $soktArtikel !== null && ($soktArtikel['zon_id'] ?? '') === $z['id']
+                            && (int) ($soktArtikel['rad'] ?? 0) === (int) $ruta['rad']
+                            && (int) ($soktArtikel['fack'] ?? 0) === (int) $ruta['fack'];
                         $hojd = $antal === 0 ? 8 : 14 + (int) round(46 * ($antal / $max));
                         $styrka = $max > 0 ? $antal / $max : 0;
                         $klass = $antal === 0 ? 'tom' : ($styrka >= 0.66 ? 'full' : ($styrka >= 0.33 ? 'halv' : 'lag'));
@@ -108,7 +136,7 @@ $max = max(1, (int) $karta['max']);
                             ? '/hylla/' . $ruta['hyllplats']['id']
                             : '/lagerkarta/ruta?zon=' . $z['id'] . '&rad=' . $ruta['rad'] . '&fack=' . $ruta['fack'];
                         ?>
-                        <a class="karta-3d-hylla <?= $klass ?>" href="<?= e(u($lank)) ?>"
+                        <a class="karta-3d-hylla <?= $klass ?><?= $markerad ? ' karta-markerad' : '' ?>" href="<?= e(u($lank)) ?>"
                            title="<?= e($z['kod'] . '-' . $ruta['rad'] . '-' . $ruta['fack']) ?> · <?= $antal ?> artiklar">
                             <span class="topp" style="height:<?= $hojd ?>px"><?= $antal > 0 ? $antal : '' ?></span>
                             <span class="sida"></span>

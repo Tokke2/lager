@@ -32,6 +32,11 @@ $visaNummerFalt = $arAdmin || !$nyArtikel;
             <?php endif; ?>
         </div>
     </div>
+    <div class="falt">
+        <label for="ean">EAN-streckkod (valfri)</label>
+        <input id="ean" name="ean" inputmode="numeric" pattern="[0-9]{8}|[0-9]{13}" maxlength="13" value="<?= e($artikel['ean'] ?? '') ?>" autocomplete="off">
+        <div class="falt-hjalp">EAN-8 eller EAN-13 från varans förpackning. Inledande nollor ska vara med.</div>
+    </div>
     <div class="rad">
         <div class="falt">
             <label for="enhet">Enhet</label>

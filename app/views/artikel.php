@@ -26,10 +26,16 @@ $arAdmin = ($konto['roll'] ?? '') === 'admin';
     <?php if (empty($artikel['aktiv'])): ?> · <span class="tag fel">inaktiv</span><?php endif; ?>
 </p>
 
+<?php if (!empty($artikel['ean'])): ?><p class="dampad">EAN: <span class="mono"><?= e($artikel['ean']) ?></span></p><?php endif; ?>
+
 <div class="actions">
+    <?php if (!empty($artikel['zon_id']) && !empty($artikel['rad']) && !empty($artikel['fack'])): ?>
+        <a class="knapp" href="<?= e(u('/lagerkarta?artikel=' . urlencode((string) $artikel['id']))) ?>">Visa på lagerkartan</a>
+    <?php endif; ?>
     <?php if ($artikel['aktiv']): ?>
         <a class="knapp primar" href="<?= e(u('/inleverans?artikel=' . e($artikel['id']))) ?>">Inleverans</a>
         <a class="knapp" href="<?= e(u('/uttag?artikel=' . e($artikel['id']))) ?>">Uttag</a>
+        <?php if (empty($artikel['ar_tavla'])): ?><a class="knapp" href="<?= e(u('/utlan?artikel=' . urlencode($artikel['id']))) ?>">Låna ut</a><?php endif; ?>
         <a class="knapp" href="<?= e(u('/overforing?artikel=' . e($artikel['id']))) ?>">Överför</a>
         <?php if ($artikel['sparningssatt'] === 'antal'): ?>
             <a class="knapp" href="<?= e(u('/plocklista?artikel=' . e($artikel['id']))) ?>">Till plocklista</a>

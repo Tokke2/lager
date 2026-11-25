@@ -102,6 +102,7 @@ $kort = function (string $href, string $titel, string $text, string $ikon, strin
         <div class="start-rutnat">
             <?= $kort('/inleverans', 'Inleverans', 'Ta emot varor på arbetsstället', 'in', 'stor') ?>
             <?= $kort('/uttag', 'Uttag', 'Lämna ut och skriv av saldo', 'ut') ?>
+            <?= $kort('/utlan', 'Utlåning', 'Låna ut och registrera återlämning', 'person') ?>
             <?= $kort('/plocklista', 'Plocklista', 'Plocka flera artiklar på en gång', 'lista') ?>
             <?= $kort('/overforing', 'Överför', 'Flytta mellan arbetsställen', 'byt') ?>
             <?= $kort('/skanna', 'Skanna', 'Läs QR-kod med kameran', 'skanna') ?>

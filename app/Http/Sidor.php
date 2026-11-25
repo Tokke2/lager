@@ -114,7 +114,8 @@ final class Sidor
         $aktivtStalle = Arbetsstalle::aktivt();
         $uppgifter = \TDL\Support\DagensUppgifter::bygg(
             $konto, $aktivtStalle, $oppna, $brister,
-            ($konto['roll'] ?? '') === 'admin' ? Backupkontroll::lage() : null
+            ($konto['roll'] ?? '') === 'admin' ? Backupkontroll::lage() : null,
+            \TDL\Domain\Utlan::oppna()
         );
 
         Vyer::rendera('startsida_nav', [
@@ -1391,6 +1392,45 @@ final class Sidor
     /* ================================================================
      *  Skanning (allmän sida)
      * ================================================================ */
+
+    /** Utlåning och full återlämning till ursprungligt arbetsställe. */
+    public static function utlanForm(): void
+    {
+        $konto = Auth::kravInloggning();
+        Vyer::rendera('utlan', [
+            'titel' => 'Utlåning', 'konto' => $konto, 'aktiv' => 'utlan',
+            'artiklar' => Lager::artiklar(true), 'platser' => Arbetsstalle::valbara(),
+            'utlan' => \TDL\Domain\Utlan::oppna(),
+            'kollegor' => array_values(array_filter(Konto::anvandare(), static fn ($u) => !empty($u['aktiv']) && $u['id'] !== $konto['id'])),
+            'valdArtikel' => get('artikel'), 'valdPlats' => Arbetsstalle::id(),
+        ]);
+    }
+
+    public static function utlanSkapa(): void
+    {
+        $konto = Auth::kravInloggning();
+        Sakerhet::kravCsrf();
+        $godkannare = null;
+        $namn = post('godkannare'); $pin = post('godkannare_pin');
+        if ($namn !== '' || $pin !== '') {
+            if ($namn === '' || $pin === '') throw new AppFel('Ange både kollegans namn och PIN.');
+            $godkannare = Konto::verifieraInloggning($namn, $pin);
+            if ($godkannare['id'] === $konto['id'] || !empty($godkannare['maste_byta_pin'])) throw new AppFel('Kollegan måste vara en annan aktiv användare med egen PIN.');
+        }
+        $koder = preg_split('/[\s,;]+/u', post('enhetskoder'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        \TDL\Domain\Utlan::skapa(post('artikel_id'), post('plats_id'), (int) post('antal'), $koder, post('lanare'), post('forfallodatum'), $konto, $godkannare);
+        flash('ok', 'Utlåningen är registrerad.');
+        omdirigera('/utlan');
+    }
+
+    public static function utlanAterlamna(string $id): void
+    {
+        $konto = Auth::kravInloggning();
+        Sakerhet::kravCsrf();
+        \TDL\Domain\Utlan::aterlamna($id, $konto);
+        flash('ok', 'Utlåningen är återlämnad till sitt ursprungliga arbetsställe.');
+        omdirigera('/utlan');
+    }
 
     public static function skanna(): void
     {

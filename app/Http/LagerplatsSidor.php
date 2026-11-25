@@ -159,7 +159,15 @@ final class LagerplatsSidor
     {
         $konto = Auth::kravInloggning();
         $zoner = Lagerplats::zoner();
-        $vald = get('zon');
+        $soktArtikel = null;
+        $artikelId = (string) get('artikel');
+        if ($artikelId !== '') {
+            $soktArtikel = Lager::artikel($artikelId);
+            if ($soktArtikel === null) {
+                throw new AppFel('Artikeln finns inte.', 404);
+            }
+        }
+        $vald = $soktArtikel !== null ? (string) ($soktArtikel['zon_id'] ?? '') : get('zon');
         $zon = null;
         if ($vald !== '') {
             $zon = Lagerplats::zon($vald) ?? Lagerplats::zonViaKod($vald);
@@ -184,6 +192,8 @@ final class LagerplatsSidor
             'zoner' => $zoner,
             'zon' => $zon,
             'karta' => Lagerplats::karta($zon['id']),
+            'soktArtikel' => $soktArtikel,
+            'sokArtiklar' => Lager::artiklar(true),
         ]);
     }
 

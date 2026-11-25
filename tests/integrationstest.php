@@ -2828,6 +2828,147 @@ prov('SS-06 PIN-återställning via konton kräver byte och eget byte loggar ut'
     krav(str_contains($kod, "omdirigera('/login')"), 'det ska gå att logga in på nytt');
 });
 
+/* ---------------------------------------------------------- Hitta, EAN och utlåning */
+prov('EAN-01 kontrollsiffra och inledande nollor', function () {
+    krav(Lager::valideraEan('4006381333931') === '4006381333931', 'giltig EAN-13');
+    krav(Lager::valideraEan('96385074') === '96385074', 'giltig EAN-8');
+    krav(Lager::valideraEan('0000000000000') === '0000000000000', 'inledande nollor bevaras');
+    kastar(fn () => Lager::valideraEan('4006381333932'), 'kontrollsiffra');
+    kastar(fn () => Lager::valideraEan('123'), '8 eller 13');
+});
+prov('EAN-02 spara, hitta, ändra och hindra dubbel EAN', function () use ($admin) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'EAN-test', 'artikelnummer'=>'EAN-T1', 'ean'=>'4006381333931', 'sparningssatt'=>'antal']), $admin);
+    krav((Lager::artikelViaEan('4006381333931')['id'] ?? '') === $a['id'], 'sökning ska hitta artikeln');
+    kastar(fn () => Lager::skapaArtikel(medPlats(['namn'=>'EAN-test 2', 'artikelnummer'=>'EAN-T2', 'ean'=>'4006381333931', 'sparningssatt'=>'antal']), $admin), 'EAN-koden används redan');
+    Lager::andraArtikel($a['id'], ['namn'=>'EAN-test ändrad'], $admin);
+    krav((Lager::artikel($a['id'])['ean'] ?? '') === '4006381333931', 'EAN bevaras om fältet inte ändras');
+    Lager::andraArtikel($a['id'], ['ean'=>'96385074'], $admin);
+    krav(Lager::artikelViaEan('4006381333931') === null && (Lager::artikelViaEan('96385074')['id'] ?? '') === $a['id'], 'ändring ska slå igenom');
+});
+prov('KARTA-01 markerar rätt ruta för artikeln', function () use ($admin) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Kart-test', 'artikelnummer'=>'MAP-T1', 'sparningssatt'=>'antal']), $admin);
+    $zon = \TDL\Domain\Lagerplats::zon($a['zon_id']);
+    $soktArtikel = $a; $sokArtiklar = [$a]; $zoner = [$zon]; $karta = \TDL\Domain\Lagerplats::karta($zon['id']);
+    ob_start(); require dirname(__DIR__) . '/app/views/lagerplats_karta.php'; $html = ob_get_clean();
+    krav(substr_count($html, 'data-karta-markerad') === 1, 'exakt en 2D-ruta ska markeras');
+    krav(str_contains($html, 'Kart-test') && str_contains($html, 'aria-current="location"'), 'artikeln och markering ska synas');
+});
+$platsUtlan = Lager::skapaPlats('Utlåning test', 'ULTEST', $admin);
+prov('UL-01 utlåning och återlämning ändrar antal exakt en gång', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Låneverktyg', 'artikelnummer'=>'LAN-T1', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 5, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 2, [], 'Anna', gmdate('Y-m-d'), $admin);
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 3, 'utlåning minskar saldo');
+    kastar(fn () => Lager::inaktiveraArtikel($a['id'], $admin), 'utlåning');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin);
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 5, 'återlämning återställer saldo');
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin), 'redan återlämnad');
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 5, 'dubblett ska inte öka saldot');
+});
+prov('UL-02 felaktig utlåning ändrar inte saldo', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Lånekontroll', 'artikelnummer'=>'LAN-T2', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 1, [], $admin);
+    kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 2, [], 'Anna', gmdate('Y-m-d'), $admin), 'Otillräckligt saldo');
+    kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], '', gmdate('Y-m-d'), $admin), 'namnet');
+    kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Anna', '2020-02-31', $admin), 'datum');
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 1, 'saldo ska vara oförändrat');
+});
+prov('UL-03 QR-enhet får inte lånas ut eller återlämnas två gånger', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'QR-lån', 'artikelnummer'=>'LAN-QR1', 'sparningssatt'=>'qr']), $admin);
+    $resultat = Rorelser::inleverans($a['id'], $platsUtlan['id'], 1, [], $admin);
+    $kod = $resultat['enheter'][0];
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 0, [$kod], 'Erik', gmdate('Y-m-d'), $admin);
+    krav(Lager::enhet($kod)['status'] === 'utlanad', 'enhet markeras utlånad');
+    kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 0, [$kod], 'Erik', gmdate('Y-m-d'), $admin), 'inte tillgänglig');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin);
+    krav(Lager::enhet($kod)['status'] === 'aktiv', 'samma enhet återaktiveras');
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin), 'redan återlämnad');
+});
+prov('UL-04 tvåpersonsregel gäller även utlåning', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Skyddad utlåning', 'artikelnummer'=>'LAN-TP1', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 2, [], $admin);
+    $inst = Installningar::alla();
+    try {
+        Installningar::spara(['tva_person_grans'=>1]);
+        kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Lånare', gmdate('Y-m-d'), $admin), 'bekräftelse');
+    } finally { Installningar::spara($inst); }
+});
+
+prov('UL-05 inventering hindrar utlåning och återlämning', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Inventering och lån', 'artikelnummer'=>'LAN-INV1', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 2, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Nina', gmdate('Y-m-d'), $admin);
+    $inv = Inventering::startaInventering($platsUtlan['id'], [], $admin);
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin), 'inventeringen');
+    kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Nina', gmdate('Y-m-d'), $admin), 'inventeringen');
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 1, 'ingen rörelse under inventering');
+    Inventering::annullera($inv['id'], $admin, 'Test avslutat');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin);
+    krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 2, 'återlämning efter inventering');
+});
+prov('UL-06 arbetsställe och spårning skyddas vid öppet lån', function () use ($admin) {
+    $plats = Lager::skapaPlats('Tillfälligt lån', 'ULLAST', $admin);
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Utlånat utan saldo', 'artikelnummer'=>'LAN-SKYDD', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $plats['id'], 1, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $plats['id'], 1, [], 'Lånare', gmdate('Y-m-d'), $admin);
+    kastar(fn () => Lager::stangPlats($plats['id'], $admin), 'utlåning');
+    kastar(fn () => Lager::andraArtikel($a['id'], ['sparningssatt'=>'qr'], $admin), 'utlåning');
+    kastar(fn () => Lager::inaktiveraArtikel($a['id'], $admin), 'utlåning');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin);
+});
+prov('UL-07 historik och påminnelser bevaras', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Påminnelse', 'artikelnummer'=>'LAN-PAM', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 1, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Lånare', gmdate('Y-m-d'), $admin);
+    $oppna = \TDL\Domain\Utlan::oppna();
+    krav(count(array_filter($oppna, fn ($x) => $x['id'] === $lan['id'])) === 1, 'öppet lån syns');
+    $uppgifter = \TDL\Support\DagensUppgifter::bygg($admin, $platsUtlan, [], [], null, $oppna);
+    krav(count(array_filter($uppgifter, fn ($x) => $x['href'] === '/utlan')) === 1, 'förfallet lån påminner');
+    \TDL\Domain\Utlan::aterlamna($lan['id'], $admin);
+    krav(count(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id'])) === 0, 'återlämning stänger lån');
+    krav(\TDL\Support\Historik::verifiera(\TDL\Support\Json::las('historik')) === [], 'historikkedjan intakt');
+});
+prov('UL-08 kollega med ändrad PIN kan inte bekräfta', function () use ($admin, $platsUtlan) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Godkännande', 'artikelnummer'=>'LAN-GODK', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 1, [], $admin);
+    $inst = Installningar::alla();
+    try {
+        Installningar::spara(['tva_person_grans'=>1]);
+        $falsk = ['id'=>'SAKNAS', 'namn'=>'Okänd', 'aktiv'=>true, 'pin_hash'=>'gammal'];
+        kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Lånare', gmdate('Y-m-d'), $admin, $falsk), 'ändrats');
+        krav((Lager::artikel($a['id'])['saldo'][$platsUtlan['id']] ?? 0) === 1, 'ingen utlåning vid felaktigt godkännande');
+    } finally { Installningar::spara($inst); }
+});
+
+prov('UL-09 giltig kollega bekräftar med egen PIN', function () use ($admin, $platsUtlan) {
+    $kollega = Konto::skapaKonto('Lånekollega', '5749', 'personal', $admin);
+    $verifierad = Konto::verifieraInloggning('Lånekollega', '5749');
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Bekräftat lån', 'artikelnummer'=>'LAN-OK', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $platsUtlan['id'], 1, [], $admin);
+    $inst = Installningar::alla();
+    try {
+        Installningar::spara(['tva_person_grans'=>1]);
+        kastar(fn () => \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Lånare', gmdate('Y-m-d'), $admin, $admin), 'bekräftelse');
+        $lan = \TDL\Domain\Utlan::skapa($a['id'], $platsUtlan['id'], 1, [], 'Lånare', gmdate('Y-m-d'), $admin, $verifierad);
+        \TDL\Domain\Utlan::aterlamna($lan['id'], $admin);
+    } finally { Installningar::spara($inst); }
+});
+prov('KARTA-02 felaktiga koordinater visar ingen markering', function () use ($admin) {
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Karta fel', 'artikelnummer'=>'MAP-T2', 'sparningssatt'=>'antal']), $admin);
+    $zon = \TDL\Domain\Lagerplats::zon($a['zon_id']); $soktArtikel = $a; $soktArtikel['rad'] = 9999;
+    $sokArtiklar = [$a]; $zoner = [$zon]; $karta = \TDL\Domain\Lagerplats::karta($zon['id']);
+    ob_start(); require dirname(__DIR__) . '/app/views/lagerplats_karta.php'; $html = ob_get_clean();
+    krav(!str_contains($html, 'data-karta-markerad') && str_contains($html, 'saknar en giltig plats'), 'fel koordinat ska visas utan markering');
+});
+prov('UL-10 utlåningsformulär och routning har skydd', function () use ($admin, $platsUtlan) {
+    $konto = $admin; $artiklar = Lager::artiklar(true); $platser = [$platsUtlan]; $utlan = \TDL\Domain\Utlan::oppna();
+    $kollegor = []; $valdArtikel = ''; $valdPlats = $platsUtlan['id'];
+    ob_start(); require dirname(__DIR__) . '/app/views/utlan.php'; $html = ob_get_clean();
+    krav(str_contains($html, 'name="_csrf"') && str_contains($html, 'name="lanare"') && str_contains($html, 'name="forfallodatum"'), 'formuläret ska innehålla skydd och fält');
+    $kod = file_get_contents(dirname(__DIR__) . '/app/Http/Sidor.php');
+    krav(str_contains($kod, 'function utlanSkapa()') && str_contains($kod, 'Konto::verifieraInloggning($namn, $pin)'), 'bekräftelse ska verifiera PIN på servern');
+});
+
 /* ---------------------------------------------------------- Sammanställning */
 echo "Tadega Lager – integrationstest\n";
 echo str_repeat('=', 60) . "\n";

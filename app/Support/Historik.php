@@ -29,7 +29,7 @@ final class Historik
         'lokalplan_vaning_skapad', 'lokalplan_vaning_andrad', 'lokalplan_vaning_bort',
         'lokalplan_foto', 'lokalplan_foto_bort', 'lokalplan_klart',
         'etikett_skapad', 'etikett_annullerad',
-        'inleverans', 'uttag', 'overforing', 'plocklista',
+        'inleverans', 'uttag', 'overforing', 'plocklista', 'utlan', 'aterlamning',
         'enhet_aktiverad', 'enhet_utgang',
         'inventering_start', 'inventering_avslut',
         'avstamning_uttag', 'avstamning_aktiv',

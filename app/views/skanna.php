@@ -1,6 +1,6 @@
 <?php $csrf = \TDL\Support\Sakerhet::csrfToken(); ?>
 <h1>Skanna</h1>
-<p class="dampad">Kameran startar först när du trycker på knappen. Fungerar inte kameran kan du alltid skriva koden.</p>
+<p class="dampad">Kameran startar först när du trycker på knappen. EAN-8 och EAN-13 kan läsas med kameran när webbläsaren stöder det. Annars kan du skriva koden eller använda en streckkodsläsare.</p>
 
 <div class="kort">
     <button type="button" id="starta-kamera" class="primar">Starta kamera</button>
@@ -11,8 +11,9 @@
 
     <hr class="avdelare">
     <form method="get" action="<?= e(u('/skanna')) ?>" id="manuell-form">
+        <?php if (\TDL\Support\Auth::iRutaMiljo()): ?><input type="hidden" name="tdlagersid" value="<?= e(session_id()) ?>"><?php endif; ?>
         <label for="enhetskod">Eller skriv koden manuellt</label>
-        <input id="enhetskod" name="kod" class="mono" autocomplete="off" placeholder="TDL-U-XXXXX-XXXXX-X">
+        <input id="enhetskod" name="kod" class="mono" autocomplete="off" placeholder="QR-kod eller EAN">
         <div class="actions">
             <button type="submit" class="primar">Leta upp</button>
         </div>
@@ -20,6 +21,7 @@
     <?php
     $kod = get('kod');
     if ($kod !== ''):
+        $eanArtikel = \TDL\Domain\Lager::artikelViaEan($kod);
         $enhet = \TDL\Domain\Lager::enhet($kod);
         $platsKod = \TDL\Domain\Lager::platsViaQr($kod);
         // Hyllapp: QR-koden sitter på hyllan och talar om var man står
@@ -43,6 +45,15 @@
                     <a class="knapp" href="<?= e(u('/uttag?artikel=' . e($artikel['id']))) ?>">Uttag</a>
                 </div>
             <?php endif; ?>
+        <?php elseif ($eanArtikel !== null): ?>
+            <div class="flash ok" style="margin-top:16px">
+                <strong>EAN <?= e($kod) ?></strong><br>
+                Artikel: <a href="<?= e(u('/artiklar/' . $eanArtikel['id'])) ?>"><?= e($eanArtikel['namn']) ?></a>
+            </div>
+            <div class="actions">
+                <a class="knapp primar" href="<?= e(u('/artiklar/' . $eanArtikel['id'])) ?>">Öppna artikel</a>
+                <a class="knapp" href="<?= e(u('/lagerkarta?artikel=' . urlencode($eanArtikel['id']))) ?>">Visa på kartan</a>
+            </div>
         <?php elseif ($hyllplats !== null): ?>
             <?php
             $hyZon = \TDL\Domain\Lagerplats::zon((string) $hyllplats['zon_id']);
@@ -74,7 +85,7 @@
             </div>
         <?php else: ?>
             <div class="flash fel" style="margin-top:16px">
-                Koden hittas inte. Kontrollera stavningen – kontrolltecknet måste stämma.
+                Koden hittas inte. Kontrollera koden eller lägg till EAN på artikeln.
             </div>
         <?php endif; ?>
     <?php endif; ?>

@@ -198,6 +198,9 @@ try {
         // Rörelser
         $rutt === '/inleverans' && $metod === 'GET' => \TDL\Http\Sidor::inleveransForm(),
         $rutt === '/inleverans' && $metod === 'POST' => \TDL\Http\Sidor::inleverans(),
+        $rutt === '/utlan' && $metod === 'GET' => \TDL\Http\Sidor::utlanForm(),
+        $rutt === '/utlan' && $metod === 'POST' => \TDL\Http\Sidor::utlanSkapa(),
+        preg_match('#^/utlan/([A-Z0-9]+)/aterlamna$#', $rutt, $m) && $metod === 'POST' => \TDL\Http\Sidor::utlanAterlamna($m[1]),
         $rutt === '/uttag' && $metod === 'GET' => \TDL\Http\Sidor::uttagForm(),
         $rutt === '/uttag' && $metod === 'POST' => \TDL\Http\Sidor::uttag(),
         $rutt === '/plocklista' && $metod === 'GET' => \TDL\Http\Sidor::plocklistaForm(),

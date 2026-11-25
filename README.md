@@ -120,6 +120,7 @@ php tests/integrationstest.php                    # 92 prov
 | `dokument/12_25-nya-forbattringar.md` | 25 nya förslag med status (1, 3, 20 byggda) |
 | `dokument/13_genomfort-1-3-20.md` | Vad som byggdes av förslag 1, 3 och 20 |
 | `dokument/14_arbetsstalle-och-utskrift.md` | Arbetsställevalet, utskriftscentralen och etikettstorlekar |
+| `dokument/17_karta-ean-utlan.md` | Artikel på kartan, EAN-skanning och utlåning |
 
 ---
 

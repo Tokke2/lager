@@ -2,6 +2,8 @@
 /** @var array $rader @var array $typer @var array $artiklar @var string $typ @var string $artikelFilter @var int $sida @var int $antalSidor */
 $beskrivning = [
     'inleverans' => 'Inleverans',
+    'utlan' => 'Utlåning',
+    'aterlamning' => 'Återlämning',
     'uttag' => 'Uttag',
     'overforing' => 'Överföring',
     'plocklista' => 'Plocklista (flera uttag)',

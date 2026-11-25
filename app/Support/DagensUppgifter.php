@@ -13,7 +13,7 @@ final class DagensUppgifter
      *
      * @return list<array{text:string, href:string}>
      */
-    public static function bygg(array $konto, ?array $stalle, array $sessioner, array $brister, ?array $backup): array
+    public static function bygg(array $konto, ?array $stalle, array $sessioner, array $brister, ?array $backup, array $utlan = []): array
     {
         $platsId = $stalle['id'] ?? null;
         $oppna = array_filter($sessioner, static fn ($s) =>
@@ -35,6 +35,17 @@ final class DagensUppgifter
             $uppgifter[] = [
                 'text' => $antal . ($antal === 1 ? ' bristrad under miniminivå' : ' bristrader under miniminivå'),
                 'href' => '/miniminiva',
+            ];
+        }
+        $forfallna = array_filter($utlan, static fn ($lan) =>
+            ($platsId === null || ($lan['plats_id'] ?? '') === $platsId)
+            && ($lan['forfallodatum'] ?? '') !== '' && $lan['forfallodatum'] <= gmdate('Y-m-d')
+        );
+        $antal = count($forfallna);
+        if ($antal > 0) {
+            $uppgifter[] = [
+                'text' => $antal . ($antal === 1 ? ' utlåning ska lämnas tillbaka' : ' utlåningar ska lämnas tillbaka'),
+                'href' => '/utlan',
             ];
         }
         if (($konto['roll'] ?? '') === 'admin' && in_array($backup['lage'] ?? '', ['saknas', 'gammal'], true)) {

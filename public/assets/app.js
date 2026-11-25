@@ -36,6 +36,9 @@ function TDLKamera(opts) {
     var timer = null;
     var canvas = null;
     var ctx = null;
+    var eanLasare = null;
+    var startar = false;
+    var generation = 0;
 
     function sattStatus(text) {
         if (status) status.textContent = text;
@@ -73,24 +76,46 @@ function TDLKamera(opts) {
             sattStatus('Kameran stöds inte i den här webbläsaren. Använd det manuella fältet.');
             return;
         }
+        if (startar) return;
+        startar = true;
+        var minGeneration = ++generation;
+        if (knapp) knapp.disabled = true;
         try {
+            if (opts.ean && 'BarcodeDetector' in window) {
+                try {
+                    var format = await BarcodeDetector.getSupportedFormats();
+                    var eanFormat = ['ean_8', 'ean_13'].filter(function (f) { return format.indexOf(f) !== -1; });
+                    if (eanFormat.length) eanLasare = new BarcodeDetector({ formats: eanFormat });
+                } catch (e) { eanLasare = null; }
+            }
             stream = await navigator.mediaDevices.getUserMedia({
                 video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
                 audio: false
             });
+            if (generation !== minGeneration || document.hidden) {
+                stream.getTracks().forEach(function (t) { t.stop(); });
+                stream = null;
+                return;
+            }
             video.srcObject = stream;
             video.setAttribute('playsinline', 'true');
             await video.play();
+            if (generation !== minGeneration || document.hidden) { stoppa(); return; }
             aktiv = true;
             if (knapp) knapp.textContent = 'Stoppa kameran';
-            sattStatus('Rikta kameran mot QR-koden.');
+            sattStatus(eanLasare ? 'Rikta kameran mot QR- eller EAN-koden.' : (opts.ean ? 'Rikta kameran mot QR-koden. För EAN: skriv koden eller använd en streckkodsläsare.' : 'Rikta kameran mot QR-koden.'));
             schema();
         } catch (e) {
+            if (generation === minGeneration) stoppa();
             sattStatus('Kunde inte starta kameran (' + (e && e.name ? e.name : 'fel') + '). Använd det manuella fältet.');
+        } finally {
+            startar = false;
+            if (knapp) knapp.disabled = false;
         }
     }
 
     function stoppa() {
+        generation++;
         aktiv = false;
         if (timer) {
             window.clearTimeout(timer);
@@ -110,9 +135,22 @@ function TDLKamera(opts) {
         timer = window.setTimeout(avlas, 120);
     }
 
-    function avlas() {
+    async function avlas() {
         if (!aktiv) return;
         try {
+            if (eanLasare && video && video.readyState >= 2 && video.videoWidth) {
+                var streck = [];
+                try { streck = await eanLasare.detect(video); } catch (e) { eanLasare = null; }
+                if (!aktiv) return;
+                if (streck.length && streck[0].rawValue) {
+                    var ean = streck[0].rawValue.trim();
+                    stoppa();
+                    if (manuell) manuell.value = ean;
+                    if (opts.onKod) opts.onKod(ean);
+                    else skickaForm(manuell && manuell.form);
+                    return;
+                }
+            }
             if (window.jsQR && video && video.readyState >= 2 && video.videoWidth) {
                 var c = litenCanvas();
                 ctx.drawImage(video, 0, 0, c.width, c.height);
@@ -142,7 +180,7 @@ function TDLKamera(opts) {
     // eller timer får ligga kvar i bakgrunden och dra batteri.
     window.addEventListener('pagehide', stoppa);
     document.addEventListener('visibilitychange', function () {
-        if (document.hidden && aktiv) stoppa();
+        if (document.hidden && (aktiv || startar)) stoppa();
     });
 }
 
@@ -185,6 +223,9 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
  * CSP är script-src 'self', så <script>TDLArtiklarValjare()</script> blockerades tyst.
  * ------------------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', function () {
+    var markeradRuta = document.querySelector('[data-karta-markerad]');
+    if (markeradRuta) markeradRuta.scrollIntoView({ block: 'nearest', inline: 'center' });
+
     // Utskriftssidor: ?skriv=1 startar utskriftsdialogen utan inline-skript
     if (new URLSearchParams(window.location.search).get('skriv') === '1') {
         window.print();
@@ -334,14 +375,14 @@ document.addEventListener('DOMContentLoaded', function () {
     var kameraKnapp = document.getElementById('starta-kamera');
     var kameraVideo = document.getElementById('kamera');
     if (kameraKnapp && kameraVideo && typeof TDLKamera === 'function') {
-        kameraKnapp.addEventListener('click', function () {
-            TDLKamera({
-                onKod: function (kod) {
-                    // Basvägen: appen kan ligga i /lager – då duger inte '/skanna'
-                    var bas = (document.body && document.body.getAttribute('data-bas')) || '';
-                    window.location.href = bas + '/skanna?kod=' + encodeURIComponent(kod);
-                }
-            });
+        TDLKamera({
+            ean: true,
+            onKod: function (kod) {
+                var form = document.getElementById('manuell-form');
+                var url = new URL(form.action, window.location.href);
+                url.searchParams.set('kod', kod);
+                window.location.href = url.toString();
+            }
         });
     }
 

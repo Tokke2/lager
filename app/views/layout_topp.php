@@ -25,6 +25,7 @@ $menyGrupper = [
         ['id' => 'oversikt', 'href' => '/oversikt', 'text' => 'Översikt', 'ikon' => 'oversikt'],
         ['id' => 'inleverans', 'href' => '/inleverans', 'text' => 'Inleverans', 'ikon' => 'in'],
         ['id' => 'uttag', 'href' => '/uttag', 'text' => 'Uttag', 'ikon' => 'ut'],
+        ['id' => 'utlan', 'href' => '/utlan', 'text' => 'Utlåning', 'ikon' => 'person'],
         ['id' => 'plocklista', 'href' => '/plocklista', 'text' => 'Plocklista', 'ikon' => 'lista'],
         ['id' => 'overforing', 'href' => '/overforing', 'text' => 'Överför', 'ikon' => 'byt'],
         ['id' => 'skanna', 'href' => '/skanna', 'text' => 'Skanna', 'ikon' => 'skanna'],

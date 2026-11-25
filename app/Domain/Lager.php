@@ -113,6 +113,36 @@ final class Lager
         return null;
     }
 
+    /** EAN-8/EAN-13 ska vara oförändrade strängar, inklusive inledande nollor. */
+    public static function valideraEan(string $ean): string
+    {
+        $ean = trim($ean);
+        if ($ean === '') return '';
+        if (!preg_match('/^(?:[0-9]{8}|[0-9]{13})$/D', $ean)) {
+            throw new AppFel('EAN-koden ska ha 8 eller 13 siffror.');
+        }
+        $summa = 0;
+        $vikt = 3;
+        for ($i = strlen($ean) - 2; $i >= 0; $i--) {
+            $summa += (int) $ean[$i] * $vikt;
+            $vikt = $vikt === 3 ? 1 : 3;
+        }
+        if ((10 - $summa % 10) % 10 !== (int) substr($ean, -1)) {
+            throw new AppFel('EAN-kodens kontrollsiffra stämmer inte.');
+        }
+        return $ean;
+    }
+
+    public static function artikelViaEan(string $ean): ?array
+    {
+        try { $ean = self::valideraEan($ean); } catch (AppFel $e) { return null; }
+        if ($ean === '') return null;
+        foreach (self::artiklar(true) as $a) {
+            if (($a['ean'] ?? '') === $ean) return $a;
+        }
+        return null;
+    }
+
     public static function enhet(string $kod): ?array
     {
         $u = Koder::utanBindestreck($kod);
@@ -309,6 +339,11 @@ final class Lager
                 if (($saldo[$id] ?? 0) !== 0) {
                     $problem[] = $a['namn'] . ' har ' . $saldo[$id] . ' ' . $a['enhet'] . ' kvar';
                 }
+                foreach ($a['utlan'] ?? [] as $lan) {
+                    if (($lan['status'] ?? '') === 'oppen' && ($lan['plats_id'] ?? '') === $id) {
+                        $problem[] = $a['namn'] . ' har en pågående utlåning';
+                    }
+                }
             }
             foreach (($tx->fil('enheter'))['poster'] as $en) {
                 if (($en['plats_id'] ?? '') === $id && in_array($en['status'] ?? '', ['aktiv', 'vantande', 'saknad'], true)) {
@@ -437,6 +472,7 @@ final class Lager
         }
         $namn = trim((string) ($data['namn'] ?? ''));
         $nummer = trim((string) ($data['artikelnummer'] ?? ''));
+        $ean = self::valideraEan((string) ($data['ean'] ?? ''));
         $enhet = trim((string) ($data['enhet'] ?? 'st'));
         $spar = (string) ($data['sparningssatt'] ?? self::SPAR_ANTAL);
         $min = (int) ($data['miniminiva'] ?? 0);
@@ -476,17 +512,21 @@ final class Lager
             throw new AppFel('Prisreferensen kan inte vara negativ.');
         }
 
-        return Las::under(function () use ($namn, $nummer, $enhet, $spar, $min, $pris, $etikettMall, $kategori, $hylla, $plats, $anvandare, $arTavla, $innehall) {
+        return Las::under(function () use ($namn, $nummer, $ean, $enhet, $spar, $min, $pris, $etikettMall, $kategori, $hylla, $plats, $anvandare, $arTavla, $innehall) {
             $tx = new Transaktion('artikel_skapad', $anvandare);
             $artiklar = $tx->fil('artiklar');
             foreach ($artiklar['poster'] as $a) {
                 if (mb_strtolower($a['artikelnummer']) === mb_strtolower($nummer)) {
                     throw new AppFel('Artikelnummer ' . $nummer . ' finns redan.');
                 }
+                if ($ean !== '' && ($a['ean'] ?? '') === $ean) {
+                    throw new AppFel('EAN-koden används redan av ' . $a['namn'] . '.');
+                }
             }
             $artikel = [
                 'id' => Koder::interntId('A', 6),
                 'artikelnummer' => $nummer,
+                'ean' => $ean,
                 'namn' => $namn,
                 'enhet' => $enhet,
                 'prisreferens' => $pris,
@@ -535,6 +575,7 @@ final class Lager
 
             $namn = trim((string) ($data['namn'] ?? $artikel['namn']));
             $nummer = trim((string) ($data['artikelnummer'] ?? $artikel['artikelnummer']));
+            $ean = self::valideraEan((string) ($data['ean'] ?? $artikel['ean'] ?? ''));
             $enhet = trim((string) ($data['enhet'] ?? $artikel['enhet']));
             $min = (int) ($data['miniminiva'] ?? $artikel['miniminiva']);
             $pris = ($data['prisreferens'] ?? '') === '' ? null : (float) $data['prisreferens'];
@@ -587,6 +628,11 @@ final class Lager
             if ($arTavla && $innehall === []) {
                 $arTavla = false;
             }
+            if ($arTavla && empty($artikel['ar_tavla'])) {
+                foreach ($artikel['utlan'] ?? [] as $lan) {
+                    if (($lan['status'] ?? '') === 'oppen') throw new AppFel('Avsluta utlåningen innan artikeln blir en verktygstavla.');
+                }
+            }
 
             if ($namn === '' || mb_strlen($namn) > 120) {
                 throw new AppFel('Artikelnamn måste vara 1–120 tecken.');
@@ -601,10 +647,16 @@ final class Lager
                 if ($a['id'] !== $id && mb_strtolower($a['artikelnummer']) === mb_strtolower($nummer)) {
                     throw new AppFel('Artikelnummer används redan av ' . $a['namn'] . '.');
                 }
+                if ($a['id'] !== $id && $ean !== '' && ($a['ean'] ?? '') === $ean) {
+                    throw new AppFel('EAN-koden används redan av ' . $a['namn'] . '.');
+                }
             }
 
             // Spårningssätt får inte stängas av när historik/enheter finns.
             if ($nyttSpar !== $artikel['sparningssatt']) {
+                foreach ($artikel['utlan'] ?? [] as $lan) {
+                    if (($lan['status'] ?? '') === 'oppen') throw new AppFel('Artikeln har en pågående utlåning.');
+                }
                 $harEnheter = self::enheter(['artikel_id' => $id]) !== [];
                 $saldoNu = self::saldoPerPlats($artikel);
                 if ($harEnheter) {
@@ -618,9 +670,10 @@ final class Lager
                 }
             }
 
-            Json::uppdatera($artiklar, $id, function ($a) use ($namn, $nummer, $enhet, $min, $pris, $nyttSpar, $etikettMall, $kategori, $hylla, $plats, $rorInnehall, $arTavla, $innehall) {
+            Json::uppdatera($artiklar, $id, function ($a) use ($namn, $nummer, $ean, $enhet, $min, $pris, $nyttSpar, $etikettMall, $kategori, $hylla, $plats, $rorInnehall, $arTavla, $innehall) {
                 $a['namn'] = $namn;
                 $a['artikelnummer'] = $nummer;
+                $a['ean'] = $ean;
                 $a['enhet'] = $enhet;
                 $a['miniminiva'] = $min;
                 $a['prisreferens'] = $pris;
@@ -672,6 +725,9 @@ final class Lager
             $artikel = Json::hitta($artiklar, $id);
             if ($artikel === null) {
                 throw new AppFel('Artikeln finns inte.', 404);
+            }
+            foreach ($artikel['utlan'] ?? [] as $lan) {
+                if (($lan['status'] ?? '') === 'oppen') throw new AppFel('Artikeln har en pågående utlåning och kan inte inaktiveras.');
             }
             $saldo = self::saldoPerPlats($artikel);
             if (self::totalt($saldo) !== 0) {
