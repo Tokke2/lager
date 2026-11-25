@@ -7,6 +7,11 @@ här; hitta inte på deras innebörd och ändra inte en annan checkout.
 
 ## Hårda regler: gren, merge och release
 
+- När användaren anger en ny regel med orden ”hård regel” eller ”regel”,
+  dokumentera den i denna rotfil anpassad till Lager och publicera ändringen
+  på GitHub via den tillåtna grenen. Kontrollera status och release enligt
+  reglerna nedan. Är regeln oklar, motstridig eller inte möjlig att följa,
+  fråga eller redovisa hindret i stället för att hitta på en tolkning.
 - Arbeta endast på `arena/2bbb9877-lager`. Byt aldrig till, skapa aldrig och
   pusha aldrig någon annan gren; arbeta aldrig mot `main`, särskilt inte vid
   appuppdateringar. Den aktuella grenen får inte byta namn.
@@ -87,15 +92,18 @@ här; hitta inte på deras innebörd och ändra inte en annan checkout.
 ## Förslag och uppföljning
 
 - Efter tio chattmeddelanden sedan föregående lista eller överenskommen start:
-  presentera tio nya förslag. Återanvänd inte tidigare förslag; granska tidigare
-  listor i `dokument/` och tillgänglig samtalshistorik. Underbygg påståenden om
-  användarbehov och påstå inte att konkurrenter saknar något utan belägg.
+  skriv tio nya förslag direkt i chatten, inte enbart i en fil. Återanvänd inte
+  tidigare förslag; granska tidigare listor i `dokument/` och tillgänglig
+  samtalshistorik. Underbygg påståenden om användarbehov och påstå inte att
+  konkurrenter saknar något utan belägg.
 - En ny chatt kan sakna räknaren och tidigare listor. Om antalet eller tidigare
   förslag inte går att fastställa, säg det och be användaren hjälpa till; låtsas
   inte ha minne av sådant som inte finns. Skicka inte oombedda meddelanden.
-- Tidigare efterfrågades även 25 nya förslag; befintliga underlag finns i
-  `dokument/18_25-ideer-efterfragade-behov.md`. Se dem som idéer och belagda
-  behov, inte som bevis för att konkurrenter saknar varje funktion.
+- När användaren ber om 25 nya förslag ska de skrivas direkt i chatten, inte
+  enbart i en fil. Tidigare underlag finns bland annat i
+  `dokument/18_25-ideer-efterfragade-behov.md` och senare förslagslistor.
+  Skilj underbyggda behov från hypoteser; saknade belägg är inte bevis för
+  att konkurrenter saknar en funktion.
 
 ## Kontroll före klart
 
