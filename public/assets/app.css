@@ -1500,3 +1500,6 @@ body.energispar .kommando::backdrop { backdrop-filter: none; }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
 }
+
+/* Versionsjämförelsens filnamn måste få plats även på smala skärmar. */
+.uppdateringsfil { overflow-wrap: anywhere; }

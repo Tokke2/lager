@@ -1,0 +1,54 @@
+name: Publicera senaste release
+
+on:
+  push:
+    branches:
+      - arena/2bbb9877-lager
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lager-release-arena-2bbb9877-lager
+  cancel-in-progress: true
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/arena/2bbb9877-lager'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hämta exakt denna commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Bygg och publicera releasen
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$GH_REPO" = 'Tokke2/lager'
+          [[ "$COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          kontrollera_gren() {
+            local senaste
+            senaste="$(gh api 'repos/Tokke2/lager/git/ref/heads/arena%2F2bbb9877-lager' --jq '.object.sha')"
+            test "$senaste" = "$COMMIT" || { echo 'En nyare commit finns; publicerar inte en gammal release.' >&2; exit 1; }
+          }
+          kontrollera_gren
+          tag="build-$COMMIT"
+          git archive --format=zip --prefix=Lager/ "$COMMIT" > "$RUNNER_TEMP/lager.zip"
+          (cd "$RUNNER_TEMP" && sha256sum lager.zip > lager.zip.sha256)
+          if gh release view "$tag" >/dev/null 2>&1; then
+            befintlig="$(gh api "repos/Tokke2/lager/git/ref/tags/$tag" --jq '.object.sha')"
+            test "$befintlig" = "$COMMIT"
+          else
+            gh release create "$tag" --target "$COMMIT" --title "Lager $COMMIT" \
+              --notes "Automatiskt byggd från den tillåtna grenens commit $COMMIT. Lagerdata ingår inte." --latest=false
+          fi
+          gh release upload "$tag" "$RUNNER_TEMP/lager.zip" "$RUNNER_TEMP/lager.zip.sha256" --clobber
+          kontrollera_gren
+          gh release edit "$tag" --latest

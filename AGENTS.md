@@ -5,3 +5,5 @@
 - Pusha bara den aktuella tillåtna grenen. Skapa inte nya grenar utan att användaren uttryckligen ändrar denna regel.
 - Standardgrenen ska vara `arena/2bbb9877-lager`. Radera inte ytterligare grenar utan att först kontrollera eventuellt unikt arbete och användarens uttryckliga instruktioner.
 - Namn och PIN är enda inloggningen för alla roller; återinför aldrig separata lösenord.
+- Hård regel: varje kodändring som pushas på den aktiva grenen ska ha en GitHub-release för samma commit, markerad som **Latest**. Kontrollera efter publicering att release och grenens HEAD överensstämmer; redovisa eventuella publiceringsfel. Automatiseringen finns i `.github/workflows/release.yml`.
+- Uppdateringskontrollen ska jämföra installerade programfiler mot senaste godkända release, inte kunddata i `storage/`. Ingen annan gren får användas som uppdateringskälla.

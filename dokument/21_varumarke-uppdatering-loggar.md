@@ -13,22 +13,35 @@ Illustrator och liknande; prova färg och små storlekar med tryckeriet.
 ## Uppdatering
 
 Det fanns ingen installerad webbuppdaterare i projektet. **Systemstatus →
-Kontrollera GitHub-releaser** är en manuell kontroll, inte en installerare.
-Den frågar endast GitHubs publika API över TLS och visar en nyare stabil
-release bara om dess tagg ligger i `arena/2bbb9877-lager`-grenens historik.
-Den tittar på högst 20 senaste releaserna och jämför högst fem kandidater.
-Versionsnumret måste hållas aktuellt i `app/bootstrap.php` vid varje release.
-API-begränsning, avsaknad av utgående HTTPS eller TLS-problem visas som fel,
-inte som en försäkran om att installationen är uppdaterad.
+Jämför med senaste releasen** är en manuell filkontroll, inte en installerare.
+GitHub-releasen måste vara markerad **Latest**, ha taggen `build-<commit>` och
+peka på exakt samma commit som `arena/2bbb9877-lager` just nu. Om releasen
+saknas, ligger efter eller pekar på en annan gren avbryts kontrollen med fel.
 
-Kontrollen verifierar **inte** kryptografiskt signerade filer och hämtar eller
-installerar ingen kod. En release ska granskas och testas av driftansvarig;
-behåll `storage/` oförändrat och ta en separat verifierad backup före manuell
-installation. Använd bara releaser från den tillåtna grenen. En säker inbyggd
-installerare med avbrottssäker återställning och signerade paket saknas ännu.
-Därför skapas ingen tillfällig uppdateringsbackup av kontrollen och den tar
-inte bort någon backup. Ordinarie drifts- och manuella backuper raderas aldrig
-av denna funktion.
+För varje versionshanterad programfil i `app/`, `public/`, `bin/`, `brand/`
+och `index.php` jämförs GitHubs Git-blobhash med filens innehåll på servern.
+Ändrade, saknade och otillgängliga filer visas. Extra lokala filer och
+filrättigheter kontrolleras inte; `storage/` läses eller ändras inte. GitHub
+använder Git SHA-1 för blobbarna: detta visar filskillnader men är **inte** en
+kryptografisk signatur eller garanti för paketets ursprung. Kontroll kräver
+utgående HTTPS, TLS och tillgänglig GitHub-API-kvot. Fel redovisas som fel,
+inte som att allt stämmer.
+
+Vid varje push till den tillåtna grenen ska arbetsflödet
+`.github/workflows/release.yml` skapa en release för exakt den committen,
+med `lager.zip` och SHA-256-kontrollsumma, och markera den som **Latest**.
+Paketet byggs med `git archive` från committen och innehåller ingen `storage/`
+eller annan oversionshanterad driftdata. Arbetsflödet kräver GitHub Actions
+med skrivbehörighet till repositoryts innehåll. Om körningen misslyckas eller
+är avstängd måste ansvarig rätta till och köra om den; då är inte regeln
+uppfylld förrän releasen kontrollerats. Gamla releaser tas inte bort.
+
+Kontrollen hämtar eller installerar ingen kod. En release ska granskas och
+testas av driftansvarig; behåll `storage/` och ta en separat verifierad backup
+före manuell installation. En säker inbyggd installerare med avbrottssäker
+återställning och signerade paket saknas ännu. Därför skapas ingen tillfällig
+uppdateringsbackup och kontrollen tar inte bort någon backup. Ordinarie
+backuper raderas aldrig av denna funktion.
 
 ## Tekniska loggar
 

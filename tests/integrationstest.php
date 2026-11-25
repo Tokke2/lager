@@ -3121,14 +3121,28 @@ prov('LOG-02 automatisk städning begränsas till roterade loggar och körs hög
     \TDL\Support\Loggstadning::vidAnvandning(); krav(!is_file($senare), 'nästa städning sker efter tidsgränsen');
     @unlink($lock);
 });
-prov('UPD-01 endast nyare stabil release i tillåten grenhistorik godkänns', function () {
-    $r = ['tag_name'=>'v1.2.0','draft'=>false,'prerelease'=>false];
-    krav(\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.1.0'), 'nyare tagg på grenen');
-    foreach (['ahead', 'diverged', 'unknown'] as $status) krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>$status], '1.1.0'), 'okänd eller annan gren får inte användas');
-    krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.2.0'), 'samma version avvisas');
-    krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '2.0.0'), 'nedgradering avvisas');
-    $r['prerelease'] = true; krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.1.0'), 'förhandsversion avvisas');
-    $r['prerelease'] = false; $r['tag_name'] = '../../main'; krav(!\TDL\Support\Uppdateringskontroll::godkand($r, ['status'=>'behind'], '1.1.0'), 'ogiltig tagg avvisas');
+prov('UPD-01 latest måste vara grenens exakta commit och giltig tagg', function () {
+    $sha = str_repeat('a', 40); $annan = str_repeat('b', 40);
+    $r = ['tag_name'=>'build-' . $sha, 'draft'=>false, 'prerelease'=>false];
+    $ref = ['object'=>['type'=>'commit', 'sha'=>$sha]];
+    krav(\TDL\Support\Uppdateringskontroll::verifieraRelease($r, $ref, $ref) === $sha, 'aktuell release godkänns');
+    kastar(fn () => \TDL\Support\Uppdateringskontroll::verifieraRelease($r, ['object'=>['type'=>'commit', 'sha'=>$annan]], $ref), 'motsvarar inte');
+    kastar(fn () => \TDL\Support\Uppdateringskontroll::verifieraRelease($r, $ref, ['object'=>['type'=>'commit', 'sha'=>$annan]]), 'motsvarar inte');
+    $r['prerelease'] = true; kastar(fn () => \TDL\Support\Uppdateringskontroll::verifieraRelease($r, $ref, $ref), 'motsvarar inte');
+    $r['prerelease'] = false; $r['tag_name'] = '../../main'; kastar(fn () => \TDL\Support\Uppdateringskontroll::verifieraRelease($r, $ref, $ref), 'motsvarar inte');
+});
+prov('UPD-02 jämför filinnehåll, inte storage eller symlänkar', function () {
+    $dir = TDL_STORAGE . '/uppdateringsprov'; @mkdir($dir . '/app', 0700, true); @mkdir($dir . '/public', 0700, true); @mkdir($dir . '/storage', 0700, true);
+    file_put_contents($dir . '/app/bootstrap.php', 'samma'); file_put_contents($dir . '/public/index.php', 'lokalt'); file_put_contents($dir . '/storage/hemlig', 'privat');
+    $blob = static fn ($path, $data) => ['path'=>$path, 'type'=>'blob', 'mode'=>'100644', 'sha'=>hash('sha1', 'blob ' . strlen($data) . "\0" . $data)];
+    $trad = ['truncated'=>false, 'tree'=>[$blob('app/bootstrap.php', 'samma'), $blob('public/index.php', 'release'), $blob('app/saknas.php', 'saknas'), $blob('storage/hemlig', 'annat')]];
+    $r = \TDL\Support\Uppdateringskontroll::jamforTrad($trad, $dir);
+    krav($r['antal'] === 3 && $r['oforandrade'] === 1 && $r['andrade'] === ['public/index.php'] && $r['saknade'] === ['app/saknas.php'], 'ändrade och saknade programfiler visas, storage ignoreras');
+    $harLank = @symlink($dir . '/storage/hemlig', $dir . '/app/lank.php');
+    if ($harLank) { $trad['tree'][] = $blob('app/lank.php', 'privat'); $r = \TDL\Support\Uppdateringskontroll::jamforTrad($trad, $dir); krav($r['otillgangliga'] === ['app/lank.php'], 'symlänk får inte följas'); @unlink($dir . '/app/lank.php'); }
+    $trad['truncated'] = true; kastar(fn () => \TDL\Support\Uppdateringskontroll::jamforTrad($trad, $dir), 'ofullständig');
+    $trad['truncated'] = false; $trad['tree'][] = $blob('app/../storage/hemlig', 'privat'); kastar(fn () => \TDL\Support\Uppdateringskontroll::jamforTrad($trad, $dir), 'osäker');
+    @unlink($dir . '/app/bootstrap.php'); @unlink($dir . '/public/index.php'); @unlink($dir . '/storage/hemlig'); @rmdir($dir . '/app'); @rmdir($dir . '/public'); @rmdir($dir . '/storage'); @rmdir($dir);
 });
 
 /* ---------------------------------------------------------- Sammanställning */
