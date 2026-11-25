@@ -210,6 +210,8 @@ final class Inventering
                 'artikelnummer' => $artikel['artikelnummer'],
                 'namn' => $artikel['namn'],
                 'enhet' => $artikel['enhet'] ?? 'st',
+                // Aktuell artikelinformation, inte ett fruset inventeringsresultat.
+                'rakneinstruktion' => $artikel['rakneinstruktion'] ?? '',
                 'typ' => $arQr ? 'qr' : 'antal',
                 'forvantat' => $forvantat,
                 'raknat' => $raknat,

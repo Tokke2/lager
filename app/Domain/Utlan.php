@@ -27,8 +27,17 @@ final class Utlan
         return $resultat;
     }
 
-    public static function skapa(string $artikelId, string $platsId, int $antal, array $koder, string $lanare, string $datum, array $av, ?array $godkannare = null): array
+    /** Platsbeskrivningar är endast anteckningar, aldrig en lagerflytt. */
+    private static function returplats(string $text): string
     {
+        $text = trim($text);
+        if (mb_strlen($text) > 120 || preg_match('/[\x00-\x1F\x7F]/', $text)) throw new AppFel('Returplatsen får vara högst 120 tecken och får inte innehålla styrtecken.');
+        return $text;
+    }
+
+    public static function skapa(string $artikelId, string $platsId, int $antal, array $koder, string $lanare, string $datum, array $av, ?array $godkannare = null, string $onskadReturplats = ''): array
+    {
+        $onskadReturplats = self::returplats($onskadReturplats);
         $lanare = trim($lanare);
         if ($lanare === '' || mb_strlen($lanare) > 120) {
             throw new AppFel('Ange namnet på den som lånar (högst 120 tecken).');
@@ -37,7 +46,7 @@ final class Utlan
         if ($d === false || $d->format('Y-m-d') !== $datum || $datum < gmdate('Y-m-d')) {
             throw new AppFel('Ange ett giltigt återlämningsdatum som inte har passerat.');
         }
-        return Las::under(function () use ($artikelId, $platsId, $antal, $koder, $lanare, $datum, $av, $godkannare) {
+        return Las::under(function () use ($artikelId, $platsId, $antal, $koder, $lanare, $datum, $av, $godkannare, $onskadReturplats) {
             $tx = new Transaktion('utlan', $av);
             $artiklar = $tx->fil('artiklar');
             $artikel = Json::hitta($artiklar, $artikelId);
@@ -82,12 +91,12 @@ final class Utlan
                 if ((int) ($artikel['saldo'][$platsId] ?? 0) < $antalLan) throw new AppFel('Otillräckligt saldo på arbetsstället.');
                 $artikel['saldo'][$platsId] = (int) $artikel['saldo'][$platsId] - $antalLan;
             }
-            $lan = ['id' => $lanId, 'status' => 'oppen', 'plats_id' => $platsId, 'plats_namn' => $plats['namn'], 'antal' => $antalLan, 'enheter' => $koder, 'lanare' => $lanare, 'forfallodatum' => $datum, 'skapad' => nu()];
+            $lan = ['id' => $lanId, 'status' => 'oppen', 'plats_id' => $platsId, 'plats_namn' => $plats['namn'], 'antal' => $antalLan, 'enheter' => $koder, 'lanare' => $lanare, 'forfallodatum' => $datum, 'onskad_returplats' => $onskadReturplats, 'skapad' => nu()];
             $artikel['utlan'][] = $lan;
             $artikel['andrad'] = nu();
             Json::uppdatera($artiklar, $artikelId, static fn ($a) => $artikel);
             $tx->sattFil('artiklar', $artiklar);
-            $tx->historik(['typ' => 'utlan', 'artikel_id' => $artikelId, 'artikelnummer' => $artikel['artikelnummer'], 'artikelnamn' => $artikel['namn'], 'plats_id' => $platsId, 'plats_namn' => $plats['namn'], 'antal' => $antalLan, 'enheter' => $koder, 'detaljer' => ['utlan_id' => $lanId, 'lanare' => $lanare, 'forfallodatum' => $datum, 'godkand_av' => $godkannare === null ? null : ['id' => $godkannare['id'], 'namn' => $godkannare['namn']]]]);
+            $tx->historik(['typ' => 'utlan', 'artikel_id' => $artikelId, 'artikelnummer' => $artikel['artikelnummer'], 'artikelnamn' => $artikel['namn'], 'plats_id' => $platsId, 'plats_namn' => $plats['namn'], 'antal' => $antalLan, 'enheter' => $koder, 'detaljer' => ['utlan_id' => $lanId, 'lanare' => $lanare, 'forfallodatum' => $datum, 'onskad_returplats' => $onskadReturplats, 'godkand_av' => $godkannare === null ? null : ['id' => $godkannare['id'], 'namn' => $godkannare['namn']]]]);
             $tx->spara();
             return $lan;
         });
@@ -100,9 +109,10 @@ final class Utlan
     }
 
     /** @return array{kvittokod:string,antal:int,kvar:int} */
-    public static function aterlamna(string $lanId, array $av, ?int $antal = null, array $valdaKoder = [], ?string $version = null, string $skick = 'ok', string $notering = '', ?array $bild = null): array
+    public static function aterlamna(string $lanId, array $av, ?int $antal = null, array $valdaKoder = [], ?string $version = null, string $skick = 'ok', string $notering = '', ?array $bild = null, string $faktiskReturplats = ''): array
     {
-        return Las::under(function () use ($lanId, $av, $antal, $valdaKoder, $version, $skick, $notering, $bild) {
+        $faktiskReturplats = self::returplats($faktiskReturplats);
+        return Las::under(function () use ($lanId, $av, $antal, $valdaKoder, $version, $skick, $notering, $bild, $faktiskReturplats) {
             $tx = new Transaktion('aterlamning', $av);
             $artiklar = $tx->fil('artiklar');
             $hittad = null;
@@ -114,6 +124,10 @@ final class Utlan
             if ($hittad === null) throw new AppFel('Utlåningen finns inte.', 404);
             [$ai, $li, $lan] = $hittad;
             if (($lan['status'] ?? '') !== 'oppen') throw new AppFel('Utlåningen är redan återlämnad.');
+            $onskadReturplats = (string) ($lan['onskad_returplats'] ?? '');
+            if ($onskadReturplats !== '' && $faktiskReturplats === '') throw new AppFel('Ange faktisk returplats för att jämföra med den önskade.');
+            $platsStammer = $onskadReturplats !== '' && $faktiskReturplats !== ''
+                ? mb_strtolower($onskadReturplats) === mb_strtolower($faktiskReturplats) : null;
             if ($version !== null && !hash_equals(self::version($lan), $version)) throw new AppFel('Utlåningen har ändrats. Ladda om sidan och kontrollera antalet innan du fortsätter.');
             $artikel = $artiklar['poster'][$ai];
             $plats = Json::hitta($tx->fil('platser'), $lan['plats_id']);
@@ -152,12 +166,12 @@ final class Utlan
             }
             $lan['antal'] = (int) $lan['antal'] - $aterAntal;
             if ($lan['antal'] === 0) { $lan['status'] = 'aterlamnad'; $lan['aterlamnad'] = nu(); if (!empty($lan['saknad'])) $lan['saknad']['status'] = 'aterlamnad'; }
-            $kvitto = ['id' => strtoupper(bin2hex(random_bytes(8))), 'tid' => nu(), 'antal' => $aterAntal, 'enheter' => $koder, 'kvar' => $lan['antal'], 'lanare' => $lan['lanare'], 'artikelnamn' => $artikel['namn'], 'plats_namn' => $plats['namn'], 'av' => $av['namn'] ?? '', 'skick' => $skick, 'notering' => $notering, 'bild' => $bild];
+            $kvitto = ['id' => strtoupper(bin2hex(random_bytes(8))), 'tid' => nu(), 'antal' => $aterAntal, 'enheter' => $koder, 'kvar' => $lan['antal'], 'lanare' => $lan['lanare'], 'artikelnamn' => $artikel['namn'], 'plats_namn' => $plats['namn'], 'av' => $av['namn'] ?? '', 'skick' => $skick, 'notering' => $notering, 'bild' => $bild, 'onskad_returplats' => $onskadReturplats, 'faktisk_returplats' => $faktiskReturplats, 'returplats_stammer' => $platsStammer];
             $lan['aterlamningar'][] = $kvitto;
             $artiklar['poster'][$ai]['utlan'][$li] = $lan;
             $artiklar['poster'][$ai]['andrad'] = nu();
             $tx->sattFil('artiklar', $artiklar);
-            $tx->historik(['typ' => 'aterlamning', 'artikel_id' => $artikel['id'], 'artikelnummer' => $artikel['artikelnummer'], 'artikelnamn' => $artikel['namn'], 'plats_id' => $lan['plats_id'], 'plats_namn' => $plats['namn'], 'antal' => $aterAntal, 'enheter' => $koder, 'detaljer' => ['utlan_id' => $lanId, 'kvitto_id' => $kvitto['id'], 'kvar' => $lan['antal'], 'lanare' => $lan['lanare'], 'skick' => $skick, 'notering' => $notering, 'bild' => $bild['fil'] ?? null]]);
+            $tx->historik(['typ' => 'aterlamning', 'artikel_id' => $artikel['id'], 'artikelnummer' => $artikel['artikelnummer'], 'artikelnamn' => $artikel['namn'], 'plats_id' => $lan['plats_id'], 'plats_namn' => $plats['namn'], 'antal' => $aterAntal, 'enheter' => $koder, 'detaljer' => ['utlan_id' => $lanId, 'kvitto_id' => $kvitto['id'], 'kvar' => $lan['antal'], 'lanare' => $lan['lanare'], 'skick' => $skick, 'notering' => $notering, 'bild' => $bild['fil'] ?? null, 'onskad_returplats' => $onskadReturplats, 'faktisk_returplats' => $faktiskReturplats, 'returplats_stammer' => $platsStammer]]);
             $tx->spara();
             return ['kvittokod' => $kvitto['id'], 'antal' => $aterAntal, 'kvar' => $lan['antal']];
         });

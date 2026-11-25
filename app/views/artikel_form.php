@@ -30,6 +30,7 @@ $visaNummerFalt = $arAdmin || !$nyArtikel;
                 <input id="artikelnummer" type="text" value="Sätts automatiskt när du sparar" disabled>
                 <div class="falt-hjalp">Numret byggs av namnet och nästa lediga löpnummer.</div>
             <?php endif; ?>
+            <?php $ordlisteFalt = 'artikelnummer'; require __DIR__ . '/ordlista_hjalp.php'; ?>
         </div>
     </div>
     <div class="falt">
@@ -41,11 +42,13 @@ $visaNummerFalt = $arAdmin || !$nyArtikel;
         <div class="falt">
             <label for="enhet">Enhet</label>
             <input id="enhet" name="enhet" maxlength="20" value="<?= e($artikel['enhet'] ?? 'st') ?>">
+            <?php $ordlisteFalt = 'enhet'; require __DIR__ . '/ordlista_hjalp.php'; ?>
         </div>
         <div class="falt">
             <label for="miniminiva">Miniminivå (per arbetsställe)</label>
             <input id="miniminiva" name="miniminiva" type="number" min="0" step="1" value="<?= e((string) ($artikel['miniminiva'] ?? 0)) ?>">
             <div class="falt-hjalp">Jämförs mot varje plats för sig, inte mot totalen.</div>
+            <?php $ordlisteFalt = 'miniminiva'; require __DIR__ . '/ordlista_hjalp.php'; ?>
         </div>
         <?php if ($visaNummerFalt): ?>
         <div class="falt">
@@ -63,7 +66,20 @@ $visaNummerFalt = $arAdmin || !$nyArtikel;
                 <?php foreach ($kategorier ?? [] as $k): ?><option value="<?= e($k) ?>"><?php endforeach; ?>
             </datalist>
             <div class="falt-hjalp">Samlar artiklar som hör ihop. Blir filter i artikellistan.</div>
+            <?php $ordlisteFalt = 'kategori'; require __DIR__ . '/ordlista_hjalp.php'; ?>
         </div>
+    </div>
+
+    <div class="falt">
+        <label for="rakneinstruktion">Räkneinstruktion vid inventering (valfri)</label>
+        <textarea id="rakneinstruktion" name="rakneinstruktion" maxlength="500" rows="3"><?= e($artikel['rakneinstruktion'] ?? '') ?></textarea>
+        <div class="falt-hjalp">Exempel: räkna lösa och hela förpackningar var för sig. Texten ändrar inte saldot.</div>
+    </div>
+
+    <div class="falt">
+        <label for="oppen_forpackning">Notering om öppnad förpackning (valfri)</label>
+        <textarea id="oppen_forpackning" name="oppen_forpackning" maxlength="500" rows="3"><?= e($artikel['oppen_forpackning'] ?? '') ?></textarea>
+        <div class="falt-hjalp">Ange arbetsställe, vilken förpackning och ungefärlig mängd med enhet. En gemensam fritextnotering per artikel; den är inte saldo och uppdateras inte automatiskt.</div>
     </div>
 
     <?php // ---- Lagerplats: zon + rad + fack. Obligatorisk. ---- ?>

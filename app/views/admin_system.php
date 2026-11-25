@@ -89,6 +89,23 @@ $halsoFarg = $halso['niva'] === 'fel' ? 'fel' : ($halso['niva'] === 'varning' ? 
 </div>
 
 <div class="kort">
+    <h2>Lokal ordlista</h2>
+    <p class="falt-hjalp">Ange verksamhetens term och förklaring för ett fält. Båda behövs; lämna båda tomma för att ta bort raden. Förklaringarna visas vid motsvarande fält.</p>
+    <form method="post" action="<?= e(u('/admin/system/ordlista')) ?>">
+        <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
+        <?php $ordlista = \TDL\Support\Ordlista::alla(); foreach (\TDL\Support\Ordlista::FALT as $falt => $etikett): $ord = is_array($ordlista[$falt] ?? null) ? $ordlista[$falt] : []; ?>
+        <fieldset><legend><?= e($etikett) ?></legend>
+            <label for="ord-<?= e($falt) ?>">Lokal term</label>
+            <input id="ord-<?= e($falt) ?>" name="ordlista[<?= e($falt) ?>][term]" maxlength="80" value="<?= e((string) ($ord['term'] ?? '')) ?>">
+            <label for="forklaring-<?= e($falt) ?>">Förklaring</label>
+            <input id="forklaring-<?= e($falt) ?>" name="ordlista[<?= e($falt) ?>][forklaring]" maxlength="300" value="<?= e((string) ($ord['forklaring'] ?? '')) ?>">
+        </fieldset>
+        <?php endforeach; ?>
+        <div class="actions"><button type="submit">Spara ordlistan</button></div>
+    </form>
+</div>
+
+<div class="kort">
     <h2>Larm och säkerhet</h2>
     <form method="post" action="<?= e(u('/admin/system/installningar')) ?>">
         <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">

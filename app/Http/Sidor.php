@@ -1420,7 +1420,7 @@ final class Sidor
             if ($godkannare['id'] === $konto['id'] || !empty($godkannare['maste_byta_pin'])) throw new AppFel('Kollegan måste vara en annan aktiv användare med egen PIN.');
         }
         $koder = preg_split('/[\s,;]+/u', post('enhetskoder'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        \TDL\Domain\Utlan::skapa(post('artikel_id'), post('plats_id'), (int) post('antal'), $koder, post('lanare'), post('forfallodatum'), $konto, $godkannare);
+        \TDL\Domain\Utlan::skapa(post('artikel_id'), post('plats_id'), (int) post('antal'), $koder, post('lanare'), post('forfallodatum'), $konto, $godkannare, post('onskad_returplats'));
         flash('ok', 'Utlåningen är registrerad.');
         omdirigera('/utlan');
     }
@@ -1440,7 +1440,7 @@ final class Sidor
             $bild = \TDL\Support\Bilder::spara($_FILES['bild'], $artikelId, 'Verktygets skick');
         }
         try {
-            $resultat = \TDL\Domain\Utlan::aterlamna($id, $konto, $antalText === '' ? 0 : (int) $antalText, post_lista('enheter'), $version, post('skick', 'ok'), post('notering'), $bild);
+            $resultat = \TDL\Domain\Utlan::aterlamna($id, $konto, $antalText === '' ? 0 : (int) $antalText, post_lista('enheter'), $version, post('skick', 'ok'), post('notering'), $bild, post('faktisk_returplats'));
         } catch (\Throwable $e) {
             if ($bild !== null && \TDL\Support\Las::oppnaJournaler() === []) {
                 $fil = \TDL\Support\Bilder::sokvag($artikelId, $bild['fil']);

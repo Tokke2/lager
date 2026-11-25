@@ -425,6 +425,19 @@ final class Lager
         return $text;
     }
 
+    /** Frivilliga artikelnoteringar ändrar aldrig saldo. */
+    private static function valideraArtikelnotering(mixed $varde, string $namn): string
+    {
+        if (!is_string($varde)) {
+            throw new AppFel($namn . ' måste vara text.');
+        }
+        $text = trim($varde);
+        if (mb_strlen($text) > 500 || preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $text)) {
+            throw new AppFel($namn . ' får vara högst 500 tecken och får inte innehålla styrtecken.');
+        }
+        return $text;
+    }
+
     /** Alla kategorier som används, för autokomplettering i formuläret. */
     public static function kategorier(): array
     {
@@ -481,6 +494,8 @@ final class Lager
         $etikettMall = self::valideraEtikettmall($data['etikett_mall'] ?? \TDL\Support\Etikettmallar::STANDARD);
         $kategori = self::valideraPlatsfalt($data['kategori'] ?? '', self::KATEGORI_MAX, 'kategorin');
         $hylla = self::valideraPlatsfalt($data['hylla'] ?? '', self::HYLLA_MAX, 'hyllan');
+        $rakneregel = self::valideraArtikelnotering($data['rakneinstruktion'] ?? '', 'Räkneinstruktionen');
+        $forpackning = self::valideraArtikelnotering($data['oppen_forpackning'] ?? '', 'Förpackningsnoteringen');
         // Lagerplats: zon + rad + fack. Obligatorisk – utan plats går inget att hitta.
         $plats = \TDL\Domain\Lagerplats::valideraPlats(
             $data['zon_id'] ?? '',
@@ -512,7 +527,7 @@ final class Lager
             throw new AppFel('Prisreferensen kan inte vara negativ.');
         }
 
-        return Las::under(function () use ($namn, $nummer, $ean, $enhet, $spar, $min, $pris, $etikettMall, $kategori, $hylla, $plats, $anvandare, $arTavla, $innehall) {
+        return Las::under(function () use ($namn, $nummer, $ean, $enhet, $spar, $min, $pris, $etikettMall, $kategori, $hylla, $rakneregel, $forpackning, $plats, $anvandare, $arTavla, $innehall) {
             $tx = new Transaktion('artikel_skapad', $anvandare);
             $artiklar = $tx->fil('artiklar');
             foreach ($artiklar['poster'] as $a) {
@@ -535,6 +550,9 @@ final class Lager
                 'etikett_mall' => $etikettMall,
                 'kategori' => $kategori,
                 'hylla' => $hylla,
+                'rakneinstruktion' => $rakneregel,
+                'oppen_forpackning' => $forpackning,
+                'oppen_forpackning_andrad' => $forpackning !== '' ? nu() : null,
                 'zon_id' => $plats['zon_id'],
                 'rad' => $plats['rad'],
                 'fack' => $plats['fack'],
@@ -553,7 +571,7 @@ final class Lager
                 'artikel_id' => $artikel['id'],
                 'artikelnummer' => $nummer,
                 'artikelnamn' => $namn,
-                'detaljer' => ['sparningssatt' => $spar, 'miniminiva' => $min, 'kategori' => $kategori, 'hylla' => $hylla,
+                'detaljer' => ['sparningssatt' => $spar, 'miniminiva' => $min, 'kategori' => $kategori, 'hylla' => $hylla, 'rakneinstruktion' => $rakneregel, 'oppen_forpackning' => $forpackning,
                     'plats' => \TDL\Domain\Lagerplats::platsText(['zon_id' => $plats['zon_id'], 'rad' => $plats['rad'], 'fack' => $plats['fack']])]
                     + ($arTavla ? ['ar_tavla' => true, 'antal_delar' => count($innehall)] : []),
             ]);
@@ -592,6 +610,12 @@ final class Lager
                 array_key_exists('hylla', $data) ? $data['hylla'] : ($artikel['hylla'] ?? ''),
                 self::HYLLA_MAX,
                 'hyllan'
+            );
+            $rakneregel = self::valideraArtikelnotering(
+                array_key_exists('rakneinstruktion', $data) ? $data['rakneinstruktion'] : ($artikel['rakneinstruktion'] ?? ''), 'Räkneinstruktionen'
+            );
+            $forpackning = self::valideraArtikelnotering(
+                array_key_exists('oppen_forpackning', $data) ? $data['oppen_forpackning'] : ($artikel['oppen_forpackning'] ?? ''), 'Förpackningsnoteringen'
             );
 
             // Lagerplats: obligatorisk även vid ändring. Skickas inget alls
@@ -670,7 +694,7 @@ final class Lager
                 }
             }
 
-            Json::uppdatera($artiklar, $id, function ($a) use ($namn, $nummer, $ean, $enhet, $min, $pris, $nyttSpar, $etikettMall, $kategori, $hylla, $plats, $rorInnehall, $arTavla, $innehall) {
+            Json::uppdatera($artiklar, $id, function ($a) use ($namn, $nummer, $ean, $enhet, $min, $pris, $nyttSpar, $etikettMall, $kategori, $hylla, $rakneregel, $forpackning, $plats, $rorInnehall, $arTavla, $innehall) {
                 $a['namn'] = $namn;
                 $a['artikelnummer'] = $nummer;
                 $a['ean'] = $ean;
@@ -681,6 +705,11 @@ final class Lager
                 $a['etikett_mall'] = $etikettMall;
                 $a['kategori'] = $kategori;
                 $a['hylla'] = $hylla;
+                $a['rakneinstruktion'] = $rakneregel;
+                if ($forpackning !== ($a['oppen_forpackning'] ?? '')) {
+                    $a['oppen_forpackning'] = $forpackning;
+                    $a['oppen_forpackning_andrad'] = $forpackning !== '' ? nu() : null;
+                }
                 $a['zon_id'] = $plats['zon_id'];
                 $a['rad'] = $plats['rad'];
                 $a['fack'] = $plats['fack'];
@@ -702,8 +731,8 @@ final class Lager
                 'artikelnummer' => $nummer,
                 'artikelnamn' => $namn,
                 'detaljer' => [
-                    'fore' => ['namn' => $artikel['namn'], 'sparningssatt' => $artikel['sparningssatt'], 'kategori' => $artikel['kategori'] ?? null, 'hylla' => $artikel['hylla'] ?? null, 'plats' => \TDL\Domain\Lagerplats::platsText($artikel)],
-                    'efter' => ['namn' => $namn, 'sparningssatt' => $nyttSpar, 'kategori' => $kategori, 'hylla' => $hylla, 'plats' => \TDL\Domain\Lagerplats::platsText(['zon_id' => $plats['zon_id'], 'rad' => $plats['rad'], 'fack' => $plats['fack']])]
+                    'fore' => ['namn' => $artikel['namn'], 'sparningssatt' => $artikel['sparningssatt'], 'kategori' => $artikel['kategori'] ?? null, 'hylla' => $artikel['hylla'] ?? null, 'rakneinstruktion' => $artikel['rakneinstruktion'] ?? '', 'oppen_forpackning' => $artikel['oppen_forpackning'] ?? '', 'plats' => \TDL\Domain\Lagerplats::platsText($artikel)],
+                    'efter' => ['namn' => $namn, 'sparningssatt' => $nyttSpar, 'kategori' => $kategori, 'hylla' => $hylla, 'rakneinstruktion' => $rakneregel, 'oppen_forpackning' => $forpackning, 'plats' => \TDL\Domain\Lagerplats::platsText(['zon_id' => $plats['zon_id'], 'rad' => $plats['rad'], 'fack' => $plats['fack']])]
                         + ($rorInnehall ? ['ar_tavla' => $arTavla, 'antal_delar' => count($innehall)] : []),
                 ],
             ]);

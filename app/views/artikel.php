@@ -27,6 +27,14 @@ $arAdmin = ($konto['roll'] ?? '') === 'admin';
 </p>
 
 <?php if (!empty($artikel['ean'])): ?><p class="dampad">EAN: <span class="mono"><?= e($artikel['ean']) ?></span></p><?php endif; ?>
+<?php if (!empty($artikel['oppen_forpackning'])): ?>
+<div class="kort">
+    <h2>Notering om öppnad förpackning</h2>
+    <p><?= nl2br(e($artikel['oppen_forpackning'])) ?></p>
+    <p class="falt-hjalp">Senast ändrad <?= e(sv_tid($artikel['oppen_forpackning_andrad'] ?? null)) ?>. Uppgiften är ungefärlig, kan vara inaktuell och är inte lagersaldo.</p>
+    <?php if ($arAdmin): ?><a href="<?= e(u('/artiklar/' . $artikel['id'] . '/redigera')) ?>">Ändra noteringen</a><?php endif; ?>
+</div>
+<?php endif; ?>
 
 <div class="actions">
     <?php if (!empty($artikel['zon_id']) && !empty($artikel['rad']) && !empty($artikel['fack'])): ?>

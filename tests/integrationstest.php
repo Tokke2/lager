@@ -3145,6 +3145,66 @@ prov('UPD-02 jämför filinnehåll, inte storage eller symlänkar', function () 
     @unlink($dir . '/app/bootstrap.php'); @unlink($dir . '/public/index.php'); @unlink($dir . '/storage/hemlig'); @rmdir($dir . '/app'); @rmdir($dir . '/public'); @rmdir($dir . '/storage'); @rmdir($dir);
 });
 
+prov('VAL-08 artikelinstruktion och förpackningsnotering ändrar inte saldo', function () use ($admin) {
+    $plats = Lager::skapaPlats('Test noteringar', 'TN23', $admin);
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Artikel med instruktion', 'artikelnummer'=>'INS23', 'sparningssatt'=>'antal', 'rakneinstruktion'=>"Räkna kartonger\nseparat", 'oppen_forpackning'=>'Örebro låda 1: cirka 3 kg']), $admin);
+    Rorelser::inleverans($a['id'], $plats['id'], 4, [], $admin);
+    $a = Lager::andraArtikel($a['id'], ['namn'=>'Artikel med instruktion'], $admin);
+    krav($a['rakneinstruktion'] === "Räkna kartonger\nseparat" && $a['oppen_forpackning'] === 'Örebro låda 1: cirka 3 kg', 'fält bevaras vid partiell ändring');
+    krav(($a['saldo'][$plats['id']] ?? 0) === 4 && !empty($a['oppen_forpackning_andrad']), 'saldo och noteringstid bevaras');
+    kastar(fn () => Lager::andraArtikel($a['id'], ['rakneinstruktion'=>str_repeat('x', 501)], $admin), '500');
+    kastar(fn () => Lager::andraArtikel($a['id'], ['oppen_forpackning'=>['ogiltig']], $admin), 'text');
+    krav(Lager::artikel($a['id'])['saldo'][$plats['id']] === 4, 'felaktig ändring påverkar inte saldo');
+    $inv = Inventering::startaInventering($plats['id'], [$a['id']], $admin);
+    $lage = Inventering::lage($inv);
+    krav($lage['rader'][0]['rakneinstruktion'] === "Räkna kartonger\nseparat", 'aktuell instruktion visas i läget');
+    Lager::andraArtikel($a['id'], ['rakneinstruktion'=>'<script>angrepp</script>'], $admin);
+    $lage = Inventering::lage($inv); $session = $inv; $utanfor = []; $arAdmin = true;
+    ob_start(); require dirname(__DIR__) . '/app/views/inventering.php'; $html = ob_get_clean();
+    krav(str_contains($html, '&lt;script&gt;angrepp&lt;/script&gt;') && !str_contains($html, '<script>angrepp</script>'), 'instruktion escapes i vyn');
+    Inventering::annullera($inv['id'], $admin, 'Test avslutat');
+});
+prov('VAL-03 lokal ordlista valideras och visas säkert', function () {
+    $gammal = Installningar::hamta('lokal_ordlista', []);
+    $ord = \TDL\Support\Ordlista::validera(['enhet'=>['term'=>'Vår kod', 'forklaring'=>'<test>'], 'okand'=>['term'=>'x','forklaring'=>'y']]);
+    krav(count($ord) === 1 && $ord['enhet']['term'] === 'Vår kod', 'bara kända fält');
+    kastar(fn () => \TDL\Support\Ordlista::validera(['enhet'=>['term'=>'saknar', 'forklaring'=>'']]), 'både');
+    kastar(fn () => \TDL\Support\Ordlista::validera(['enhet'=>['term'=>str_repeat('x', 81), 'forklaring'=>'x']]), '80');
+    Installningar::spara(['lokal_ordlista'=>$ord]);
+    $ordlisteFalt = 'enhet'; ob_start(); require dirname(__DIR__) . '/app/views/ordlista_hjalp.php'; $html = ob_get_clean();
+    krav(str_contains($html, '&lt;test&gt;') && !str_contains($html, '<test>'), 'text visas säkert');
+    Installningar::spara(['lokal_ordlista'=>$gammal]);
+});
+prov('VAL-07 returplats jämförs per delåterlämning utan lagerflytt', function () use ($admin) {
+    $plats = Lager::skapaPlats('Returtest', 'RT23', $admin);
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Returvara', 'artikelnummer'=>'RET23', 'sparningssatt'=>'antal']), $admin);
+    Rorelser::inleverans($a['id'], $plats['id'], 4, [], $admin);
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $plats['id'], 4, [], 'Anna', gmdate('Y-m-d'), $admin, null, 'Hylla A');
+    $version = \TDL\Domain\Utlan::version($lan);
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 1, [], $version), 'faktisk returplats');
+    krav((Lager::artikel($a['id'])['saldo'][$plats['id']] ?? 0) === 0, 'ogiltig retur ändrar inte saldo');
+    $r = \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 1, [], $version, 'ok', '', null, 'Hylla B');
+    $k = \TDL\Domain\Utlan::kvitto($lan['id'], $r['kvittokod']);
+    krav($k['returplats_stammer'] === false && $k['onskad_returplats'] === 'Hylla A' && $k['faktisk_returplats'] === 'Hylla B', 'avvikelse sparas i kvittot');
+    kastar(fn () => \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 1, [], $version, 'ok', '', null, 'Hylla A'), 'ändrats');
+    $aktuell = array_values(array_filter(\TDL\Domain\Utlan::oppna(), fn ($x) => $x['id'] === $lan['id']))[0];
+    $r2 = \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 3, [], $aktuell['version'], 'ok', '', null, 'hylla a');
+    krav(\TDL\Domain\Utlan::kvitto($lan['id'], $r2['kvittokod'])['returplats_stammer'] === true, 'jämförelsen ignorerar skiftläge');
+    krav(Lager::artikel($a['id'])['saldo'][$plats['id']] === 4, 'återförs till ursprungliga arbetsstället');
+    krav(\TDL\Support\Historik::verifiera(Json::las('historik')) === [], 'historikkedjan är intakt');
+});
+
+prov('VAL-07B returplats för QR-enhet bevarar identitet och ursprungligt ställe', function () use ($admin) {
+    $plats = Lager::skapaPlats('Retur QR', 'RQ23', $admin);
+    $a = Lager::skapaArtikel(medPlats(['namn'=>'Retur QR', 'artikelnummer'=>'RETQR23', 'sparningssatt'=>'qr']), $admin);
+    $kod = Rorelser::inleverans($a['id'], $plats['id'], 1, [], $admin)['enheter'][0];
+    $lan = \TDL\Domain\Utlan::skapa($a['id'], $plats['id'], 0, [$kod], 'Anna', gmdate('Y-m-d'), $admin, null, 'Vagn 1');
+    $r = \TDL\Domain\Utlan::aterlamna($lan['id'], $admin, 0, [$kod], \TDL\Domain\Utlan::version($lan), 'ok', '', null, 'Vagn 2');
+    $en = Lager::enhet($kod); $k = \TDL\Domain\Utlan::kvitto($lan['id'], $r['kvittokod']);
+    krav($en['status'] === 'aktiv' && $en['plats_id'] === $plats['id'] && $k['returplats_stammer'] === false, 'QR-identitet, arbetsställe och avvikelse bevaras');
+    krav(\TDL\Support\Historik::verifiera(Json::las('historik')) === [], 'historikkedjan är intakt');
+});
+
 /* ---------------------------------------------------------- Sammanställning */
 echo "Tadega Lager – integrationstest\n";
 echo str_repeat('=', 60) . "\n";

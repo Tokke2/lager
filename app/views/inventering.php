@@ -129,6 +129,9 @@ $procent = $lage['antal_artiklar'] > 0
                     <a href="<?= e(u('/artiklar/' . e($r['artikel_id']))) ?>"><?= e($r['namn']) ?></a>
                     <span class="dampad mono" style="font-size:.78rem"><?= e($r['artikelnummer']) ?></span>
                     <?php if ($r['typ'] === 'qr'): ?><span class="tag">QR</span><?php endif; ?>
+                    <?php if (!empty($r['rakneinstruktion'])): ?>
+                        <div class="falt-hjalp"><strong>Aktuell räkneinstruktion:</strong> <?= nl2br(e($r['rakneinstruktion'])) ?></div>
+                    <?php endif; ?>
                 </td>
                 <td class="tal-kol mono" data-etikett="Förväntat"><?= (int) $r['forvantat'] ?></td>
                 <td class="tal-kol">

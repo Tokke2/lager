@@ -6,6 +6,18 @@ $harRegel = ($tvaPerson['antal'] ?? 0) > 0 || ($tvaPerson['varde'] ?? 0) > 0;
 <h1>Uttag</h1>
 <p class="dampad">Uttag kräver tillräckligt saldo <strong>på valt arbetsställe</strong>. Räcker inte saldot sparas ingenting.</p>
 
+<details class="kort" data-atgang>
+    <summary>Beräkna materialåtgång för en artikel</summary>
+    <p class="falt-hjalp">Ange arbetsmängd och material per arbetsenhet. Detta är bara en uppskattning: inget uttag registreras och antalet fylls inte i automatiskt.</p>
+    <div class="rad">
+        <div class="falt"><label for="atgang-arbete">Arbetsmängd</label><input id="atgang-arbete" data-atgang-arbete type="number" min="0" max="1000000" step="any" inputmode="decimal"></div>
+        <div class="falt"><label for="atgang-per">Material per arbetsenhet</label><input id="atgang-per" data-atgang-per type="number" min="0" max="1000000" step="any" inputmode="decimal"></div>
+    </div>
+    <p data-atgang-resultat aria-live="polite">Ange båda värdena för att beräkna.</p>
+    <p class="falt-hjalp">Saldot hanteras i hela enheter. Kontrollera uppskattningen, vald artikel och tillgängligt saldo innan du själv anger ett uttag.</p>
+    <noscript><p>Beräkningen kräver JavaScript. Det vanliga uttaget fungerar utan beräkningen.</p></noscript>
+</details>
+
 <form method="post" action="<?= e(u('/uttag')) ?>" class="kort">
     <input type="hidden" name="_csrf" value="<?= e($csrf) ?>">
 
@@ -20,6 +32,7 @@ $harRegel = ($tvaPerson['antal'] ?? 0) > 0 || ($tvaPerson['varde'] ?? 0) > 0;
     </select>
 
     <label for="plats_id">Arbetsställe som lämnar ut</label>
+    <?php $ordlisteFalt = 'arbetsstalle'; require __DIR__ . '/ordlista_hjalp.php'; ?>
     <?php $valtStalle = \TDL\Support\Arbetsstalle::aktivt(); ?>
     <?php if ($valtStalle !== null): ?>
         <div class="falt-hjalp" style="margin:0 0 6px">

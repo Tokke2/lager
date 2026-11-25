@@ -285,6 +285,18 @@ final class Admin
         omdirigera('/admin/system');
     }
 
+    public static function ordlistaSpara(): void
+    {
+        Auth::kravRoll('admin');
+        Sakerhet::kravCsrf();
+        $rader = $_POST['ordlista'] ?? [];
+        if (!is_array($rader)) throw new AppFel('Ogiltig ordlista.');
+        $ord = \TDL\Support\Ordlista::validera($rader);
+        Installningar::spara(['lokal_ordlista' => $ord]);
+        flash('ok', 'Den lokala ordlistan är sparad.');
+        omdirigera('/admin/system');
+    }
+
     public static function systemBackup(): void
     {
         $konto = Auth::kravRoll('admin');

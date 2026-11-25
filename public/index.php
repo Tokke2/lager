@@ -257,6 +257,7 @@ try {
         $rutt === '/admin/halsa' && $metod === 'GET' => \TDL\Http\Admin::halsa(),
         $rutt === '/admin/system/backup' && $metod === 'POST' => \TDL\Http\Admin::systemBackup(),
         $rutt === '/admin/system/installningar' && $metod === 'POST' => \TDL\Http\Admin::systemInstallningar(),
+        $rutt === '/admin/system/ordlista' && $metod === 'POST' => \TDL\Http\Admin::ordlistaSpara(),
         $rutt === '/offline' && $metod === 'GET' => \TDL\Http\Sidor::offline(),
         $rutt === '/sw.js' && $metod === 'GET' => \TDL\Http\Sidor::serviceWorker(),
         $rutt === '/site.webmanifest' && $metod === 'GET' => \TDL\Http\Sidor::manifest(),

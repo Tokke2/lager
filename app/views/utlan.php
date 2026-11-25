@@ -24,6 +24,11 @@
                     <?php else: ?>
                         <label>Antal att återlämna <input type="number" name="antal" min="1" max="<?= (int) $lan['antal'] ?>" value="<?= (int) $lan['antal'] ?>" required></label>
                     <?php endif; ?>
+                    <?php if (!empty($lan['onskad_returplats'])): ?>
+                    <p>Önskad returplats: <strong><?= e($lan['onskad_returplats']) ?></strong></p>
+                    <label>Faktisk returplats <input name="faktisk_returplats" maxlength="120" required></label>
+                    <p class="falt-hjalp">Ange var varan lades. Texten jämförs på kvittot; saldot återförs alltid till samma arbetsställe.</p>
+                    <?php endif; ?>
                     <?php if (($lan['sparningssatt'] ?? '') === 'qr'): ?>
                     <label>Skick <select name="skick"><option value="ok">I ordning</option><option value="skadad">Skadad – spärra för nytt lån</option></select></label>
                     <label>Notering om skick <textarea name="notering" maxlength="500" rows="2"></textarea></label>
@@ -82,6 +87,7 @@
         <?php endforeach; ?>
     </select>
     <label for="plats_id">Arbetsställe</label>
+    <?php $ordlisteFalt = 'arbetsstalle'; require __DIR__ . '/ordlista_hjalp.php'; ?>
     <select id="plats_id" name="plats_id" required><option value="">Välj arbetsställe …</option>
         <?php foreach ($platser as $p): ?><option value="<?= e($p['id']) ?>" <?= $valdPlats === $p['id'] ? 'selected' : '' ?>><?= e($p['namn']) ?></option><?php endforeach; ?>
     </select>
@@ -89,6 +95,9 @@
     <div id="koder-falt"><label for="enhetskoder">QR-enhetskoder (en per rad)</label><textarea id="enhetskoder" name="enhetskoder" rows="3" class="mono"></textarea></div>
     <label for="lanare">Vem lånar?</label><input id="lanare" name="lanare" maxlength="120" required>
     <label for="forfallodatum">Åter senast</label><input type="date" id="forfallodatum" name="forfallodatum" min="<?= e(gmdate('Y-m-d')) ?>" required>
+    <label for="onskad_returplats">Önskad returplats inom arbetsstället (valfri beskrivning)</label>
+    <input id="onskad_returplats" name="onskad_returplats" maxlength="120" placeholder="Till exempel hylla A3">
+    <p class="falt-hjalp">Beskrivningen är en påminnelse och flyttar inte lagersaldot. Saldot återförs till samma arbetsställe som lånet togs från.</p>
     <fieldset><legend>Kollegans bekräftelse vid större utlåning</legend>
         <p class="falt-hjalp">Samma tvåpersonsregel som för uttag gäller. Om den kräver bekräftelse anger en annan kollega sin PIN här.</p>
         <label for="godkannare">Kollega</label><select id="godkannare" name="godkannare"><option value="">Ingen</option>

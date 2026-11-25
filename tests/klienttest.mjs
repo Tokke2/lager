@@ -47,3 +47,49 @@ const emitter = () => ({ events: {}, addEventListener(n, fn) { this.events[n] = 
     battery.charging = true; battery.events.chargingchange(); assert(!body.active);
     console.log('OK: energisparläge för nätverk och batteri');
 }
+
+// Materialberäkningen är fristående och rundar bara för information.
+{
+    const f1 = { ...emitter(), value: '' }, f2 = { ...emitter(), value: '' };
+    const result = { textContent: '' };
+    const ruta = { querySelector(s) { return ({ '[data-atgang-arbete]': f1, '[data-atgang-per]': f2, '[data-atgang-resultat]': result })[s]; } };
+    const js = las('app.js');
+    const section = js.slice(js.indexOf('function TDLAtgang('), js.indexOf('/** Visa antal-'));
+    const context = { Number, Math }; vm.runInNewContext(section, context); context.TDLAtgang(ruta);
+    f1.value = '3'; f2.value = '1.5'; f1.events.input();
+    assert.match(result.textContent, /4,5/); assert.match(result.textContent, /hela enheter: 5/);
+    f1.value = '0.0000001'; f2.value = '1'; f1.events.input(); assert.match(result.textContent, /hela enheter: 1/);
+    f2.value = '-1'; f2.events.input(); assert.match(result.textContent, /giltiga värden/);
+    f2.value = ''; f2.events.input(); assert.match(result.textContent, /Ange båda/);
+    console.log('OK: isolerad materialberäkning och indata');
+}
+
+// Ingen automatisk återstart när fliken döljs eller kameraströmmen avbryts.
+{
+    let starter = 0, stoppar = 0;
+    const track = { ...emitter(), stop() { stoppar++; }, getCapabilities() { return {}; } };
+    const stream = { getTracks: () => [track], getVideoTracks: () => [track] };
+    const knapp = { ...emitter(), textContent: '', disabled: false };
+    const status = { textContent: '' };
+    const video = { srcObject: null, setAttribute() {}, play: async () => {} };
+    const doc = { ...emitter(), hidden: false, getElementById(id) { return ({kamera: video, 'starta-kamera': knapp, 'kamera-status': status})[id] || null; } };
+    const win = { ...emitter(), isSecureContext: true, setTimeout, clearTimeout };
+    const navigator = { mediaDevices: { async getUserMedia() { starter++; return stream; } } };
+    const js = las('app.js');
+    const section = js.slice(js.indexOf('function TDLKamera('), js.indexOf('/* ---------------------------------------------------------------------------\n * PWA:'));
+    const context = { document: doc, window: win, navigator }; vm.runInNewContext(section, context);
+    context.TDLKamera({});
+    const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+    knapp.events.click(); await tick(); assert.equal(starter, 1); assert.equal(knapp.textContent, 'Stoppa kameran');
+    track.events.mute(); assert.match(status.textContent, /pausad/);
+    track.events.unmute(); assert.match(status.textContent, /aktiv igen/);
+    doc.hidden = true; doc.events.visibilitychange();
+    assert.equal(stoppar, 1); assert.equal(knapp.textContent, 'Återuppta kameran'); assert.match(status.textContent, /sidan doldes/);
+    doc.hidden = false; doc.events.visibilitychange(); await tick(); assert.equal(starter, 1);
+    knapp.events.click(); await tick(); assert.equal(starter, 2);
+    track.events.mute(); assert.equal(knapp.textContent, 'Återuppta kameran');
+    knapp.events.click(); await tick(); assert.equal(starter, 3); assert.equal(stoppar, 2);
+    track.events.ended(); assert.equal(stoppar, 3); assert.match(status.textContent, /avslutades/); assert.equal(knapp.textContent, 'Återuppta kameran');
+    assert.equal(video.srcObject, null);
+    console.log('OK: kamerapaus, avbruten ström och manuell återstart');
+}

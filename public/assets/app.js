@@ -1,6 +1,31 @@
 /* Tadega Lager – litet gränssnittslager. Ingen extern kod. */
 'use strict';
 
+/** Isolerad uppskattning: ändrar varken uttagsformuläret eller lagret. */
+function TDLAtgang(ruta) {
+    var arbete = ruta.querySelector('[data-atgang-arbete]');
+    var per = ruta.querySelector('[data-atgang-per]');
+    var resultat = ruta.querySelector('[data-atgang-resultat]');
+    function berakna() {
+        if (arbete.value === '' || per.value === '') {
+            resultat.textContent = 'Ange båda värdena för att beräkna.';
+            return;
+        }
+        var a = Number(arbete.value), b = Number(per.value);
+        var summa = a * b;
+        if (!Number.isFinite(summa) || a < 0 || b < 0 || a > 1000000 || b > 1000000 || summa > 1000000000) {
+            resultat.textContent = 'Ange giltiga värden. Beräknat antal får vara högst en miljard.';
+            return;
+        }
+        // Begränsa flyttalsbrus utan att avrunda små positiva värden till noll.
+        summa = Number(summa.toPrecision(12));
+        resultat.textContent = 'Beräknat ungefär: ' + summa.toLocaleString('sv-SE', { maximumFractionDigits: 12 }) +
+            ' enheter. Avrundat uppåt till hela enheter: ' + Math.ceil(summa).toLocaleString('sv-SE') + '.';
+    }
+    arbete.addEventListener('input', berakna);
+    per.addEventListener('input', berakna);
+}
+
 /** Visa antal- eller enhetsfält beroende på vald artikels saldohanteringssätt. */
 function TDLArtiklarValjare() {
     var artikel = document.getElementById('artikel_id');
@@ -35,6 +60,7 @@ function TDLKamera(opts) {
     var lampaPa = false;
     var stream = null;
     var aktiv = false;
+    var pausad = false;
     var timer = null;
     var canvas = null;
     var ctx = null;
@@ -103,20 +129,55 @@ function TDLKamera(opts) {
             video.srcObject = stream;
             video.setAttribute('playsinline', 'true');
             await video.play();
-            if (generation !== minGeneration || document.hidden) { stoppa(); return; }
+            if (generation !== minGeneration) return;
+            if (document.hidden) { stoppa(); return; }
             aktiv = true;
             if (knapp) knapp.textContent = 'Stoppa kameran';
             var formaga = {};
             try {
                 var spar = stream.getVideoTracks()[0];
+                if (spar && spar.addEventListener) {
+                    spar.addEventListener('ended', function () {
+                        if (generation !== minGeneration || !aktiv) return;
+                        stoppa();
+                        if (knapp) knapp.textContent = 'Återuppta kameran';
+                        sattStatus('Kameran avslutades av webbläsaren eller enheten. Tryck på Återuppta kameran eller skriv koden manuellt.');
+                    });
+                    spar.addEventListener('mute', function () {
+                        if (generation !== minGeneration || !aktiv) return;
+                        pausad = true;
+                        if (knapp) knapp.textContent = 'Återuppta kameran';
+                        sattStatus('Kamerabilden är tillfälligt pausad av webbläsaren eller enheten. Vänta eller tryck på Återuppta kameran.');
+                    });
+                    spar.addEventListener('unmute', function () {
+                        if (generation !== minGeneration || !aktiv) return;
+                        pausad = false;
+                        if (knapp) knapp.textContent = 'Stoppa kameran';
+                        sattStatus('Kamerabilden är aktiv igen. Rikta kameran mot koden.');
+                    });
+                }
                 formaga = spar && typeof spar.getCapabilities === 'function' ? spar.getCapabilities() : {};
             } catch (e) { /* inget stöd – kameran fungerar ändå */ }
             if (ficklampa) ficklampa.hidden = !formaga.torch;
-            sattStatus(eanLasare ? 'Rikta kameran mot QR- eller EAN-koden.' : (opts.ean ? 'Rikta kameran mot QR-koden. För EAN: skriv koden eller använd en streckkodsläsare.' : 'Rikta kameran mot QR-koden.'));
+            if (spar && spar.readyState === 'ended') {
+                stoppa();
+                if (knapp) knapp.textContent = 'Återuppta kameran';
+                sattStatus('Kameran avslutades av webbläsaren eller enheten. Tryck på Återuppta kameran eller skriv koden manuellt.');
+                return;
+            }
+            if (spar && spar.muted) {
+                pausad = true;
+                if (knapp) knapp.textContent = 'Återuppta kameran';
+                sattStatus('Kamerabilden är tillfälligt pausad av webbläsaren eller enheten. Vänta eller tryck på Återuppta kameran.');
+            } else {
+                sattStatus(eanLasare ? 'Rikta kameran mot QR- eller EAN-koden.' : (opts.ean ? 'Rikta kameran mot QR-koden. För EAN: skriv koden eller använd en streckkodsläsare.' : 'Rikta kameran mot QR-koden.'));
+            }
             schema();
         } catch (e) {
-            if (generation === minGeneration) stoppa();
-            sattStatus('Kunde inte starta kameran (' + (e && e.name ? e.name : 'fel') + '). Använd det manuella fältet.');
+            if (generation === minGeneration) {
+                stoppa();
+                sattStatus('Kunde inte starta kameran (' + (e && e.name ? e.name : 'fel') + '). Använd det manuella fältet.');
+            }
         } finally {
             startar = false;
             if (knapp) knapp.disabled = false;
@@ -126,6 +187,7 @@ function TDLKamera(opts) {
     function stoppa() {
         generation++;
         aktiv = false;
+        pausad = false;
         if (timer) {
             window.clearTimeout(timer);
             timer = null;
@@ -187,7 +249,9 @@ function TDLKamera(opts) {
 
     if (knapp) {
         knapp.addEventListener('click', function () {
-            if (aktiv) stoppa(); else starta();
+            if (aktiv && pausad) { stoppa(); starta(); }
+            else if (aktiv) stoppa();
+            else starta();
         });
     }
 
@@ -213,7 +277,11 @@ function TDLKamera(opts) {
     // eller timer får ligga kvar i bakgrunden och dra batteri.
     window.addEventListener('pagehide', stoppa);
     document.addEventListener('visibilitychange', function () {
-        if (document.hidden && (aktiv || startar)) stoppa();
+        if (document.hidden && (aktiv || startar)) {
+            stoppa();
+            if (knapp) knapp.textContent = 'Återuppta kameran';
+            sattStatus('Kameran pausades när sidan doldes. Tryck på Återuppta kameran när du vill skanna igen, eller skriv koden manuellt.');
+        }
     });
 }
 
@@ -403,6 +471,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (document.getElementById('artikel_id')) {
         TDLArtiklarValjare();
     }
+
+    var atgang = document.querySelector('[data-atgang]');
+    if (atgang) TDLAtgang(atgang);
 
     // Skanna-sidan: kamera startas först vid knapptryck (integritet + prestanda)
     var kameraKnapp = document.getElementById('starta-kamera');
