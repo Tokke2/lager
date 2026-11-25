@@ -82,9 +82,10 @@ här; hitta inte på deras innebörd och ändra inte en annan checkout.
   med korrekthet eller säkerhet. Påstå inte uppmätta förbättringar utan mätning.
 - Håll standardlogotyp och ikoner konsekventa i appen. Bevara redigerbara
   vektororiginal för tryck och respektera kundens egen vitmärkning.
-- Separat profilskapande under inställningar är ett öppet önskemål. Lager har
-  befintliga skrivarprofiler i `app/Support/Skrivare.php`, men användaren har
-  inte specificerat om det är dessa som avses; fråga innan nya profiler byggs.
+- Separat profilskapande under inställningar gäller bara appar som använder
+  profiler. Lager har befintliga skrivarprofiler i `app/Support/Skrivare.php`,
+  men användaren har inte specificerat om det är dessa som avses; fråga innan
+  nya profiler byggs och skapa inte profiler för appar utan ett sådant behov.
 - Lager har hyllrutor i lagerkartan och lokalplanen, men ingen identifierad
   projektskapare från TTK-versionen. Anta inte att någon av dessa är samma
   funktion som det efterfrågade rutvalet; be om detaljer innan det byggs.

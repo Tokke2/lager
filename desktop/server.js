@@ -100,6 +100,8 @@ async function starta(resursKatalog, logg, startPort = Number(process.env.TDL_PO
             cwd: appKatalog,
             env: { ...process.env },
             stdio: ['ignore', 'pipe', 'pipe'],
+            // Visa inte PHP-processens konsolfönster på Windows.
+            windowsHide: true,
         }
     );
 
