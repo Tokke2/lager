@@ -1,10 +1,9 @@
 # Arbetsregler för Lager
 
-Dessa regler gäller kommande arbete i detta repository. Läs dem tillsammans med
-sessionens aktuella instruktioner och kontrollera aktuellt grenläge innan arbete.
-När en regel hänvisar till ett annat projekt eller ett krav som inte finns här:
-hitta inte på innehållet och ändra inte en annan checkout – be användaren om rätt
-fil eller förklaring.
+Dessa regler gäller Lager: webbappen i `app/` och `public/`, PWA:n och
+skrivbordsappen i `desktop/`. Läs dem tillsammans med sessionens aktuella
+instruktioner. Projekt- eller kravnamn från andra appar gäller inte automatiskt
+här; hitta inte på deras innebörd och ändra inte en annan checkout.
 
 ## Hårda regler: gren, merge och release
 
@@ -41,9 +40,17 @@ fil eller förklaring.
   användarflöden, filformat, lagrad data, roller och befintliga integrationer.
   Om en ändring måste bryta kompatibilitet, redovisa den uttryckligen, fråga
   vid behov och tillhandahåll en säker migrations- och återställningsväg.
-- `REQ-K4` ska respekteras när dess innehåll är känt. Definitionen finns inte
-  i denna checkout; be om originalkravet eller korrekt projekt innan du tolkar
-  eller implementerar det. Anta inte att det redan är uppfyllt.
+- Skydda Lager-specifik dataintegritet: saldo per arbetsställe, QR-enheters
+  identitet och status, öppna lån, inventeringar och spårbar historik. Skrivande
+  ändringar ska valideras på servern och använda appens lås och journaler där
+  de behövs, utan delvis genomförda lagertransaktioner.
+- Bevara den privata lagringen, säkerhetskopiornas återläsbarhet, behörighets-
+  kontroller, sessionsskydd och CSRF. Skapa inte testdata i en driftinstallation.
+  Kameran ska fortfarande ha manuell reservväg.
+- `REQ-K4` har ingen känd definition i Lager. Koppla inte etiketten till ett
+  annat krav och påstå inte att den är uppfylld; be om lydelsen om den blir
+  relevant. Lager har ett separat historiskt kravunderlag i `03_kravmatris.md`,
+  vars autentiseringsavsnitt är inaktuellt – namn och PIN-regeln ovan gäller.
 
 ## Gränssnitt, prestanda och varumärke
 
@@ -56,10 +63,12 @@ fil eller förklaring.
   med korrekthet eller säkerhet. Påstå inte uppmätta förbättringar utan mätning.
 - Håll standardlogotyp och ikoner konsekventa i appen. Bevara redigerbara
   vektororiginal för tryck och respektera kundens egen vitmärkning.
-- Önskemålen om profilskapande under inställningar och val av ruta i en
-  projektskapare från en tidigare TTK-version ska inte antas vara genomförda
-  eller höra till Lager om relevant funktion och originalkrav saknas. Be om
-  rätt projekt och detaljer innan arbete som beror på dem.
+- Separat profilskapande under inställningar är ett öppet önskemål. Lager har
+  befintliga skrivarprofiler i `app/Support/Skrivare.php`, men användaren har
+  inte specificerat om det är dessa som avses; fråga innan nya profiler byggs.
+- Lager har hyllrutor i lagerkartan och lokalplanen, men ingen identifierad
+  projektskapare från TTK-versionen. Anta inte att någon av dessa är samma
+  funktion som det efterfrågade rutvalet; be om detaljer innan det byggs.
 
 ## Förslag och uppföljning
 
@@ -77,8 +86,12 @@ fil eller förklaring.
 ## Kontroll före klart
 
 - Granska diff och kör relevanta automatiska tester samt syntaxkontroller före
-  klartecken. Testa gränssnitt vid relevanta skärmstorlekar och använd realistiska
-  fel- och säkerhetsfall när ändringen berör dessa. Skydda riktig driftdata.
+  klartecken. För Lager finns `tests/integrationstest.php`,
+  `tests/tillgangstest.php` och `tests/klienttest.mjs`; välj tester efter
+  ändringen och använd separat temporär lagring. Ändra inte testernas
+  skyddsvillkor i källfilen för att passa en testmiljö.
+- Testa gränssnitt vid relevanta skärmstorlekar och använd realistiska fel- och
+  säkerhetsfall när ändringen berör dessa. Skydda riktig driftdata.
 - Redovisa vad som testats, eventuella uteblivna tester och begränsningar. Säg
   inte att något är färdigt, säkert, uppdaterat eller snabbare utan stöd för det.
 - Vid push: verifiera att releasens commit och Latest-status matchar grenens
